@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head><title>Deposit</title></head>
+<body>
+    <h2>Deposit Funds</h2>
+    <form method="post">
+        {% csrf_token %}
+        <input type="number" name="amount" step="0.01" placeholder="Amount" required>
+        <button type="submit">Deposit</button>
+    </form>
+    <a href="{% url 'wallet' %}">Back to Wallet</a>
+</body>
+</html>

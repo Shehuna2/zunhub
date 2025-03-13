@@ -1,0 +1,266 @@
+@font-face {
+  font-family: 'icomoon';
+  src:  url('icomoon5784.eot?u96gzp');
+  src:  url('icomoon5784.eot?u96gzp#iefix') format('embedded-opentype'),
+    url('icomoon5784.ttf?u96gzp') format('truetype'),
+    url('icomoon5784.woff?u96gzp') format('woff'),
+    url('icomoon5784.svg?u96gzp#icomoon') format('svg');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+[class^="icon-"], [class*=" icon-"] {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'icomoon' !important;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-globe:before {
+  content: "\e900";
+}
+.icon-select-right:before {
+  content: "\e903";
+  color: #7e8088;
+}
+.icon-think:before {
+  content: "\e904";
+  color: #d33535;
+}
+.icon-clockwise2:before {
+  content: "\e905";
+}
+.icon-gmail:before {
+  content: "\e906";
+}
+.icon-discord:before {
+  content: "\e907";
+}
+.icon-tw:before {
+  content: "\e908";
+}
+.icon-fb:before {
+  content: "\e909";
+}
+.icon-clock:before {
+  content: "\e90a";
+}
+.icon-key:before {
+  content: "\e90b";
+}
+.icon-funnel:before {
+  content: "\e90c";
+}
+.icon-bluetooth:before {
+  content: "\e90d";
+}
+.icon-phrase:before {
+  content: "\e90f";
+}
+.icon-mpc:before {
+  content: "\e910";
+}
+.icon-arr-right:before {
+  content: "\e911";
+}
+.icon-wallet-money:before {
+  content: "\e912";
+  color: #10b981;
+}
+.icon-book:before {
+  content: "\e913";
+  color: #8358ff;
+}
+.icon-noti:before {
+  content: "\e914";
+}
+.icon-view-hide:before {
+  content: "\e901";
+}
+.icon-bank:before {
+  content: "\e915";
+}
+.icon-history:before {
+  content: "\e916";
+}
+.icon-cancel:before {
+  content: "\e92a";
+}
+.icon-left-btn:before {
+  content: "\e917";
+}
+.icon-check:before {
+  content: "\e923";
+}
+.icon-view:before {
+  content: "\e918";
+}
+.icon-select-up:before {
+  content: "\e919";
+}
+.icon-select-down:before {
+  content: "\e91a";
+}
+.icon-way2:before {
+  content: "\e91b";
+}
+.icon-way:before {
+  content: "\e91c";
+}
+.icon-wallet2:before {
+  content: "\e91d";
+}
+.icon-wallet:before {
+  content: "\e91e";
+}
+.icon-earn2:before {
+  content: "\e91f";
+}
+.icon-earn:before {
+  content: "\e920";
+}
+.icon-convert2:before {
+  content: "\e921";
+}
+.icon-convert:before {
+  content: "\e922";
+}
+.icon-exchange2:before {
+  content: "\e924";
+}
+.icon-exchange:before {
+  content: "\e925";
+}
+.icon-home2:before {
+  content: "\e926";
+}
+.icon-home:before {
+  content: "\e927";
+  color: #7a798a;
+}
+.icon-tag:before {
+  content: "\e928";
+}
+.icon-user:before {
+  content: "\e929";
+}
+.icon-swap:before {
+  content: "\e92b";
+}
+.icon-star:before {
+  content: "\e92c";
+}
+.icon-star--2:before {
+  content: "\e90e";
+}
+.icon-share:before {
+  content: "\e92d";
+}
+.icon-shapes:before {
+  content: "\e92e";
+}
+.icon-search:before {
+  content: "\e92f";
+}
+.icon-robot:before {
+  content: "\e930";
+}
+.icon-question:before {
+  content: "\e902";
+}
+.icon-present:before {
+  content: "\e931";
+}
+.icon-loan:before {
+  content: "\e932";
+}
+.icon-metalogo:before {
+  content: "\e933";
+}
+.icon-mobile:before {
+  content: "\e934";
+}
+.icon-heart1:before {
+  content: "\e935";
+}
+.icon-leftRight:before {
+  content: "\e936";
+}
+.icon-hammer:before {
+  content: "\e937";
+}
+.icon-headset:before {
+  content: "\e938";
+}
+.icon-grid-nine:before {
+  content: "\e939";
+}
+.icon-graph:before {
+  content: "\e93a";
+}
+.icon-gift:before {
+  content: "\e93b";
+}
+.icon-game-control:before {
+  content: "\e93c";
+}
+.icon-fire:before {
+  content: "\e93d";
+}
+.icon-filter:before {
+  content: "\e93e";
+}
+.icon-fileText:before {
+  content: "\e93f";
+}
+.icon-dimond:before {
+  content: "\e940";
+}
+.icon-database:before {
+  content: "\e941";
+}
+.icon-currency:before {
+  content: "\e942";
+}
+.icon-credit-card:before {
+  content: "\e943";
+}
+.icon-copy:before {
+  content: "\e944";
+}
+.icon-coins:before {
+  content: "\e945";
+}
+.icon-close:before {
+  content: "\e946";
+}
+.icon-clockwise:before {
+  content: "\e947";
+}
+.icon-circlesFour:before {
+  content: "\e948";
+}
+.icon-check-circle:before {
+  content: "\e949";
+}
+.icon-chartPie:before {
+  content: "\e94a";
+}
+.icon-cart:before {
+  content: "\e94b";
+}
+.icon-barcode:before {
+  content: "\e94c";
+}
+.icon-arr-down:before {
+  content: "\e94d";
+}

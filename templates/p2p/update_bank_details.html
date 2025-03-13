@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Update Bank Details</title>
+</head>
+<body>
+    <h2>Update Your Bank Details</h2>
+    <form method="POST">
+        {% csrf_token %}
+        <label>Bank Name:</label>
+        <input type="text" name="bank_name" value="{{ profile.bank_name }}" required><br>
+
+        <label>Account No:</label>
+        <input type="text" name="account_no" value="{{ profile.account_no }}" required><br>
+
+        <button type="submit">Update</button>
+    </form>
+
+    <br>
+    <a href="{% url 'buyer_orders' %}">Back to Orders</a>
+</body>
+</html>

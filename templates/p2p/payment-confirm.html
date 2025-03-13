@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Mirrored from themesflat.co/html/cointexcrypto/cointex/payment-confirm.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 01 Mar 2025 11:32:46 GMT -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, viewport-fit=cover">
+    <!-- font -->
+    <link rel="stylesheet" href="fonts/fonts.css">
+    <!-- Icons -->
+    <link rel="stylesheet" href="fonts/font-icons.css">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet"type="text/css" href="css/styles.css"/>
+
+   
+    <!-- Favicon and Touch Icons  -->
+    <link rel="shortcut icon" href="images/logo/48.png" />
+    <link rel="apple-touch-icon-precomposed" href="images/logo/48.png" />
+
+    <title>Confirm</title>
+</head>
+
+<body>
+    <!-- preloade -->
+    <div class="preload preload-container">
+        <div class="preload-logo" style="background-image: url('images/logo/144.png')">
+            <div class="spinner"></div>
+        </div>
+    </div>
+    <!-- /preload --> 
+
+    <div class="header fixed-top bg-surface d-flex justify-content-center align-items-center">
+        <a href="javascript:void(0);" class="left back-btn"><i class="icon-left-btn"></i></a>
+        <h3>Confirm</h3>
+    </div>
+    <div class="pt-45 pb-90">
+        <div class="tf-container">
+           <p class="text-center text-small mt-4">Transfer amount</p>
+           <h1 class="mt-8 text-center">$1200.0</h1>
+           <div class="mt-12 accent-box-v3 bg-menuDark">
+                <div class="pb-10 line-bt">
+                    <span>From</span>
+                    <div class="mt-4 card-item">
+                        <img src="images/card/card1.png" alt="img" class="img">
+                        <div class="content flex-grow-1">
+                            <p class="text-large text-white">Visacard</p>
+                            <p>****  ****  ****  4234</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-10">
+                    <span>To</span>
+                    <div class="mt-4 card-item">
+                        <img src="images/card/card2.png" alt="img" class="img">
+                        <div class="content flex-grow-1">
+                            <p class="text-large text-white">Tony Nguyen</p>
+                            <p>****  ****  ****  4234</p>
+                        </div>
+                    </div>
+                </div>
+           </div>
+           <ul class="mt-12 accent-box-v4 bg-menuDark">
+                <li class="d-flex align-items-center justify-content-between pb-8 line-bt">
+                    <span class="text-small">Transaction fee</span>
+                    <span class="text-large text-white">Free</span>
+                </li>
+                <li class="d-flex align-items-center justify-content-between pt-8 pb-8 line-bt">
+                    <span class="text-small">Amount in words </span>
+                    <span class="text-large text-white text-end">One thousand two <br> hundred dollars</span>
+                </li>
+                <li class="d-flex align-items-center justify-content-between pt-8 pb-8 line-bt">
+                    <span class="text-small">Transfer form</span>
+                    <span class="text-large text-white">Transfer to bank</span>
+                </li>
+                <li class="d-flex align-items-center justify-content-between pt-8 pb-8">
+                    <span class="text-small">Notification</span>
+                    <span class="text-large text-white">BTC</span>
+                </li>
+           </ul>
+        </div>
+    </div>
+
+    <div class="menubar-footer footer-fixed bg-surface">
+        <div class="inner-bar">
+            <a href="javascript:void(0);" class="tf-btn lg primary" data-bs-toggle="modal" data-bs-target="#otpPin">Confirm</a>
+        </div>
+    </div>
+
+
+    <!-- filter otp -->
+    <div class="modal fade action-sheet sheet-down" id="otpPin">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="header d-flex justify-content-center align-items-center">
+                    <span class="left icon-cancel" data-bs-dismiss="modal"></span>
+                    <h3>Enter your pin</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="digit-group">
+                        <input required type="text" id="digit-2" name="digit-2" data-next="digit-3" data-previous="digit-1" value="3">
+                        <input required type="text" id="digit-3" name="digit-3" data-next="digit-4" data-previous="digit-2" value="6">
+                        <input required type="text" id="digit-4" name="digit-4" data-next="digit-5" data-previous="digit-3">
+                        <input required type="text" id="digit-5" name="digit-5" data-next="digit-6" data-previous="digit-4">
+                    </div> 
+                    <p class="text-center text-small text-white mt-16">Enter  your PIN to proceed</p>
+                    <a href="#success" class="mt-40 tf-btn lg primary" data-bs-toggle="modal">Confirm</a>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- filter success -->
+    <div class="modal fade modalCenter" id="success">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content success_box">
+                <div class="icon-1 ani3">
+                    <span class="circle-box lg bg-circle check-icon bg-primary"></span>
+                </div>
+                <div class="icon-2 ani5">
+                    <span class="circle-box md bg-primary"></span>
+                </div>
+                <div class="icon-3 ani8">
+                    <span class="circle-box md bg-primary"></span>
+                </div>
+                <div class="icon-4 ani2">
+                    <span class="circle-box sm bg-primary"></span>
+                </div>
+                <div class="text-center">
+                    <h2 class="text-surface">Successful!</h2>
+                    <p class="text-small mt-8">Your transfer has been done!</p>
+                    <h5 class="mt-16 text-surface">Transfer amount</h5>
+                    <h1 class="mt-8 text-primary">$ 1200.0</h1>
+                    <p class="mt-16 text-surface text-button">Notification</p>
+                    <p class="text-small mt-4">BTC payment</p>
+                </div>
+                
+                <a href="home.html" class="tf-btn lg primary mt-40">Done</a>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="text/javascript" src="js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/main.js"></script>
+
+    
+</body>
+
+<!-- Mirrored from themesflat.co/html/cointexcrypto/cointex/payment-confirm.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 01 Mar 2025 11:32:47 GMT -->
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head><title>Buy Internal Currency</title></head>
+<body>
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+            <li class="{% if message.tags %}{{ message.tags }}{% endif %}">
+                {{ message }}
+            </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    <h2>Buy from {{ sell_offer.merchant.username }}</h2>
+    <p>Price per unit: ₦{{ sell_offer.price_per_unit }}</p>
+    <p>Min: ₦{{ sell_offer.min_amount }} -- Max: ₦{{ sell_offer.max_amount }}</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Buy Now</button>
+    </form>
+    <a href="{% url 'merchant_list' %}">Back to Merchants</a>
+</body>
+</html>

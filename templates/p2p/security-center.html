@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- Mirrored from themesflat.co/html/cointexcrypto/cointex/security-center.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 01 Mar 2025 11:32:43 GMT -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, viewport-fit=cover">
+
+    <!-- font -->
+    <link rel="stylesheet" href="fonts/fonts.css">
+    <!-- Icons -->
+    <link rel="stylesheet" href="fonts/font-icons.css">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet"type="text/css" href="css/styles.css"/>
+
+   
+    <!-- Favicon and Touch Icons  -->
+    <link rel="shortcut icon" href="images/logo/48.png" />
+    <link rel="apple-touch-icon-precomposed" href="images/logo/48.png" />
+
+    <title>Security center</title>
+</head>
+
+<body>
+
+    <div class="header fixed-top bg-surface d-flex justify-content-center align-items-center">
+        <a href="javascript:void(0);" class="left back-btn"><i class="icon-left-btn"></i></a>
+        <h3>Security center</h3>
+    </div>
+    <div class="pt-45 pb-16">
+        <div class="tf-container">
+            <h4 class="mt-4">Verification method</h4>
+            <ul class="pt-16 pb-16 line-bt">
+                <li>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="javascript:void(0);" class="left-inner">
+                            <p class="text-small">2-factor authentication</p>
+                            <p class="mt-4 text-secondary">Send verification code for secure login.</p>
+                        </a>
+                        <input class="tf-switch-check" type="checkbox" value="checkbox" name="check">
+
+                    </div>
+                </li>
+                <li class="mt-16">
+                    <a href="javascript:void(0);" class="d-flex justify-content-between align-items-center">
+                        <p class="text-small">Authentication app</p>
+                        <div class="text-secondary d-flex gap-8 align-items-center"><span>Unlinked </span><i class="icon-arr-right fs-12 text-secondary"></i></div>
+                    </a>
+                </li>
+                <li class="mt-16 ">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <p class="text-small text-white">Phone number</p>
+                        <input class="tf-switch-check" type="checkbox" value="checkbox" name="check" checked>
+                    </div>
+                </li>
+                <li class="mt-16">
+                    <a href="javascript:void(0);" class="d-flex justify-content-between align-items-center">
+                        <p class="text-small">Email</p>
+                        <div class="text-secondary d-flex gap-8 align-items-center"><span>Unlinked </span><i class="icon-arr-right fs-12 text-secondary"></i></div>
+                    </a>
+                </li>
+            </ul>
+            <h4 class="mt-16">Advanced security</h4>
+            <ul class="pt-16 pb-16 line-bt">
+                <li>
+                    <a href="javascript:void(0);" class="d-flex justify-content-between align-items-center">
+                        <div class="left-inner">
+                            <p class="text-small">Anti-phishing code online</p>
+                            <p class="mt-4 text-secondary text-xsmall">Add a unique code for Avicoin to authenticate.</p>
+                        </div>
+                        <i class="icon-arr-right fs-12 text-secondary"></i>
+                    </a>
+                </li>
+                <li class="pt-16">
+                    <a href="javascript:void(0);" class="d-flex justify-content-between align-items-center">
+                        <div class="left-inner">
+                            <p class="text-small">App lock</p>
+                            <p class="mt-4 text-secondary text-xsmall">Set face ID and pattern lock settings.</p>
+                        </div>
+                        <i class="icon-arr-right fs-12 text-secondary"></i>
+                    </a>
+                </li>
+                <li class="pt-16">
+                    <a href="javascript:void(0);" class="d-flex justify-content-between align-items-center">
+                        <div class="left-inner">
+                            <p class="text-small">Channel verification</p>
+                            <p class="mt-4 text-secondary text-xsmall">Verify a source officially represents Avicion.</p>
+                        </div>
+                        <i class="icon-arr-right fs-12 text-secondary"></i>
+                    </a>
+                </li>
+            </ul>
+            <h4 class="mt-16">Account management</h4>
+            <ul class="pt-16 pb-16">
+                <li>
+                    <a href="change-password.html" class="d-flex justify-content-between align-items-center">
+                        <p class="text-small">Change the password</p>
+                        <i class="icon-arr-right fs-12 text-secondary"></i>
+                    </a>
+                </li>
+                <li class="mt-16" data-bs-toggle="modal" data-bs-target="#equipment">
+                    <a href="javascript:void(0);" class="d-flex justify-content-between align-items-center">
+                        <p class="text-small">Equipment management</p>
+                        <i class="icon-arr-right fs-12 text-secondary"></i>
+                    </a>
+                </li>
+                <li class="mt-16">
+                    <a href="account-freeze.html" class="d-flex justify-content-between align-items-center">
+                        <p class="text-small">Freeze/close account</p>
+                        <i class="icon-arr-right fs-12 text-secondary"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- modal equipment -->
+    <div class="modal fade modalRight" id="equipment">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="header fixed-top bg-surface d-flex justify-content-center align-items-center">
+                    <span class="left" data-bs-dismiss="modal"  aria-hidden="true"><i class="icon-left-btn"></i></span>
+                    <h3>Equipment management</h3>
+                </div>
+                <div class="overflow-auto pt-45 pb-16">
+                    <div class="tf-container">
+                        <ul class="mt-4">
+                            <li>
+                                <div class="d-flex gap-12">
+                                    <i class="icon-mobile"></i>
+                                    <div class="content pb-8 line-bt flex-grow-1">
+                                        <h5>iPhone(iOS)</h5>
+                                        <p class="text-small mt-4">Last place: USA</p>
+                                        <p class="text-small mt-4">IP: 123.45.67.890</p>
+                                        <p class="text-small mt-4">Last seen: 2023-01-01 10:51:43</p>
+                                    </div>  
+                                </div>
+                            </li>
+                            <li class="mt-12 pb-12 line-bt pl-32">
+                                <h5>History</h5>
+                                <div class="mt-4 d-flex gap-8">
+                                    <div class="flex-grow-1">
+                                        <p class="text-small">Location</p>
+                                        <p class="text-small">USA</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-small">IP</p>
+                                        <p class="text-small">123.45.67.890</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-small">Date and time</p>
+                                        <p class="text-small">2023-01-01 10:51:43</p>
+                                    </div>
+                                </div>
+                            </li>
+                           
+                        </ul>
+                    </div>
+                        
+                </div>
+               
+            </div>
+        </div>
+    </div>
+
+   
+
+
+    <script type="text/javascript" src="js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/main.js"></script>
+
+    <script>
+    </script>
+    
+</body>
+
+<!-- Mirrored from themesflat.co/html/cointexcrypto/cointex/security-center.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 01 Mar 2025 11:32:44 GMT -->
+</html>

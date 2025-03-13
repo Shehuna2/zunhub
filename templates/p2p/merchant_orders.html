@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Merchant Orders</title>
+</head>
+<body>
+    <h2>Orders Received</h2>
+    <table border="1">
+        <tr>
+            <th>Buyer</th>
+            <th>Amount</th>
+            <th>Total Price</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Action</th>
+        </tr>
+        {% for order in orders %}
+        <tr>
+            <td>{{ order.buyer.username }}</td>
+            <td>{{ order.amount_requested }}</td>
+            <td>₦{{ order.total_price }}</td>
+            <td>{{ order.get_status_display }}</td>
+            <td>{{ order.created_at }}</td>
+            <td>
+                {% if order.status == 'paid' %}
+                    <a href="{% url 'confirm_payment' order.id %}">Release Funds</a>
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6">No orders received.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

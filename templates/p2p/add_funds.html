@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Fund Your Wallet</h2>
+<form method="post">
+    {% csrf_token %}
+    <label>Enter Amount:</label>
+    <input type="number" name="amount" required>
+    <button type="submit">Get Seller</button>
+</form>
+
+{% if seller_name %}
+    <h3>Send Payment To:</h3>
+    <p>Seller: {{ seller_name }}</p>
+    <p>Bank: {{ bank_name }}</p>
+    <p>Account Number: {{ account_number }}</p>
+    <p>After sending, wait for confirmation.</p>
+{% endif %}
+{% endblock %}
