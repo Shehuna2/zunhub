@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head><title>Merchants</title></head>
+<body>
+    <h2>Approved Merchants</h2>
+    <ul>
+        {% for merchant in merchants %}
+            <li>{{ merchant.username }} - <a href="#">View Offers</a></li>
+        {% empty %}
+            <p>No merchants available.</p>
+        {% endfor %}
+    </ul>
+    <a href="{% url 'wallet' %}">Back to Wallet</a>
+</body>
+</html>

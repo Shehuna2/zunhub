@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Order Details</title>
+</head>
+<body>
+    <h2>Order Details</h2>
+    <p><strong>Order ID:</strong> {{ order.id }}</p>
+    <p><strong>Merchant:</strong> {{ order.sell_offer.merchant.username }}</p>
+    <p><strong>Buyer:</strong> {{ order.buyer.username }}</p>
+    <p><strong>Rate:</strong> ₦{{ order.sell_offer.price_per_unit }}</p>
+    <p><strong>Amount:</strong> ₦{{ order.amount_requested }}</p>
+    <p><strong>Total Price:</strong> ₦{{ order.total_price }}</p>
+    <p><strong>Status:</strong> {{ order.get_status_display }}</p>
+    <p><strong>Created At:</strong> {{ order.created_at }}</p>
+
+    {% if request.user == order.buyer %}
+        <h3>Payment Instructions</h3>
+        <p><strong>Send Payment to:</strong></p>
+        <p><strong>Full Name:</strong> {{ order.sell_offer.merchant.profile.full_name }}</p>
+        <p><strong>Bank Name:</strong> {{ order.sell_offer.merchant.profile.bank_name }}</p>
+        <p><strong>Account No:</strong> {{ order.sell_offer.merchant.profile.account_no }}</p>
+
+        {% if order.status == 'pending' %}
+            <form action="{% url 'mark_as_paid' order.id %}" method="POST">
+                {% csrf_token %}
+                <button type="submit">Mark as Paid</button>
+            </form>
+        {% endif %}
+    {% endif %}
+
+    {% if request.user == order.sell_offer.merchant and order.status == 'paid' %}
+        <a href="{% url 'confirm_payment' order.id %}">Release Funds</a>
+    {% endif %}
+
+    <br><br>
+    <a href="{% url 'buyer_orders' %}">Back to My Orders</a>
+</body>
+</html>

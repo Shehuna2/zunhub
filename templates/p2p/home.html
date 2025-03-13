@@ -1,0 +1,648 @@
+{% include 'base.html' %}
+{% load static %}
+{% block content %}
+
+    <div class="header-style2 fixed-top bg-menuDark">
+        <div class="d-flex justify-content-between align-items-center gap-14">
+            <div class="box-account style-2">
+                <a href="user-info.html">
+                    <img src="{% static 'images/avt/avt2.jpg' %}" alt="img" class="avt">
+                </a>
+                <div class="search-box box-input-field style-2">
+                    <a href="home-search.html" class="icon-search"></a>
+                    <input type="text" placeholder="Looking for crypto" required class="clear-ip">
+                    <i class="icon-close"></i>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-8">
+                <a href="list-blog.html" class="icon-gift"></a>
+                <a href="#notification" class="icon-noti box-noti" data-bs-toggle="modal"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="pt-68 pb-80">
+        <div class="bg-menuDark tf-container">
+            <div class="pt-12 pb-12 mt-4">
+                <h5><span class="text-primary">My Wallet</span> - <a href="#" class="choose-account" data-bs-toggle="modal" data-bs-target="#accountWallet"><span class="dom-text">Account 1 </span> &nbsp;<i class="icon-select-down"></i></a> </h5>
+                <h1 class="mt-16"><a href="#">₦2159,34</a></h1>
+                <ul class="mt-16 grid-4 m--16">
+                    <li>
+                        <a href="{% url 'add_funds'  %}" class="tf-list-item d-flex flex-column gap-8 align-items-center">
+                            <span class="box-round bg-surface d-flex justify-content-center align-items-center"><i class="icon icon-way2"></i></span>
+                            Deposit
+                        </a>
+                    </li>
+                    <li>
+                        <a href="qr-code2.html" class="tf-list-item d-flex flex-column gap-8 align-items-center">
+                            <span class="box-round bg-surface d-flex justify-content-center align-items-center"><i class="icon icon-way"></i></span>
+                            Withdraw
+                        </a>
+                    </li>
+                    <li>
+                        <a href="buy-quantity.html" class="tf-list-item d-flex flex-column gap-8 align-items-center">
+                            <span class="box-round bg-surface d-flex justify-content-center align-items-center"><i class="icon icon-wallet"></i></span>
+                            Buy
+                        </a>
+                    </li>
+                    <li>
+                        <a href="earn.html" class="tf-list-item d-flex flex-column gap-8 align-items-center">
+                            <span class="box-round bg-surface d-flex justify-content-center align-items-center"><i class="icon icon-exchange"></i></span>
+                            Earn
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="bg-menuDark tf-container">
+            <div class="pt-12 pb-12 mt-4">
+                <div class="wrap-filter-swiper">
+                    <h5><a href="cryptex-rating.html" class="cryptex-rating"><i class="icon-star"></i>Cryptex Rating</a></h5> 
+                    <!-- <div class="swiper swiper-wrapper-r market-swiper" data-space-between="20" data-preview="auto"> -->
+                        <div class="swiper-wrapper1 menu-tab-v3 mt-12" role="tablist">
+                            <div class="swiper-slide1 nav-link active" data-bs-toggle="tab" data-bs-target="#favorites"  role="tab" aria-controls="favorites" aria-selected="true">
+                                Favorites     
+                            </div>
+                            <div class="swiper-slide1 nav-link" data-bs-toggle="tab" data-bs-target="#top" role="tab" aria-controls="top" aria-selected="false">
+                                Top   
+                            </div>
+                            <div class="swiper-slide1 nav-link" data-bs-toggle="tab" data-bs-target="#popular" role="tab" aria-controls="popular" aria-selected="false">
+                                Popular  
+                            </div>
+                            <div class="swiper-slide1 nav-link" data-bs-toggle="tab" data-bs-target="#price" role="tab" aria-controls="price" aria-selected="false">
+                                Token price   
+                            </div>
+                            <div class="swiper-slide1 nav-link" data-bs-toggle="tab" data-bs-target="#new" role="tab" aria-controls="new" aria-selected="false">
+                                New token    
+                            </div>
+                        </div>
+                    <!-- </div> -->
+                </div>
+                <div class="tab-content mt-8">
+                    <div class="tab-pane fade show active" id="favorites" role="tabpanel">
+                        <div class="d-flex justify-content-between">
+                            Name
+                            <p class="d-flex gap-8">
+                                <span>Last price</span>
+                                <span>Change</span>
+                            </p>
+                        </div>
+                        <ul class="mt-16">
+                            <li>
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-6.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">ETH</p>
+                                            <span class="text-secondary">$360,6M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$1.878,80</span>
+                                            <span class="coin-btn decrease">-1,62%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-7.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">arb_ETH</p>
+                                            <span class="text-secondary">$132,18M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$1.878,80</span>
+                                            <span class="coin-btn increase">+1,62%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-8.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">WBTC</p>
+                                            <span class="text-secondary">$50,56M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$30.001,96</span>
+                                            <span class="coin-btn decrease">-1,64%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-3.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">ARB</p>
+                                            <span class="text-secondary">$31,55M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$1,11</span>
+                                            <span class="coin-btn increase">+3,71%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-9.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">WETH</p>
+                                            <span class="text-secondary">$24,34M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$1.878,56</span>
+                                            <span class="coin-btn decrease">-1,62%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-10.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">MATIC</p>
+                                            <span class="text-secondary">$19,36M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$0,666</span>
+                                            <span class="coin-btn decrease">-4,42%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            
+                        </ul>  
+                    </div>
+                    <div class="tab-pane fade" id="top" role="tabpanel">
+                        <div class="d-flex justify-content-between">
+                            Name
+                            <p class="d-flex gap-8">
+                                <span>Last price</span>
+                                <span>Change</span>
+                            </p>
+                        </div>
+                        <ul class="mt-16">
+                            <li>
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-6.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">ETH</p>
+                                            <span class="text-secondary">$360,6M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$1.878,80</span>
+                                            <span class="coin-btn decrease">-1,62%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-7.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">arb_ETH</p>
+                                            <span class="text-secondary">$132,18M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$1.878,80</span>
+                                            <span class="coin-btn increase">+1,62%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-8.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">WBTC</p>
+                                            <span class="text-secondary">$50,56M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$30.001,96</span>
+                                            <span class="coin-btn decrease">-1,64%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-3.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">ARB</p>
+                                            <span class="text-secondary">$31,55M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$1,11</span>
+                                            <span class="coin-btn increase">+3,71%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-9.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">WETH</p>
+                                            <span class="text-secondary">$24,34M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$1.878,56</span>
+                                            <span class="coin-btn decrease">-1,62%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-10.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">MATIC</p>
+                                            <span class="text-secondary">$19,36M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$0,666</span>
+                                            <span class="coin-btn decrease">-4,42%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                        </ul>       
+                    </div>
+                    <div class="tab-pane fade" id="popular" role="tabpanel">
+                        <div class="d-flex justify-content-between">
+                            Name
+                            <p class="d-flex gap-8">
+                                <span>Last price</span>
+                                <span>Change</span>
+                            </p>
+                        </div>
+                        <ul class="mt-16">
+                            <li>
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-6.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">ETH</p>
+                                            <span class="text-secondary">$360,6M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$1.878,80</span>
+                                            <span class="coin-btn decrease">-1,62%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-7.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">arb_ETH</p>
+                                            <span class="text-secondary">$132,18M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$1.878,80</span>
+                                            <span class="coin-btn increase">+1,62%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-8.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">WBTC</p>
+                                            <span class="text-secondary">$50,56M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$30.001,96</span>
+                                            <span class="coin-btn decrease">-1,64%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-3.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">ARB</p>
+                                            <span class="text-secondary">$31,55M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$1,11</span>
+                                            <span class="coin-btn increase">+3,71%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-9.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">WETH</p>
+                                            <span class="text-secondary">$24,34M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$1.878,56</span>
+                                            <span class="coin-btn decrease">-1,62%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-10.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">MATIC</p>
+                                            <span class="text-secondary">$19,36M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$0,666</span>
+                                            <span class="coin-btn decrease">-4,42%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                           
+                        </ul>      
+                    </div>
+                    <div class="tab-pane fade" id="price" role="tabpanel">
+                        <div class="d-flex justify-content-between">
+                            Name
+                            <p class="d-flex gap-8">
+                                <span>Last price</span>
+                                <span>Change</span>
+                            </p>
+                        </div>
+                        <ul class="mt-16">
+                            <li>
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-6.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">ETH</p>
+                                            <span class="text-secondary">$360,6M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$1.878,80</span>
+                                            <span class="coin-btn decrease">-1,62%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-7.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">arb_ETH</p>
+                                            <span class="text-secondary">$132,18M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$1.878,80</span>
+                                            <span class="coin-btn increase">+1,62%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-8.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">WBTC</p>
+                                            <span class="text-secondary">$50,56M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$30.001,96</span>
+                                            <span class="coin-btn decrease">-1,64%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-3.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">ARB</p>
+                                            <span class="text-secondary">$31,55M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$1,11</span>
+                                            <span class="coin-btn increase">+3,71%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-9.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">WETH</p>
+                                            <span class="text-secondary">$24,34M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$1.878,56</span>
+                                            <span class="coin-btn decrease">-1,62%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-10.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">MATIC</p>
+                                            <span class="text-secondary">$19,36M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$0,666</span>
+                                            <span class="coin-btn decrease">-4,42%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            
+                        </ul>     
+                    </div>
+                    <div class="tab-pane fade" id="new" role="tabpanel">
+                        <div class="d-flex justify-content-between">
+                            Name
+                            <p class="d-flex gap-8">
+                                <span>Last price</span>
+                                <span>Change</span>
+                            </p>
+                        </div>
+                        <ul class="mt-16">
+                            <li>
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-6.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">ETH</p>
+                                            <span class="text-secondary">$360,6M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$1.878,80</span>
+                                            <span class="coin-btn decrease">-1,62%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-7.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">arb_ETH</p>
+                                            <span class="text-secondary">$132,18M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$1.878,80</span>
+                                            <span class="coin-btn increase">+1,62%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-8.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">WBTC</p>
+                                            <span class="text-secondary">$50,56M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$30.001,96</span>
+                                            <span class="coin-btn decrease">-1,64%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-3.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">ARB</p>
+                                            <span class="text-secondary">$31,55M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$1,11</span>
+                                            <span class="coin-btn increase">+3,71%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-9.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">WETH</p>
+                                            <span class="text-secondary">$24,34M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$1.878,56</span>
+                                            <span class="coin-btn decrease">-1,62%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="mt-16">
+                                <a href="choose-payment.html" class="coin-item style-2 gap-12">
+                                    <img src="{% static 'images/coin/coin-10.jpg' %}" alt="img" class="img">
+                                    <div class="content">
+                                        <div class="title">
+                                            <p class="mb-4 text-button">MATIC</p>
+                                            <span class="text-secondary">$19,36M</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-12">
+                                            <span class="text-small">$0,666</span>
+                                            <span class="coin-btn decrease">-4,42%</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                           
+                        </ul>      
+                    </div>
+                </div>
+            </div>
+        </div>    
+    </div>
+    
+    <div class="menubar-footer footer-fixed">
+        <ul class="inner-bar">
+            <li class="active">
+                <a href="home.html">
+                    <i class="icon icon-home2"></i>
+                    Home
+                </a>
+            </li>
+            <li>
+                <a href="exchange-market.html">
+                    <i class="icon icon-exchange"></i>
+                    Exchange
+                </a>
+            </li>
+            <li>
+                <a href="earn.html">
+                    <i class="icon icon-earn"></i>
+                    Earn
+                </a>
+            </li>
+            <li>
+                <a href="wallet.html">
+                    <i class="icon icon-wallet"></i>
+                    Wallet
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- account -->
+    <div class="modal fade action-sheet" id="accountWallet">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span>Wallet</span>
+                    <span class="icon-cancel" data-bs-dismiss="modal"></span>
+                </div>
+                <ul class="mt-20 pb-16">
+                    <li data-bs-dismiss="modal"><div class="d-flex justify-content-between align-items-center gap-8 text-large item-check active dom-value">Account 1 <i class="icon icon-check-circle"></i> </div></li>
+                    <li class="mt-4" data-bs-dismiss="modal"><div class="d-flex  justify-content-between gap-8 text-large item-check dom-value">Account 2<i class="icon icon-check-circle"></i></div></li>
+                </ul>
+            </div>
+            
+        </div>
+    </div>
+ 
+ 
+
+
+
+
+{% endblock content %}

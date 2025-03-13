@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Orders</title>
+</head>
+<body>
+    <h2>My Orders</h2>
+    <table border="1">
+        <tr>
+            <th>Merchant</th>
+            <th>Amount</th>
+            <th>Total Price</th>
+            <th>Status</th>
+            <th>Date</th>
+        </tr>
+        {% for order in orders %}
+        <tr>
+            <td>{{ order.sell_offer.merchant.username }}</td>
+            <td>{{ order.amount_requested }}</td>
+            <td>${{ order.total_price }}</td>
+            <td>{{ order.get_status_display }}</td>
+            <td>{{ order.created_at }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">No orders found.</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <a href="{% url 'marketplace' %}">Back to Marketplace</a>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Marketplace</title>
+</head>
+<body>
+    <h2>P2P Marketplace</h2>
+    <table border="1">
+        <tr>
+            <th>Merchant</th>
+            <th>Price per Unit</th>
+            <th>Available Balance</th>
+            <th>Min - Max</th>
+            <th>Action</th>
+        </tr>
+        {% for offer in offers %}
+        <tr>
+            <td>{{ offer.merchant.username }}</td>
+            <td>₦{{ offer.price_per_unit }}</td>
+            <td>{{ offer.amount_available }}</td>
+            <td>{{ offer.min_amount }} - {{ offer.max_amount }}</td>
+            <td>
+                <a href="{% url 'create_order' offer.id %}">Buy</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">No active offers available.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
