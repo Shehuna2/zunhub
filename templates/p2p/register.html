@@ -1,13 +1,54 @@
 <!DOCTYPE html>
-<html>
-<head><title>Register</title></head>
-<body>
-    <h2>Register</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Register</button>
-    </form>
-    <a href="{% url 'login' %}">Login</a>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 flex items-center justify-center h-screen">
+
+    <div class="w-full max-w-md bg-gray-800 p-8 rounded-lg shadow-md text-white">
+        <h2 class="text-2xl font-semibold text-center">Sign Up</h2>
+
+        <form action="{% url 'register' %}" method="POST" class="mt-5">
+            {% csrf_token %}
+            <label class="block text-gray-300 mb-2">Username</label>
+            <input type="text" name="username" class="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:border-blue-500" required>
+
+            <label class="block text-gray-300 mt-4 mb-2">Email</label>
+            <input type="email" name="email" class="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:border-blue-500" required>
+
+            <label class="block text-gray-300 mt-4 mb-2">Password</label>
+            <input type="password" name="password1" class="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:border-blue-500" required>
+
+            <label class="block text-gray-300 mt-4 mb-2">Confirm Password</label>
+            <input type="password" name="password2" class="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:border-blue-500" required>
+
+            <button type="submit" class="w-full mt-5 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg shadow">
+                Register
+            </button>
+        </form>
+
+        <!-- Social Sign-up -->
+        <div class="mt-6">
+            <p class="text-center text-gray-400">Or sign up with</p>
+            <div class="flex justify-center gap-4 mt-4">
+                <a href="#" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-white flex items-center gap-2">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/20px-Google_%22G%22_Logo.svg.png" alt="Google">
+                    Google
+                </a>
+                <a href="#" class="bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded-lg text-white flex items-center gap-2">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/0/05/Facebook_Logo_%282019%29.png" width="20" alt="Facebook">
+                    Facebook
+                </a>
+            </div>
+        </div>
+
+        <p class="mt-6 text-center text-gray-400">Already have an account? 
+            <a href="{% url 'login' %}" class="text-blue-400 hover:text-blue-300">Login</a>
+        </p>
+    </div>
+
 </body>
 </html>

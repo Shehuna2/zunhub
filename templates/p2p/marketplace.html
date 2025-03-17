@@ -1,33 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Marketplace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h2>P2P Marketplace</h2>
-    <table border="1">
-        <tr>
-            <th>Merchant</th>
-            <th>Price per Unit</th>
-            <th>Available Balance</th>
-            <th>Min - Max</th>
-            <th>Action</th>
-        </tr>
-        {% for offer in offers %}
-        <tr>
-            <td>{{ offer.merchant.username }}</td>
-            <td>₦{{ offer.price_per_unit }}</td>
-            <td>{{ offer.amount_available }}</td>
-            <td>{{ offer.min_amount }} - {{ offer.max_amount }}</td>
-            <td>
-                <a href="{% url 'create_order' offer.id %}">Buy</a>
-            </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="5">No active offers available.</td>
-        </tr>
-        {% endfor %}
-    </table>
+<body class="bg-gray-900 text-gray-200">
+    <div class="container mx-auto p-6">
+        <h2 class="text-2xl font-semibold mb-6 text-center">Marketplace</h2>
+
+        <!-- Sell Offers Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for offer in offers %}
+            <div class="bg-gray-800 p-4 rounded-lg shadow-md flex items-center justify-between">
+                <!-- Merchant Name -->
+                <div>
+                    <h3 class="text-lg font-medium">{{ offer.merchant.username }}</h3>
+                    <p class="text-sm text-gray-400">Price: <span class="text-green-400">₦{{ offer.price_per_unit }}</span></p>
+                    <p class="text-sm text-gray-400">Available: <span class="text-green-400">₦{{ offer.merchant.wallet.balance }}</span></p>
+                    <p class="text-sm text-gray-400">Min: <span class="text-red-400">₦{{ offer.min_amount }}</span></p>
+                    <p class="text-sm text-gray-400">Max: <span class="text-blue-400">₦{{ offer.max_amount }}</span></p>
+                </div>
+
+                <!-- Buy Button -->
+                <a href="{% url 'create_order' offer.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm">
+                    Buy
+                </a>
+            </div>
+            {% empty %}
+            <p class="text-center col-span-full text-gray-400">No sell offers available at the moment.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Back to Dashboard -->
+        <div class="text-center mt-6">
+            <a href="{% url 'dashboard' %}" class="text-blue-400 hover:underline">
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
 </body>
 </html>

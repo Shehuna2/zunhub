@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import User, SellOffer, Order
+from .models import User, SellOffer, Order, Dispute
 
 class UserRegisterForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -36,3 +36,9 @@ class OrderForm(forms.ModelForm):
         if amount < self.sell_offer.min_amount or amount > self.sell_offer.max_amount:
             raise forms.ValidationError(f"Amount must be between {self.sell_offer.min_amount} and {self.sell_offer.max_amount}.")
         return amount
+    
+
+class DisputeForm(forms.ModelForm):
+    class Meta:
+        model = Dispute
+        fields = ["reason", "proof"]  # Only allow reason and proof upload

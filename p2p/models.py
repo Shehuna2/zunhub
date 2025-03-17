@@ -3,6 +3,10 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.core.mail import send_mail
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+
 
 
 class User(AbstractUser):
@@ -66,6 +70,12 @@ class Wallet(models.Model):
             self.save()
             return True
         return False  # Insufficient balance
+    
+    def can_withdraw(self, amount):
+        """Check if a user can withdraw given the balance and disputes."""
+        active_disputes = Dispute.objects.filter(order__merchant=self.user, status="pending").exists()
+        return self.balance - self.locked_balance >= amount and not active_disputes
+    
 
     def __str__(self):
         return f"{self.user.username} - Balance: ₦{self.balance}, Locked: ₦{self.locked_balance}"
@@ -117,3 +127,48 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order {self.id} - {self.buyer.username} from {self.sell_offer.merchant.username}"
+
+
+class Dispute(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("resolved_buyer", "Resolved in Buyer's Favor"),
+        ("resolved_merchant", "Resolved in Merchant's Favor"),
+        ("rejected", "Rejected"),
+    ]
+
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name="dispute")
+    buyer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="disputes_raised")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    reason = models.TextField(blank=True, null=True)
+    proof = models.FileField(upload_to="disputes/", blank=True, null=True)
+    admin_comment = models.TextField(blank=True, null=True)  # Admin’s decision notes
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    def resolve_dispute(self, decision, admin_comment=""):
+        self.status = decision
+        self.admin_comment = admin_comment
+        self.resolved_at = timezone.now()
+        self.save()
+
+        if decision == "resolved_buyer":
+            self.order.buyer.wallet.balance += self.order.amount_requested
+            decision_text = "in Buyer's favor"
+        elif decision == "resolved_merchant":
+            self.order.merchant.wallet.balance += self.order.amount_requested
+            decision_text = "in Merchant's favor"
+        else:
+            decision_text = "Rejected"
+
+        self.order.status = "completed" if decision != "rejected" else "disputed"
+        self.order.save()
+
+        send_mail(
+            "Dispute Resolution",
+            f"Your dispute for Order #{self.order.id} has been resolved {decision_text}.\nAdmin Comment: {self.admin_comment}",
+            "noreply@zunhub.com",
+            [self.order.buyer.email, self.order.merchant.email],
+            fail_silently=True,
+        )
+

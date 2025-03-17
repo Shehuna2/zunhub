@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Your Disputes</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Order ID</th>
+            <th>Buyer</th>
+            <th>Merchant</th>
+            <th>Status</th>
+            <th>Admin Decision</th>
+            <th>Proof</th>
+            <th>Created At</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for dispute in disputes %}
+        <tr>
+            <td>#{{ dispute.order.id }}</td>
+            <td>{{ dispute.order.buyer.username }}</td>
+            <td>{{ dispute.order.merchant.username }}</td>
+            <td>
+                {% if dispute.status == "pending" %}
+                    <span style="color: orange;">Pending</span>
+                {% elif dispute.status == "resolved_buyer" %}
+                    <span style="color: green;">Resolved (Buyer Won)</span>
+                {% elif dispute.status == "resolved_merchant" %}
+                    <span style="color: blue;">Resolved (Merchant Won)</span>
+                {% else %}
+                    <span style="color: red;">Rejected</span>
+                {% endif %}
+            </td>
+            <td>{{ dispute.admin_comment|default:"No decision yet" }}</td>
+            <td>
+                {% if dispute.proof %}
+                    <a href="{{ dispute.proof.url }}" target="_blank">View Proof</a>
+                {% else %}
+                    No proof uploaded
+                {% endif %}
+            </td>
+            <td>{{ dispute.created_at }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7">No disputes found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

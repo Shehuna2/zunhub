@@ -1,4 +1,77 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchant Orders</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white">
+
+    <div class="max-w-5xl mx-auto mt-10 p-6 bg-gray-800 rounded-lg shadow-md">
+        <h2 class="text-2xl font-semibold text-center mb-6">Merchant Orders</h2>
+
+        {% if orders %}
+            <div class="overflow-x-auto">
+                <table class="w-full table-auto border-collapse">
+                    <thead>
+                        <tr class="bg-gray-700 text-gray-300">
+                            <th class="p-3 text-left">Order ID</th>
+                            <th class="p-3 text-left">Buyer</th>
+                            <th class="p-3 text-left">Amount</th>
+                            <th class="p-3 text-left">Total</th>
+                            <th class="p-3 text-left">View</th>
+                            <th class="p-3 text-left">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr class="border-b border-gray-700 hover:bg-gray-750">
+                            <td class="p-3">#{{ order.id }}</td>
+                            <td class="p-3">{{ order.buyer.username }}</td>
+                            <td class="p-3">₦{{ order.amount_requested }}</td>
+                            <td class="p-3">₦{{ order.total_price }}</td></td>
+                            <td class="p-3">
+                                <a href="{% url 'order_details' order.id %}" 
+                                   class="px-4 py-2 bg-gray-600 hover:bg-blue-700 text-white rounded-lg shadow">
+                                    View
+                                </a>
+                            </td>
+                            <td>
+                                {% if order.status == 'paid' %}
+                                    <a href="{% url 'confirm_payment' order.id %}" 
+                                    class="px-4 py-2 bg-blue-600 hover:bg-red-700 text-white rounded-lg shadow">
+                                        Release
+                                    </a>
+                                {% else %}
+                                    {% if order.status == "completed" %}
+                                        <span class="px-2 py-1 bg-green-600 text-white rounded text-sm">Completed</span>
+                                    {% elif order.status == "pending" %}
+                                        <span class="px-2 py-1 bg-yellow-500 text-gray-900 rounded text-sm">Pending</span>
+                                    {% elif order.status == "disputed" %}
+                                        <span class="px-2 py-1 bg-red-600 text-white rounded text-sm">Disputed</span>
+                                    {% else %}
+                                        <span class="px-2 py-1 bg-gray-600 text-white rounded text-sm">Unknown</span>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-center text-gray-400">No orders found.</p>
+        {% endif %}
+    </div>
+
+</body>
+</html>
+
+
+
+
+<!-- <!DOCTYPE html>
 <html>
 <head>
     <title>Merchant Orders</title>
@@ -36,4 +109,4 @@
         {% endfor %}
     </table>
 </body>
-</html>
+</html> -->
