@@ -1,39 +1,97 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Details</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h2>Order Details</h2>
-    <p><strong>Order ID:</strong> {{ order.id }}</p>
-    <p><strong>Merchant:</strong> {{ order.sell_offer.merchant.username }}</p>
-    <p><strong>Buyer:</strong> {{ order.buyer.username }}</p>
-    <p><strong>Rate:</strong> ₦{{ order.sell_offer.price_per_unit }}</p>
-    <p><strong>Amount:</strong> ₦{{ order.amount_requested }}</p>
-    <p><strong>Total Price:</strong> ₦{{ order.total_price }}</p>
-    <p><strong>Status:</strong> {{ order.get_status_display }}</p>
-    <p><strong>Created At:</strong> {{ order.created_at }}</p>
+<body class="bg-gray-900 text-gray-200">
+    <div class="container mx-auto p-6">
+        <div class="max-w-3xl mx-auto bg-gray-800 p-6 rounded-lg shadow-lg">
+            <h2 class="text-2xl font-semibold border-b pb-3 mb-4">Order Details</h2>
 
-    {% if request.user == order.buyer %}
-        <h3>Payment Instructions</h3>
-        <p><strong>Send Payment to:</strong></p>
-        <p><strong>Full Name:</strong> {{ order.sell_offer.merchant.profile.full_name }}</p>
-        <p><strong>Bank Name:</strong> {{ order.sell_offer.merchant.profile.bank_name }}</p>
-        <p><strong>Account No:</strong> {{ order.sell_offer.merchant.profile.account_no }}</p>
+            <div class="space-y-3">
+                <p><strong>Order ID:</strong> {{ order.id }}</p>
+                <p><strong>Merchant:</strong> {{ order.sell_offer.merchant.username }}</p>
+                <p><strong>Buyer:</strong> {{ order.buyer.username }}</p>
+                <p><strong>Rate:</strong> ₦{{ order.sell_offer.price_per_unit }}</p>
+                <p><strong>Amount:</strong> ₦{{ order.amount_requested }}</p>
+                <p><strong>Total Price:</strong> ₦{{ order.total_price }}</p>
+                <p><strong>Status:</strong> 
+                    <span class="px-2 py-1 rounded text-white 
+                        {% if order.status == 'pending' %} bg-yellow-500 
+                        {% elif order.status == 'paid' %} bg-blue-500 
+                        {% elif order.status == 'completed' %} bg-green-500 
+                        {% elif order.status == 'disputed' %} bg-red-500 
+                        {% endif %}">
+                        {{ order.get_status_display }}
+                    </span>
+                </p>
+                <p><strong>Created At:</strong> {{ order.created_at }}</p>
+            </div>
 
-        {% if order.status == 'pending' %}
-            <form action="{% url 'mark_as_paid' order.id %}" method="POST">
-                {% csrf_token %}
-                <button type="submit">Mark as Paid</button>
-            </form>
-        {% endif %}
-    {% endif %}
+            {% if request.user == order.buyer %}
+                <div class="mt-6 bg-gray-700 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-2">Payment Instructions</h3>
+                    <p><strong>Send Payment to:</strong></p>
+                    <p><strong>Full Name:</strong> {{ order.sell_offer.merchant.profile.full_name }}</p>
+                    <p><strong>Bank Name:</strong> {{ order.sell_offer.merchant.profile.bank_name }}</p>
+                    <p><strong>Account No:</strong> {{ order.sell_offer.merchant.profile.account_no }}</p>
 
-    {% if request.user == order.sell_offer.merchant and order.status == 'paid' %}
-        <a href="{% url 'confirm_payment' order.id %}">Release Funds</a>
-    {% endif %}
+                    {% if order.status == 'pending' %}
+                        <form action="{% url 'mark_as_paid' order.id %}" method="POST" class="mt-3">
+                            {% csrf_token %}
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">
+                                Mark as Paid
+                            </button>
+                        </form>
+                    {% elif order.status == 'paid' %}
+                    <div class="mt-4 flex space-x-3">
+                        {% if order.dispute %}
+                            <p class="text-red-500 font-semibold">A dispute has been raised for this order.</p>
+                
+                            <!-- Cancel Dispute Button -->
+                            <form action="{% url 'cancel_dispute' order.dispute.id %}" method="POST">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                        class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
+                                    Cancel Dispute
+                                </button>
+                            </form>
+                
+                            <!-- Dispute Tracking Button -->
+                            <a href="{% url 'track_dispute' order.dispute.id %}" 
+                               class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                                Track Dispute
+                            </a>
+                        {% else %}
+                            <!-- Raise Dispute Button -->
+                            <a href="{% url 'create_dispute' order.id %}" 
+                               class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
+                                Raise Dispute
+                            </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            {% endif %}
 
-    <br><br>
-    <a href="{% url 'buyer_orders' %}">Back to My Orders</a>
+            {% if request.user == order.sell_offer.merchant and order.status == 'paid' %}
+                <a href="{% url 'confirm_payment' order.id %}" class="block text-center bg-green-600 hover:bg-green-700 text-white py-2 rounded mt-4">
+                    Release Funds
+                </a>
+            {% endif %}
+            {% if request.user == order.sell_offer.merchant %}
+            <a href="{% url 'merchant_orders' %}" class="block text-center mt-6 text-blue-400 hover:underline">
+                Back to My Orders
+            </a>
+            {% else %}
+            <a href="{% url 'buyer_orders' %}" class="block text-center mt-6 text-blue-400 hover:underline">
+                Back to My Orders
+            </a>
+            {% endif %}
+        </div>
+    </div>
 </body>
 </html>

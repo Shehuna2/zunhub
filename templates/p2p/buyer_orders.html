@@ -1,32 +1,70 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Orders</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h2>My Orders</h2>
-    <table border="1">
-        <tr>
-            <th>Merchant</th>
-            <th>Amount</th>
-            <th>Total Price</th>
-            <th>Status</th>
-            <th>Date</th>
-        </tr>
-        {% for order in orders %}
-        <tr>
-            <td>{{ order.sell_offer.merchant.username }}</td>
-            <td>{{ order.amount_requested }}</td>
-            <td>${{ order.total_price }}</td>
-            <td>{{ order.get_status_display }}</td>
-            <td>{{ order.created_at }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="5">No orders found.</td>
-        </tr>
-        {% endfor %}
-    </table>
-    <a href="{% url 'marketplace' %}">Back to Marketplace</a>
+<body class="bg-gray-900 text-white">
+
+    <div class="container mx-auto p-6">
+        <h2 class="text-2xl font-semibold text-center mb-6">My Orders</h2>
+
+        {% if orders %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-gray-800 shadow-lg rounded-lg">
+                    <thead>
+                        <tr class="text-left bg-gray-700 text-white">
+                            <th class="p-3">Order ID</th>
+                            <th class="p-3">Merchant</th>
+                            <th class="p-3">Amount</th>
+                            <th class="p-3">Rate</th>
+                            <th class="p-3">Total</th>
+                            <th class="p-3">Status</th>
+                            <th class="p-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr class="border-b border-gray-700 hover:bg-gray-700">
+                            <td class="p-3">#{{ order.id }}</td>
+                            <td class="p-3">{{ order.sell_offer.merchant.username }}</td>
+                            <td class="p-3">₦{{ order.amount_requested }}</td>
+                            <td class="p-3">₦{{ order.sell_offer.price_per_unit }}</td>
+                            <td class="p-3">₦{{ order.total_price }}</td>
+                            <td class="p-3">
+                                <span class="px-3 py-1 rounded-full text-sm font-medium
+                                    {% if order.status == 'pending' %}
+                                        bg-yellow-500
+                                    {% elif order.status == 'completed' %}
+                                        bg-green-500
+                                    {% elif order.status == 'cancelled' %}
+                                        bg-red-500
+                                    {% endif %}">
+                                    {{ order.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="p-3">
+                                <a href="{% url 'order_details' order.id %}" 
+                                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-center text-gray-400 mt-6">You have no active orders.</p>
+        {% endif %}
+    </div>
+    <div>
+        <a href="{% url 'marketplace' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow">Back to Marketplace</a>
+    </div>
+
 </body>
 </html>
+
+

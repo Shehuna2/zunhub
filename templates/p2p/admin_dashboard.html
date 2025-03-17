@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-300">
+
+    <div class="max-w-6xl mx-auto py-10">
+        <h1 class="text-3xl font-bold text-center text-white mb-6">Admin Dashboard</h1>
+
+        <!-- Statistics Overview -->
+        <div class="grid grid-cols-3 gap-6 mb-8">
+            <div class="bg-gray-800 shadow-md p-6 rounded-lg text-center">
+                <h3 class="text-lg font-semibold text-white">Total Orders</h3>
+                <p class="text-2xl font-bold text-blue-400">{{ total_orders }}</p>
+            </div>
+
+            <div class="bg-gray-800 shadow-md p-6 rounded-lg text-center">
+                <h3 class="text-lg font-semibold text-yellow-400">Pending Orders</h3>
+                <p class="text-2xl font-bold text-yellow-300">{{ pending_orders }}</p>
+            </div>
+
+            <div class="bg-gray-800 shadow-md p-6 rounded-lg text-center">
+                <h3 class="text-lg font-semibold text-green-400">Completed Orders</h3>
+                <p class="text-2xl font-bold text-green-300">{{ completed_orders }}</p>
+            </div>
+
+            <div class="bg-gray-800 shadow-md p-6 rounded-lg text-center">
+                <h3 class="text-lg font-semibold text-red-400">Total Disputes</h3>
+                <p class="text-2xl font-bold text-red-300">{{ total_disputes }}</p>
+            </div>
+
+            <div class="bg-gray-800 shadow-md p-6 rounded-lg text-center">
+                <h3 class="text-lg font-semibold text-orange-400">Pending Disputes</h3>
+                <p class="text-2xl font-bold text-orange-300">{{ pending_disputes }}</p>
+            </div>
+
+            <div class="bg-gray-800 shadow-md p-6 rounded-lg text-center">
+                <h3 class="text-lg font-semibold text-blue-400">Total Users</h3>
+                <p class="text-2xl font-bold text-blue-300">{{ total_users }}</p>
+            </div>
+        </div>
+
+        <!-- Latest Orders -->
+        <div class="bg-gray-800 shadow-md p-6 rounded-lg mb-8">
+            <h3 class="text-xl font-semibold text-white mb-4">Recent Orders</h3>
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-gray-700">
+                        <th class="p-2 text-gray-400">Order ID</th>
+                        <th class="p-2 text-gray-400">Buyer</th>
+                        <th class="p-2 text-gray-400">Status</th>
+                        <th class="p-2 text-gray-400">Amount</th>
+                        <th class="p-2 text-gray-400">Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in recent_orders %}
+                    <tr class="hover:bg-gray-700 transition cursor-pointer">
+                        <td class="p-2">{{ order.id }}</td>
+                        <td class="p-2">{{ order.buyer.username }}</td>
+                        <td class="p-2">{{ order.get_status_display }}</td>
+                        <td class="p-2">₦{{ order.total_price }}</td>
+                        <td class="p-2">{{ order.created_at }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="p-2 text-center text-gray-500">No recent orders</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Latest Disputes -->
+        <div class="bg-gray-800 shadow-md p-6 rounded-lg">
+            <h3 class="text-xl font-semibold text-white mb-4">Recent Disputes</h3>
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-gray-700">
+                        <th class="p-2 text-gray-400">Dispute ID</th>
+                        <th class="p-2 text-gray-400">Buyer</th>
+                        <th class="p-2 text-gray-400">Order ID</th>
+                        <th class="p-2 text-gray-400">Status</th>
+                        <th class="p-2 text-gray-400">Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dispute in recent_disputes %}
+                    <tr class="hover:bg-gray-700 transition cursor-pointer" onclick="window.location='{% url 'track_dispute' dispute.id %}'">
+                        <td class="p-2">{{ dispute.id }}</td>
+                        <td class="p-2">{{ dispute.buyer.username }}</td>
+                        <td class="p-2">{{ dispute.order.id }}</td>
+                        <td class="p-2">{{ dispute.get_status_display }}</td>
+                        <td class="p-2">{{ dispute.created_at }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="p-2 text-center text-gray-500">No recent disputes</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Navigation -->
+        <div class="mt-8 text-center">
+            <a href="/admin/" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Go to Default Admin Panel</a>
+        </div>
+    </div>
+
+</body>
+</html>

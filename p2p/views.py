@@ -1,13 +1,81 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
+
 from django.http import HttpResponseForbidden, JsonResponse
 from django.contrib import messages
-from .forms import UserRegisterForm, OrderForm
+from .forms import UserRegisterForm, OrderForm, DisputeForm
 from decimal import Decimal
-from .models import Wallet, SellOffer, Order
+from .models import Wallet, SellOffer, Order, Dispute
 
+
+
+@user_passes_test(lambda u: u.is_superuser)  # Ensure only admins can access
+def admin_dashboard(request):
+    if not request.user.is_superuser:
+        return redirect("home")  # Redirect non-admins
+
+    total_orders = Order.objects.count()
+    pending_orders = Order.objects.filter(status="pending").count()
+    completed_orders = Order.objects.filter(status="completed").count()
+    disputed_orders = Order.objects.filter(status="disputed").count()
+
+    total_disputes = Dispute.objects.count()
+    pending_disputes = Dispute.objects.filter(status="pending").count()
+    resolved_buyer = Dispute.objects.filter(status="resolved_buyer").count()
+    resolved_merchant = Dispute.objects.filter(status="resolved_merchant").count()
+
+    recent_orders = Order.objects.order_by("-created_at")[:5]
+    recent_disputes = Dispute.objects.order_by("-created_at")[:5]
+
+    context = {
+        "total_orders": total_orders,
+        "pending_orders": pending_orders,
+        "completed_orders": completed_orders,
+        "disputed_orders": disputed_orders,
+        "total_disputes": total_disputes,
+        "pending_disputes": pending_disputes,
+        "resolved_buyer": resolved_buyer,
+        "resolved_merchant": resolved_merchant,
+        "recent_orders": recent_orders,
+        "recent_disputes": recent_disputes,
+    }
+    
+    return render(request, "p2p/admin_dashboard.html", context)
+
+
+@login_required
+def dashboard(request):
+    wallet = Wallet.objects.get(user=request.user)
+    
+    total_orders = Order.objects.filter(buyer=request.user).count()
+    total_sales = Order.objects.filter(sell_offer__merchant=request.user, status="completed").count()
+    merchant_total_orders = Order.objects.filter(sell_offer__merchant=request.user).count()
+    open_disputes = Dispute.objects.filter(order__buyer=request.user, status="pending").count()
+
+    if request.user.is_merchant:
+        total_orders = Order.objects.filter(sell_offer__merchant=request.user).count()
+    else:
+        total_orders = Order.objects.filter(buyer=request.user).count()
+
+    if request.user.is_merchant:
+        recent_orders = Order.objects.filter(sell_offer__merchant=request.user).order_by("-created_at")[:5]
+    else:
+        recent_orders = Order.objects.filter(buyer=request.user).order_by("-created_at")[:5]
+
+    context = {
+        "wallet": wallet,
+        "total_orders": total_orders,
+        "total_sales": total_sales,
+        "merchant_total_orders": merchant_total_orders,
+        "open_disputes": open_disputes,
+        "recent_orders": recent_orders,
+    }
+
+    return render(request, "p2p/dashboard.html", context)
 
 @login_required
 def wallet_dashboard(request):
@@ -84,7 +152,6 @@ def create_order(request, offer_id):
 
 
 
-
 @login_required
 def mark_as_paid(request, order_id):
     """Allows the buyer to mark an order as paid."""
@@ -104,7 +171,7 @@ def mark_as_paid(request, order_id):
 
 
 @login_required
-def confirm_payment(request, order_id):
+def confirm_payment(request, order_id): 
     """Merchant confirms payment and releases internal currency."""
     order = get_object_or_404(Order, id=order_id, sell_offer__merchant=request.user)
 
@@ -130,6 +197,78 @@ def confirm_payment(request, order_id):
     return JsonResponse({"error": "Invalid action"}, status=400)
 
 
+@login_required
+def create_dispute(request, order_id):
+    """Allow a buyer to raise a dispute for an order."""
+    order = get_object_or_404(Order, id=order_id, buyer=request.user)
+
+    if hasattr(order, "dispute"):  # Check if a dispute already exists
+        messages.error(request, "A dispute has already been raised for this order.")
+        return redirect("order_details", order_id=order.id)
+
+    if request.method == "POST":
+        form = DisputeForm(request.POST, request.FILES)
+        if form.is_valid():
+            dispute = form.save(commit=False)
+            dispute.order = order
+            dispute.buyer = request.user
+            dispute.save()
+
+            # Send notification emails
+            merchant_email = order.sell_offer.merchant.email
+            admin_email = User.objects.filter(is_superuser=True).values_list("email", flat=True)
+
+            send_mail(
+                subject="New Dispute Raised",
+                message=f"A dispute has been raised for Order #{order.id} by {request.user.username}.",
+                from_email="noreply@zunhub.com",
+                recipient_list=[merchant_email] + list(admin_email),
+                fail_silently=True,
+            )
+
+            messages.success(request, "Dispute submitted successfully. The merchant and admin have been notified.")
+            return redirect("order_details", order_id=order.id)
+
+    else:
+        print("Dispute form page loaded")  # Debugging
+        form = DisputeForm()
+
+    return render(request, "p2p/create_dispute.html", {"form": form, "order": order})
+
+@login_required
+def cancel_dispute(request, dispute_id):
+    dispute = get_object_or_404(Dispute, id=dispute_id, buyer=request.user)
+
+    if dispute.status == "pending":
+        dispute.delete()
+        messages.success(request, "Dispute has been canceled successfully.")
+    else:
+        messages.error(request, "You cannot cancel this dispute.")
+
+    return redirect("order_details", order_id=dispute.order.id)
+
+@login_required
+def track_dispute(request, dispute_id):
+    """Allows the buyer (or admin) to track dispute progress."""
+    dispute = get_object_or_404(Dispute, id=dispute_id)
+
+    if request.user != dispute.buyer and not request.user.is_superuser:
+        messages.error(request, "You do not have permission to view this dispute.")
+        return redirect("order_details", order_id=dispute.order.id)
+
+    return render(request, "p2p/track_dispute.html", {"dispute": dispute})
+
+
+@login_required
+def dispute_list(request):
+    """Show disputes related to the logged-in user (as buyer or merchant)."""
+    disputes = Dispute.objects.filter(
+        order__buyer=request.user
+    ) | Dispute.objects.filter(
+        order__merchant=request.user
+    ).order_by("-created_at")
+
+    return render(request, "p2p/dispute_list.html", {"disputes": disputes})
 
 @login_required
 def buyer_orders(request):
@@ -142,7 +281,6 @@ def merchant_orders(request):
     """Show all orders received by the merchant."""
     orders = Order.objects.filter(sell_offer__merchant=request.user).order_by('-created_at')
     return render(request, "p2p/merchant_orders.html", {"orders": orders})
-
 
 def register(request):
     if request.method == 'POST':
@@ -168,9 +306,6 @@ def user_login(request):
 def user_logout(request):
     logout(request)
     return redirect('login')
-
-def dashboard(request):
-    return render(request, 'p2p/dashboard.html')
 
 @login_required
 def update_bank_details(request):
