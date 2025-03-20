@@ -44,7 +44,6 @@
 <body class="bg-gray-900 text-white min-h-screen">
 
 <!-- Sticky Header -->
-<!-- Sticky Header -->
 <header class="bg-gray-900 text-white p-4 fixed top-0 w-full flex items-center justify-between shadow-md z-50">
     
     <!-- Profile Icon -->
@@ -130,7 +129,7 @@
             <div class="grid grid-cols-2 gap-4 mt-4">
                 <a href="{% url 'marketplace' %}" class="bg-blue-500 p-3 rounded-lg text-white font-semibold hover:bg-blue-600">Deposit</a>
                 <a href="{% url 'withdraw' %}" class="bg-red-500 p-3 rounded-lg text-white font-semibold hover:bg-red-600">Withdraw</a>
-                <a href="#" class="bg-green-500 p-3 rounded-lg text-white font-semibold hover:bg-green-600">Buy</a>
+                <a href="{% url 'asset_list' %}" class="bg-green-500 p-3 rounded-lg text-white font-semibold hover:bg-green-600">Buy</a>
                 <a href="#" class="bg-yellow-500 p-3 rounded-lg text-white font-semibold hover:bg-yellow-600">Sell</a>
             </div>
         </div>

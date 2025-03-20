@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Options</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        function toggleDropdown(id) {
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                if (menu.id !== id) {
+                    menu.classList.add("hidden"); // Close other dropdowns
+                }
+            });
+            document.getElementById(id).classList.toggle("hidden");
+        }
+
+        function searchCrypto() {
+            let input = document.getElementById("cryptoSearch").value.toLowerCase();
+            let items = document.querySelectorAll("#cryptoDropdown a");
+
+            items.forEach(item => {
+                let text = item.textContent.toLowerCase();
+                if (text.includes(input)) {
+                    item.classList.remove("hidden");
+                } else {
+                    item.classList.add("hidden");
+                }
+            });
+        }
+    </script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+
+    <!-- Header -->
+    {% include 'gasfee/header.html' %}
+
+    <!-- Main Content -->
+    <div class="container mx-auto p-16 mt-8">
+        <h2 class="text-2xl font-bold text-center mb-6">Select an Option</h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 relative">
+
+            <!-- Gas Fee (Crypto) Card -->
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg hover:bg-gray-700 transition relative">
+                <div class="flex justify-between items-center cursor-pointer" onclick="toggleDropdown('cryptoDropdown')">
+                    <h3 class="text-lg font-semibold">Gas Fee</h3>
+                    <span class="text-gray-400">&#9662;</span>
+                </div>
+                <div id="cryptoDropdown" class="dropdown-menu hidden absolute left-0 mt-2 w-full bg-gray-800 z-10 shadow-lg rounded-lg p-2">
+                    <!-- Search Field -->
+                    <input type="text" id="cryptoSearch" onkeyup="searchCrypto()" placeholder="Search crypto..." 
+                        class="w-full p-2 mb-2 bg-gray-700 text-white rounded-md focus:outline-none">
+                    
+                    <!-- Scrollable Crypto List -->
+                    <div class="max-h-64 overflow-y-auto">
+                        {% for crypto in cryptos %}
+                            <a href="{% url 'buy_crypto' crypto.id %}" class="block px-4 py-2 hover:bg-gray-700">
+                                {{ crypto.name }} ({{ crypto.symbol }})
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Airtime Card -->
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg hover:bg-gray-700 transition relative">
+                <div class="flex justify-between items-center cursor-pointer" onclick="toggleDropdown('airtimeDropdown')">
+                    <h3 class="text-lg font-semibold">Airtime</h3>
+                    <span class="text-gray-400">&#9662;</span>
+                </div>
+                <div id="airtimeDropdown" class="dropdown-menu hidden absolute left-0 mt-2 w-full bg-gray-800 z-10 shadow-lg rounded-lg">
+                    <a href="#" class="block px-4 py-2 hover:bg-gray-700">MTN</a>
+                    <a href="#" class="block px-4 py-2 hover:bg-gray-700">Airtel</a>
+                    <a href="#" class="block px-4 py-2 hover:bg-gray-700">Glo</a>
+                    <a href="#" class="block px-4 py-2 hover:bg-gray-700">9mobile</a>
+                </div>
+            </div>
+
+            <!-- Data Card -->
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg hover:bg-gray-700 transition relative">
+                <div class="flex justify-between items-center cursor-pointer" onclick="toggleDropdown('dataDropdown')">
+                    <h3 class="text-lg font-semibold">Data</h3>
+                    <span class="text-gray-400">&#9662;</span>
+                </div>
+                <div id="dataDropdown" class="dropdown-menu hidden absolute left-0 mt-2 w-full bg-gray-800 z-10 shadow-lg rounded-lg">
+                    <a href="#" class="block px-4 py-2 hover:bg-gray-700">MTN</a>
+                    <a href="#" class="block px-4 py-2 hover:bg-gray-700">Airtel</a>
+                    <a href="#" class="block px-4 py-2 hover:bg-gray-700">Glo</a>
+                    <a href="#" class="block px-4 py-2 hover:bg-gray-700">9mobile</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

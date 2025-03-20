@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Cryptocurrency</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        function filterCryptos() {
+            let input = document.getElementById("crypto-search").value.toLowerCase();
+            let cryptoItems = document.getElementsByClassName("crypto-item");
+
+            for (let i = 0; i < cryptoItems.length; i++) {
+                let name = cryptoItems[i].getAttribute("data-name").toLowerCase();
+                let symbol = cryptoItems[i].getAttribute("data-symbol").toLowerCase();
+                
+                if (name.includes(input) || symbol.includes(input)) {
+                    cryptoItems[i].style.display = "";
+                } else {
+                    cryptoItems[i].style.display = "none";
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-6">
+
+    <!-- Header -->
+    <header class="bg-gray-800 p-4 text-center text-xl font-bold">
+        Select Cryptocurrency
+    </header>
+
+    <!-- Search Bar -->
+    <div class="my-4 flex justify-center">
+        <input type="text" id="crypto-search" onkeyup="filterCryptos()" placeholder="Search crypto..."
+            class="w-2/3 p-3 rounded-lg text-black">
+    </div>
+
+    <!-- Crypto List -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for crypto in cryptos %}
+        <div class="crypto-item bg-gray-800 p-4 rounded-lg flex items-center justify-between shadow-lg"
+             data-name="{{ crypto.name }}" data-symbol="{{ crypto.symbol }}">
+            
+            <div class="flex items-center space-x-4">
+                <img src="{{ crypto.logo_url }}" alt="{{ crypto.name }}" class="w-10 h-10 rounded-full">
+                <div>
+                    <h3 class="text-lg font-bold">{{ crypto.name }}</h3>
+                    <p class="text-gray-400">{{ crypto.symbol }}</p>
+                </div>
+            </div>
+            
+            <a href="#" 
+               class="bg-blue-500 px-4 py-2 rounded-lg text-white hover:bg-blue-600">
+                Buy
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+</body>
+</html>

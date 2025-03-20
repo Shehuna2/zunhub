@@ -1,0 +1,47 @@
+<!-- Sticky Header -->
+<header class="bg-gray-900 text-white p-4 fixed top-0 w-full flex items-center justify-between shadow-md z-50">
+    
+    <!-- Profile Icon -->
+    <div class="relative">
+        <button id="profile-btn" class="flex items-center space-x-2">
+            <a href="{% url 'dashboard' %}"><span class="hidden md:inline">ZUNHUB</span></a>
+        </button>
+    </div>
+    <div class="relative">
+        <button id="profile-btn" class="flex items-center space-x-2">
+            <img src="#" alt="Profile" class="w-8 h-8 rounded-full border border-gray-300">
+            <span class="hidden md:inline">{{ user.username }}</span>
+        </button>
+        
+        <!-- Profile Dropdown (Hidden by Default) -->
+        <div id="profile-menu" class="absolute right-0 mt-2 w-48 bg-white text-black shadow-lg rounded-md hidden">
+            <a href="#" class="block px-4 py-2 hover:bg-gray-200">My Profile</a>
+            <a href="#" class="block px-4 py-2 hover:bg-gray-200 text-red-500">Logout</a>
+        </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="relative flex items-center bg-gray-800 px-2 rounded-md border border-gray-600">
+        <input type="text" placeholder="Search..." class="w-60 md:w-80 px-3 py-2 bg-transparent text-white focus:outline-none">
+        <button class="text-gray-400 hover:text-white px-2">
+            🔍 <!-- Search Icon -->
+        </button>
+    </div>
+
+    <!-- Icons Section -->
+    <div class="flex items-center space-x-4">
+
+        <!-- Notification Icon -->
+        <button id="notif-btn" class="relative">
+            🔔
+            <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                3 <!-- Example notification count -->
+            </span>
+        </button>
+
+        <!-- Additional Icons -->
+        <button class="text-gray-400 hover:text-white">⚙️</button>  <!-- Settings -->
+        <button class="text-gray-400 hover:text-white">📜</button>  <!-- Transactions -->
+        
+    </div>
+</header>
