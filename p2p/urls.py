@@ -24,5 +24,5 @@ urlpatterns = [
     path("order/dispute/create/<int:order_id>/", views.create_dispute, name="create_dispute"),
     path("dispute/cancel/<int:dispute_id>/", views.cancel_dispute, name="cancel_dispute"),
     path("dispute/track/<int:dispute_id>/", views.track_dispute, name="track_dispute"),
-    path("disputes/", views.dispute_list, name="dispute_list")
+    path("disputes/", views.dispute_list, name="dispute_list"),
 ]

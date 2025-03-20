@@ -151,7 +151,6 @@ def create_order(request, offer_id):
     return render(request, "p2p/create_order.html", {"form": form, "sell_offer": sell_offer})
 
 
-
 @login_required
 def mark_as_paid(request, order_id):
     """Allows the buyer to mark an order as paid."""
@@ -321,3 +320,5 @@ def update_bank_details(request):
         return redirect("update_bank_details")
 
     return render(request, "p2p/update_bank_details.html", {"profile": profile})
+
+
