@@ -6,28 +6,26 @@ from django.contrib.auth.models import User
 class Crypto(models.Model):
     name = models.CharField(max_length=50, unique=True)
     symbol = models.CharField(max_length=10, unique=True)
-    price_rate = models.DecimalField(default=0.00, max_digits=15, decimal_places=2)  # Admin sets NGN rate
+    logo = models.ImageField(upload_to='images/', default='default_logo.png')
+    price_rate = models.DecimalField(default=0.00, max_digits=15, decimal_places=2)  # Admin sets rate in $
     available = models.BooleanField(default=True)  # Admin controls availability
 
     def __str__(self):
-        return f"{self.name} ({self.symbol})"
+        return f"{self.name} ({self.symbol} ${self.price_rate})"
     
 class CryptoPurchase(models.Model):
-    STATUS_CHOICES = [
-        ("pending", "Pending"),
-        ("completed", "Completed"),
-        ("failed", "Failed"),
-    ]
-
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    crypto = models.ForeignKey(Crypto, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=15, decimal_places=8)  # Crypto amount
-    total_price = models.DecimalField(max_digits=15, decimal_places=2)  # NGN price
-    wallet_address = models.CharField(max_length=100)
-    timestamp = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
+    crypto = models.ForeignKey('Crypto', on_delete=models.CASCADE)  # Adjust 'Crypto' to your app’s model name
+    input_amount = models.DecimalField(max_digits=20, decimal_places=8)  # Amount user entered
+    input_currency = models.CharField(max_length=10)  # NGN, USDT, or crypto symbol
+    crypto_amount = models.DecimalField(max_digits=20, decimal_places=8)  # Actual crypto received
+    total_price = models.DecimalField(max_digits=20, decimal_places=2)  # Total cost in NGN
+    wallet_address = models.CharField(max_length=255)
+    status = models.CharField(max_length=20, default="pending")
+    created_at = models.DateTimeField(auto_now_add=True)  # Optional
+
 
     def __str__(self):
-        return f"{self.user.username} - {self.crypto.symbol} - ₦{self.amount} - ₦{self.total_price} ({self.status})"
+        return f"{self.user.username} - {self.crypto.symbol} - ₦{self.crypto_amount} - ₦{self.total_price} ({self.status})"
 
 

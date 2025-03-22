@@ -24,8 +24,6 @@
         </div>
       </div>
 
- 
-
       <!-- Purchase Form -->
       <form id="buyCryptoForm"> 
         {% csrf_token %}
@@ -56,7 +54,7 @@
         <!-- Total Cost & Amount Display -->
         <div class="flex justify-between items-center mb-4">
           <div>
-            <p class="text-gray-400">Total Cost:</p>
+            <p class="text-gray-400">Total Cost (<span id="inputCurrency">{{ crypto.symbol }}</span>):</p>
             <p id="totalCost" class="text-2xl font-bold text-blue-400">₦0.00</p>
           </div>
           <div>
@@ -78,16 +76,16 @@
   </div>
 
   <!-- Success Modal -->
-<div id="successModal" 
-     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden"
-     style="z-index: 1000;">
-  <div class="bg-gray-800 text-white p-6 rounded-lg shadow-lg relative">
-    <h3 class="text-xl font-semibold">Purchase Successful!</h3>
-    <p>Your {{ crypto.symbol }} on the way. Check your wallet in the next few minutes</p>
-    <p>You can submit another if you want.</p>
-    <button id="closeModal" class="mt-4 px-4 py-2 bg-blue-600 rounded hover:bg-blue-700">OK</button>
+  <div id="successModal" 
+       class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden"
+       style="z-index: 1000;">
+    <div class="bg-gray-800 text-white p-6 rounded-lg shadow-lg relative">
+      <h3 class="text-xl font-semibold">Purchase Successful!</h3>
+      <p id="successMessage">Your purchase is processing.</p>
+      <p>Check your wallet in the next few minutes. Thank you for being a valuable customer!</p>
+      <button id="closeModal" class="mt-4 px-4 py-2 bg-blue-600 rounded hover:bg-blue-700">OK</button>
+    </div>
   </div>
-</div>
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -96,72 +94,95 @@
         const totalCostDisplay = document.getElementById("totalCost");
         const cryptoReceivedDisplay = document.getElementById("cryptoReceived");
 
-        const exchangeRate = parseFloat("{{ exchange_rate }}");
         const cryptoPrice = parseFloat("{{ crypto.price_rate }}");
+        const exchangeRate = parseFloat("{{ exchange_rate }}");
+
+        if (isNaN(cryptoPrice) || cryptoPrice <= 0) {
+            console.error("🚨 Invalid crypto price:", cryptoPrice);
+        }
+        if (isNaN(exchangeRate) || exchangeRate <= 0) {
+            console.error("🚨 Invalid exchange rate:", exchangeRate);
+        }
 
         function updateCostAndCrypto() {
             const amount = parseFloat(amountInput.value) || 0;
             const currency = currencySelect.value;
 
-            let totalCost = 0;
+            let totalCostNgn = 0;
             let cryptoReceived = 0;
 
             if (currency === "ngn") {
-                totalCost = amount;
-                cryptoReceived = amount / cryptoPrice;
+                const amountInUsdt = amount / exchangeRate;
+                cryptoReceived = amountInUsdt / cryptoPrice;
+                totalCostNgn = amount;
             } else if (currency === "usdt") {
-                totalCost = amount * exchangeRate;
-                cryptoReceived = amount * (exchangeRate / cryptoPrice);
-            } else {
-                totalCost = amount * cryptoPrice;
+                cryptoReceived = amount / cryptoPrice;
+                totalCostNgn = amount * exchangeRate;
+            } else {  // crypto.symbol
                 cryptoReceived = amount;
+                totalCostNgn = (amount * cryptoPrice) * exchangeRate;
             }
 
-            totalCostDisplay.innerText = `₦${totalCost.toFixed(2)}`;
+            totalCostNgn = isFinite(totalCostNgn) ? totalCostNgn : 0;
+            cryptoReceived = isFinite(cryptoReceived) ? cryptoReceived : 0;
+
+            totalCostDisplay.innerText = `₦${totalCostNgn.toFixed(2)}`;
             cryptoReceivedDisplay.innerText = `${cryptoReceived.toFixed(6)} {{ crypto.symbol }}`;
+            document.getElementById("inputCurrency").innerText = currency.toUpperCase();
         }
 
         amountInput.addEventListener("input", updateCostAndCrypto);
-        currencySelect.addEventListener("change", updateCostAndCrypto); 
-    });
-  </script>
-  
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
+        currencySelect.addEventListener("change", updateCostAndCrypto);
+
         const buyCryptoForm = document.getElementById("buyCryptoForm");
         const successModal = document.getElementById("successModal");
         const closeModal = document.getElementById("closeModal");
-    
+
         buyCryptoForm.addEventListener("submit", function (event) {
-            event.preventDefault(); // Prevent default form submission
-    
+            event.preventDefault();
             const formData = new FormData(buyCryptoForm);
-    
+
             fetch("{% url 'buy_crypto' crypto.id %}", {
                 method: "POST",
                 body: formData,
                 headers: {
                     "X-CSRFToken": "{{ csrf_token }}",
+                    "X-Requested-With": "XMLHttpRequest"
                 },
             })
-            .then(response => response.json())  // Expecting a JSON response
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return response.json();
+            })
             .then(data => {
+                console.log("📨 Response Data:", data);
                 if (data.success) {
-                    successModal.classList.remove("hidden"); // Show modal
+                    // Extract crypto amount and symbol from backend message
+                    const cryptoText = data.message.split("Your ")[1].split(" purchase")[0]; // e.g., "0.001538 BNB"
+                    const [cryptoAmount, cryptoSymbol] = cryptoText.split(" ");
+                    // Get input amount and adjust based on currency
+                    const inputAmount = parseFloat(formData.get("amount")).toFixed(2);
+                    const inputCurrency = formData.get("currency").toUpperCase();
+                    const totalCostFormatted = inputCurrency === "NGN" ? `₦${inputAmount}` : `${inputAmount} ${inputCurrency}`;
+
+                    // Format the success message
+                    document.getElementById("successMessage").innerText = 
+                        `Congrats! Your purchase of ${totalCostFormatted} worth of ${cryptoAmount} ${cryptoSymbol} is processing and will hit your provided wallet shortly`;
+                    successModal.style.display = "flex";
+                    successModal.style.opacity = "1";
                 } else {
-                    alert("Something went wrong. Try again.");
+                    console.log("❌ Purchase failed:", data);
+                    alert(data.error || "Something went wrong. Try again.");
                 }
             })
-            .catch(error => console.error("Error:", error));
+            .catch(error => console.error("🚨 Fetch Error:", error));
         });
-    
+
         closeModal.addEventListener("click", function () {
-            successModal.classList.add("hidden"); // Hide modal
-            window.location.reload(); // Reload page to clear form
+            successModal.style.display = "none";
+            window.location.href = "{% url 'asset_list' %}";
         });
     });
-    </script>
-    
-
+  </script>
 </body>
 </html>
