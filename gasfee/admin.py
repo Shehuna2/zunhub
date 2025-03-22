@@ -10,7 +10,18 @@ class CryptoAdmin(admin.ModelAdmin):
 
 @admin.register(CryptoPurchase)
 class CryptoPurchaseAdmin(admin.ModelAdmin):
-    list_display = ("user", "crypto", "amount", "wallet_address", "timestamp", "status")
-    search_fields = ("user__username", "crypto__name", "crypto__symbol")
-    list_filter = ("status",)
-    ordering = ("-timestamp",)
+    list_display = ("user", "crypto", "input_amount", "input_currency", "crypto_amount", "total_price", "status", "created_at")
+    list_filter = ("status", "input_currency", "crypto", "created_at")
+    search_fields = ("user__username", "crypto__symbol", "wallet_address")
+    readonly_fields = ("created_at",)
+    fieldsets = (
+        (None, {
+            "fields": ("user", "crypto", "wallet_address", "status")
+        }),
+        ("Purchase Details", {
+            "fields": ("input_amount", "input_currency", "crypto_amount", "total_price")
+        }),
+        ("Metadata", {
+            "fields": ("created_at",)
+        }),
+    )

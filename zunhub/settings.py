@@ -17,6 +17,12 @@ ALLOWED_HOSTS = []
 
 AUTH_USER_MODEL = 'p2p.User'
 
+# Celery settings
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Using Redis as the broker
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -111,6 +117,9 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = '/media/'
 
 
 # Default primary key field type
