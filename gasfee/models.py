@@ -7,11 +7,10 @@ class Crypto(models.Model):
     name = models.CharField(max_length=50, unique=True)
     symbol = models.CharField(max_length=10, unique=True)
     logo = models.ImageField(upload_to='images/', default='default_logo.png')
-    price_rate = models.DecimalField(default=0.00, max_digits=15, decimal_places=2)  # Admin sets rate in $
-    available = models.BooleanField(default=True)  # Admin controls availability
+    coingecko_id = models.CharField(max_length=50, unique=True, null=True)  # Added for API consistency
 
     def __str__(self):
-        return f"{self.name} ({self.symbol} ${self.price_rate})"
+        return f"{self.name} ({self.symbol} {self.coingecko_id})"
     
 class CryptoPurchase(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -29,3 +28,10 @@ class CryptoPurchase(models.Model):
         return f"{self.user.username} - {self.crypto.symbol} - ₦{self.crypto_amount} - ₦{self.total_price} ({self.status})"
 
 
+class ExchangeRateMargin(models.Model):
+    currency_pair = models.CharField(max_length=20, default="USDT/NGN", unique=True)
+    profit_margin = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # NGN amount to add
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.currency_pair} Margin: ₦{self.profit_margin}"

@@ -1,11 +1,11 @@
 from django.contrib import admin
-from .models import Crypto, CryptoPurchase
+from .models import Crypto, CryptoPurchase, ExchangeRateMargin
 
 @admin.register(Crypto)
 class CryptoAdmin(admin.ModelAdmin):
-    list_display = ("name", "symbol", "price_rate", "available")  # Display columns
-    search_fields = ("name", "symbol")  # Enable search by name or symbol
-    list_filter = ("available",)  # Filter by availability
+    list_display = ("name", "symbol", "coingecko_id")  # Display columns
+    search_fields = ("name", "symbol", "coingecko_id")  # Enable search by name or symbol
+    list_filter = ("symbol",)  # Filter by availability
     ordering = ("name",)
 
 @admin.register(CryptoPurchase)
@@ -25,3 +25,9 @@ class CryptoPurchaseAdmin(admin.ModelAdmin):
             "fields": ("created_at",)
         }),
     )
+
+@admin.register(ExchangeRateMargin)
+class ExchangeRateMarginAdmin(admin.ModelAdmin):
+    list_display = ("currency_pair", "profit_margin", "updated_at")
+    list_editable = ("profit_margin",)  # Edit margin directly in list view
+    search_fields = ("currency_pair",)

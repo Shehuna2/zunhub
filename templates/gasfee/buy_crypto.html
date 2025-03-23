@@ -16,7 +16,7 @@
       <!-- Exchange Rate Display -->
       <div class="flex justify-between items-center mb-6">
         <div class="flex items-center space-x-4">
-          <img src="{{ crypto.logo_url }}" alt="{{ crypto.name }} logo" class="w-12 h-12 rounded-full">
+          <img src="{{ crypto.logo.url }}" alt="{{ crypto.name }} logo" class="w-12 h-12 rounded-full">
           <div>
             <p class="text-gray-400">Exchange Rate (USDT/NGN):</p>
             <p class="text-lg font-bold text-green-400">₦{{ exchange_rate }}</p>
@@ -82,7 +82,8 @@
     <div class="bg-gray-800 text-white p-6 rounded-lg shadow-lg relative">
       <h3 class="text-xl font-semibold">Purchase Successful!</h3>
       <p id="successMessage">Your purchase is processing.</p>
-      <p>Check your wallet in the next few minutes. Thank you for being a valuable customer!</p>
+      <p>Check your wallet in the next few minutes.</p>
+      <p>You can submit another if you want.</p>
       <button id="closeModal" class="mt-4 px-4 py-2 bg-blue-600 rounded hover:bg-blue-700">OK</button>
     </div>
   </div>
@@ -94,7 +95,7 @@
         const totalCostDisplay = document.getElementById("totalCost");
         const cryptoReceivedDisplay = document.getElementById("cryptoReceived");
 
-        const cryptoPrice = parseFloat("{{ crypto.price_rate }}");
+        const cryptoPrice = parseFloat("{{ crypto_price }}"); // Live price from backend
         const exchangeRate = parseFloat("{{ exchange_rate }}");
 
         if (isNaN(cryptoPrice) || cryptoPrice <= 0) {
@@ -157,15 +158,12 @@
             .then(data => {
                 console.log("📨 Response Data:", data);
                 if (data.success) {
-                    // Extract crypto amount and symbol from backend message
-                    const cryptoText = data.message.split("Your ")[1].split(" purchase")[0]; // e.g., "0.001538 BNB"
+                    const cryptoText = data.message.split("Your ")[1].split(" purchase")[0];
                     const [cryptoAmount, cryptoSymbol] = cryptoText.split(" ");
-                    // Get input amount and adjust based on currency
                     const inputAmount = parseFloat(formData.get("amount")).toFixed(2);
                     const inputCurrency = formData.get("currency").toUpperCase();
                     const totalCostFormatted = inputCurrency === "NGN" ? `₦${inputAmount}` : `${inputAmount} ${inputCurrency}`;
 
-                    // Format the success message
                     document.getElementById("successMessage").innerText = 
                         `Congrats! Your purchase of ${totalCostFormatted} worth of ${cryptoAmount} ${cryptoSymbol} is processing and will hit your provided wallet shortly`;
                     successModal.style.display = "flex";
