@@ -18,7 +18,7 @@ def process_crypto_order(order_id):
             # Notify user via email (optional)
             send_mail(
                 "Your Crypto Purchase is Complete",
-                f"Your order for {order.amount} {order.crypto.symbol} has been completed.",
+                f"Your order for {order.input_amount} {order.crypto.symbol} has been completed.",
                 "admin@zunhub.com",
                 [order.user.email],
                 fail_silently=True,
