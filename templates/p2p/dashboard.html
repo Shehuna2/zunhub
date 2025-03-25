@@ -142,20 +142,22 @@
                     <thead>
                         <tr class="border-b border-gray-700">
                             <th class="p-2">Order ID</th>
+                            <th class="p-2">Asset</th>
                             <th class="p-2">Amount</th>
                             <th class="p-2">Status</th>
                             <th class="p-2">Date</th>
-                            <th class="p-2">Actions</th>
+                            <!-- <th class="p-2">Actions</th> -->
                         </tr>
                     </thead>
                     <tbody>
-                        {% for order in recent_orders %}
+                        {% for order in purchase_history %}
                         <tr class="border-b border-gray-700">
                             <td class="p-2">#{{ order.id }}</td>
+                            <td class="p-2">{{ order.crypto_amount }} {{ order.crypto.symbol }}</td>
                             <td class="p-2">₦{{ order.total_price }}</td>
                             <td class="p-2">
                                 <span class="{% if order.status == 'completed' %}text-green-400{% elif order.status == 'pending' %}text-yellow-400{% else %}text-red-400{% endif %}">
-                                    {{ order.get_status_display }}
+                                    {{ order.status }}
                                 </span>
                             </td>
                             <td class="p-2">{{ order.created_at|date:"M d, Y" }}</td>
