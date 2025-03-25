@@ -1,3 +1,4 @@
+import os
 import requests
 import logging
 
@@ -9,15 +10,19 @@ from decimal import Decimal
 from django.contrib import messages
 from django.utils import timezone
 from web3 import Web3
-from .utils import send_order_email
 
 from p2p.models import Wallet
 from .models import CryptoPurchase, Crypto, ExchangeRateMargin
 from .tasks import process_crypto_order
+from .utils import send_order_email
+from dotenv import load_dotenv
 
-
-
+load_dotenv()
 logger = logging.getLogger(__name__)
+
+# Connect to Binance Smart Chain
+w3 = Web3(Web3.HTTPProvider(os.getenv('BSC_RPC_URL')))
+SENDER_ADDRESS = w3.eth.account.from_key(os.getenv('SENDER_PRIVATE_KEY')).address
 
 
 
@@ -26,7 +31,7 @@ def buy_crypto(request, crypto_id):
     crypto = get_object_or_404(Crypto, id=crypto_id)
 
     # Cache keys
-    crypto_price_key = f"crypto_price_{crypto.coingecko_id}_usd"  # Updated to usd
+    crypto_price_key = f"crypto_price_{crypto.coingecko_id}_usd"
     exchange_rate_key = "exchange_rate_usdt_ngn"
 
     # Fetch live crypto price (e.g., TON in USD) from cache or API
@@ -42,18 +47,18 @@ def buy_crypto(request, crypto_id):
             if not crypto_price_data or crypto.coingecko_id not in crypto_price_data:
                 raise ValueError(f"No price data for {crypto.coingecko_id}")
             price_dict = crypto_price_data[crypto.coingecko_id]
-            if "usd" not in price_dict or not price_dict["usd"]:  # Changed to usd
+            if "usd" not in price_dict or not price_dict["usd"]:
                 raise ValueError(f"USD price missing or invalid for {crypto.coingecko_id}")
-            crypto_price = Decimal(str(price_dict["usd"]))  # Changed to usd
+            crypto_price = Decimal(str(price_dict["usd"]))
             cache.set(crypto_price_key, crypto_price, timeout=300)
             logger.info(f"Cached crypto price for {crypto.coingecko_id}: {crypto_price}")
         except requests.RequestException as e:
             logger.error(f"API request failed: {str(e)}")
-            crypto_price = Decimal("500")  # Fallback
+            crypto_price = Decimal("500")
             messages.warning(request, "Couldn’t fetch live crypto price. Using fallback value.")
         except (KeyError, ValueError, TypeError) as e:
             logger.error(f"Data parsing error: {str(e)}, Response: {crypto_price_data}")
-            crypto_price = Decimal("500")  # Fallback
+            crypto_price = Decimal("500")
             messages.warning(request, "Couldn’t fetch live crypto price. Using fallback value.")
     else:
         logger.info(f"Using cached crypto price for {crypto.coingecko_id}: {crypto_price}")
@@ -99,10 +104,10 @@ def buy_crypto(request, crypto_id):
         total_price_ngn = Decimal("0")
 
         if currency == "NGN":
-            amount_in_usd = amount / exchange_rate  # Changed to usd conceptually
+            amount_in_usd = amount / exchange_rate
             crypto_received = amount_in_usd / crypto_price
             total_price_ngn = amount
-        elif currency == "USDT":  # Treat as USD for simplicity
+        elif currency == "USDT":
             crypto_received = amount / crypto_price
             total_price_ngn = amount * exchange_rate
         elif currency == crypto.symbol.upper():
@@ -131,21 +136,23 @@ def buy_crypto(request, crypto_id):
 
         process_crypto_order.delay(order.id)
 
-        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse({
-                "success": True,
-                "message": f"Your {crypto_received:.6f} {crypto.symbol} purchase is processing."
-            })
+        return JsonResponse({
+            "success": True,
+            "message": f"Your {crypto_received:.6f} {crypto.symbol} purchase is processing."
+        })
 
-        messages.success(request, f"Your order for {crypto_received:.6f} {crypto.symbol} is being processed!")
-        return redirect("asset_list")
+    # Handle AJAX GET request for live price
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return JsonResponse({
+            "crypto_price": float(crypto_price),  # Convert Decimal to float for JSON
+            "exchange_rate": float(exchange_rate),
+        })
 
     return render(request, "gasfee/buy_crypto.html", {
         "crypto": crypto,
         "exchange_rate": exchange_rate,
         "crypto_price": crypto_price,
     })
-
 
 
 def asset_list(request):

@@ -10,6 +10,7 @@ from django.contrib import messages
 from .forms import UserRegisterForm, OrderForm, DisputeForm
 from decimal import Decimal
 from .models import Wallet, SellOffer, Order, Dispute
+from gasfee.models import CryptoPurchase
 
 
 
@@ -55,6 +56,7 @@ def dashboard(request):
     total_sales = Order.objects.filter(sell_offer__merchant=request.user, status="completed").count()
     merchant_total_orders = Order.objects.filter(sell_offer__merchant=request.user).count()
     open_disputes = Dispute.objects.filter(order__buyer=request.user, status="pending").count()
+    purchase_history = CryptoPurchase.objects.filter(user=request.user).order_by('created_at')
 
     if request.user.is_merchant:
         total_orders = Order.objects.filter(sell_offer__merchant=request.user).count()
@@ -73,6 +75,7 @@ def dashboard(request):
         "merchant_total_orders": merchant_total_orders,
         "open_disputes": open_disputes,
         "recent_orders": recent_orders,
+        "purchase_history": purchase_history
     }
 
     return render(request, "p2p/dashboard.html", context)
