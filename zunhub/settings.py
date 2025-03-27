@@ -1,4 +1,19 @@
 from pathlib import Path
+from dotenv import load_dotenv
+import os
+
+
+load_dotenv()  # Load environment variables from .env file
+
+# Toncenter API Key
+TONCENTER_API_KEY = os.getenv("TONCENTER_API_KEY")
+TON_API_URL = os.getenv("TON_API_URL")
+
+# BSC Configuration
+BSC_SENDER_PRIVATE_KEY = os.getenv("BSC_SENDER_PRIVATE_KEY")
+BSC_RPC_URL = os.getenv("BSC_RPC_URL")
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
