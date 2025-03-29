@@ -24,80 +24,74 @@ def get_env_var(var_name, required=True):
         raise ValueError(f"Missing required environment variable: {var_name}")
     return value
 
-# ✅ TON Setup using tonsdk.py
-TON_API_URL = get_env_var("TON_API_URL")
-ton_client = ToncenterClient(base_url=TON_API_URL, api_key=get_env_var("TONCENTER_API_KEY"))
-SENDER_SEED = get_env_var("TON_SEED_PHRASE")
+from web3 import Web3
+import os
 
-# ✅ Properly load wallet from mnemonic
-_, _, _, wallet = Wallets.from_mnemonics(SENDER_SEED.split(), WalletVersionEnum.v3r2, workchain=0)
-SENDER_ADDRESS = wallet.address.to_string(True, True, True)
+# Load environment variables
+ARBITRUM_RPC = os.getenv("ARBITRUM_RPC_URL", "https://arb1.arbitrum.io/rpc")
+BASE_RPC = os.getenv("BASE_RPC_URL", "https://mainnet.base.org")
+OPTIMISM_RPC = os.getenv("OPTIMISM_RPC_URL", "https://mainnet.optimism.io")
 
+L2_CHAINS = {
+    "ARB": {"rpc": ARBITRUM_RPC, "symbol": "ETH"},
+    "BASE": {"rpc": BASE_RPC, "symbol": "ETH"},
+    "OP": {"rpc": OPTIMISM_RPC, "symbol": "ETH"}
+}
 
-logger.info(f"Derived TON Wallet Address: {SENDER_ADDRESS}")
+def send_evm(chain, recipient, amount_wei):
+    """Send ETH on an L2 EVM chain (Arbitrum, Base, Optimism)"""
+    if chain not in L2_CHAINS:
+        raise ValueError(f"Unsupported chain: {chain}")
 
-# ✅ TON Wallet Validation Function
-def is_valid_ton_wallet(address):
-    """Validate if a given TON wallet address is valid"""
-    if not address:
-        return False
+    w3 = Web3(Web3.HTTPProvider(L2_CHAINS[chain]["rpc"]))
+    
+    sender_private_key = os.getenv(f"{chain}_PRIVATE_KEY")
+    sender_address = os.getenv(f"{chain}_SENDER_ADDRESS")
+    sender_address = Web3.to_checksum_address(sender_address)
+    recipient = Web3.to_checksum_address(recipient)
+
+    if not sender_private_key or not sender_address:
+        raise ValueError("Sender wallet not configured for " + chain)
+    
+    sender_balance = w3.eth.get_balance(sender_address)
+    nonce = w3.eth.get_transaction_count(sender_address)
+    gas_price = w3.eth.gas_price
+    
+    # Build a transaction skeleton for gas estimation
+    tx_estimate = {
+        "from": sender_address,
+        "to": recipient,
+        "value": amount_wei,
+        "gasPrice": gas_price,
+        "nonce": nonce,
+        "chainId": w3.eth.chain_id
+    }
+    
+    # Dynamically estimate gas
     try:
-        unpack_url = f"https://toncenter.com/api/v2/unpackAddress?address={address}"
-        response = requests.get(unpack_url, headers={"accept": "application/json"})
-        return response.status_code == 200 and response.json().get("ok", False)
+        gas_limit = w3.eth.estimate_gas(tx_estimate)
     except Exception as e:
-        logger.error(f"TON wallet validation failed: {e}")
-        return False
+        raise ValueError(f"Gas estimation failed: {str(e)}")
 
-# ✅ Send TON Function using tonsdk.py
-def send_ton(wallet_address, amount):
-    try:
-        # Validate wallet address before sending
-        if not is_valid_ton_wallet(wallet_address):
-            logger.error(f"Invalid TON wallet address: {wallet_address}")
-            return None
+    # Calculate total cost
+    total_cost = amount_wei + (gas_limit * gas_price)
+    if sender_balance < total_cost:
+        raise ValueError(f"Insufficient balance on {chain}. Required: {w3.from_wei(total_cost, 'ether')} ETH, Available: {w3.from_wei(sender_balance, 'ether')} ETH")
 
-        nanotons = to_nano(amount, "ton")  # Convert TON to nanotons
+    # Construct the final transaction
+    tx = {
+        "to": recipient,
+        "value": amount_wei,
+        "gas": gas_limit,
+        "gasPrice": gas_price,
+        "nonce": nonce,
+        "chainId": w3.eth.chain_id
+    }
 
-        # Get seqno from TON blockchain
-        seqno = ton_client.get_seqno(SENDER_ADDRESS)
-        if seqno is None:
-            logger.error(f"Failed to retrieve seqno for wallet: {SENDER_ADDRESS}")
-            return None
+    signed_tx = w3.eth.account.sign_transaction(tx, sender_private_key)
+    tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
 
-        # Create transaction message with seqno
-        tx = wallet.create_transfer_message(wallet_address, nanotons, seqno)
-
-        # Sign the transaction before sending
-        signed_boc = wallet.sign(tx["message"].to_boc(False))
-
-        # Send the signed transaction
-        result = ton_client.send_boc(signed_boc)
-
-        if 'result' not in result:
-            logger.error(f"Transaction submission failed: {result}")
-            return None
-
-        tx_hash = result['result']
-        logger.info(f"Transaction Sent! Hash: {tx_hash}")
-
-        # Verify that the transaction appears on the blockchain
-        for _ in range(10):  # Retry up to 10 times with a delay
-            time.sleep(5)  # Wait 5 seconds before checking
-            tx_status = ton_client.get_transactions(SENDER_ADDRESS, limit=1)
-
-            if tx_status and tx_status[0]['transaction_id']['hash'] == tx_hash:
-                logger.info(f"Transaction {tx_hash} confirmed on blockchain!")
-                return tx_hash
-
-        logger.warning(f"Transaction {tx_hash} was sent but not confirmed after multiple checks.")
-        return None
-
-    except Exception as e:
-        logger.error(f"Failed to send TON transaction: {e}\n{traceback.format_exc()}")
-        return None
-
-
+    return w3.to_hex(tx_hash)
 
 
 # ✅ BSC Setup
@@ -147,13 +141,17 @@ def send_bsc(to_address, amount):
 
 
 # Function to get crypto price with cache
-def get_crypto_price(coingecko_id):
-    crypto_price_key = f"crypto_price_{coingecko_id}"
+def get_crypto_price(coingecko_id, network="Ethereum"):
+    """
+    Fetches the price of a cryptocurrency from CoinGecko, with L2 network support.
+    Caches results for 5 minutes to reduce API calls.
+    """
+    crypto_price_key = f"crypto_price_{coingecko_id}_{network.lower()}"  # Unique key per network
     crypto_price = cache.get(crypto_price_key)
 
     if crypto_price is None:
         crypto_price_url = f"https://api.coingecko.com/api/v3/simple/price?ids={coingecko_id}&vs_currencies=usd"
-        logger.info(f"Fetching crypto price from: {crypto_price_url}")
+        logger.info(f"Fetching crypto price for {network} from: {crypto_price_url}")
 
         try:
             response = requests.get(crypto_price_url, timeout=5)
@@ -161,22 +159,23 @@ def get_crypto_price(coingecko_id):
             crypto_price_data = response.json()
 
             if coingecko_id not in crypto_price_data or "usd" not in crypto_price_data[coingecko_id]:
-                raise ValueError(f"No valid price data for {coingecko_id}")
+                raise ValueError(f"No valid price data for {coingecko_id} on {network}")
 
             crypto_price = Decimal(str(crypto_price_data[coingecko_id]["usd"]))
             cache.set(crypto_price_key, crypto_price, timeout=300)  # Cache for 5 minutes
-            logger.info(f"Cached crypto price for {coingecko_id}: {crypto_price}")
+            logger.info(f"Cached crypto price for {coingecko_id} on {network}: {crypto_price}")
 
         except requests.RequestException as e:
-            logger.error(f"API request failed: {str(e)}\n{traceback.format_exc()}")
+            logger.error(f"API request failed for {coingecko_id} on {network}: {str(e)}\n{traceback.format_exc()}")
             crypto_price = Decimal("500")  # Fallback value
         except (KeyError, ValueError, TypeError) as e:
-            logger.error(f"Data parsing error: {str(e)}\n{traceback.format_exc()}")
+            logger.error(f"Data parsing error for {coingecko_id} on {network}: {str(e)}\n{traceback.format_exc()}")
             crypto_price = Decimal("500")  # Fallback value
     else:
-        logger.info(f"Using cached crypto price for {coingecko_id}: {crypto_price}")
+        logger.info(f"Using cached crypto price for {coingecko_id} on {network}: {crypto_price}")
 
     return crypto_price
+
 
 # ✅ Fully Restored: Function to get USD to NGN exchange rate
 def get_exchange_rate():
