@@ -3,10 +3,21 @@ from .models import Crypto, CryptoPurchase, ExchangeRateMargin
 
 @admin.register(Crypto)
 class CryptoAdmin(admin.ModelAdmin):
-    list_display = ("name", "symbol", "coingecko_id")  # Display columns
+    list_display = ("symbol", "network", "coingecko_id")  # Display columns
     search_fields = ("name", "symbol", "coingecko_id")  # Enable search by name or symbol
     list_filter = ("symbol",)  # Filter by availability
     ordering = ("name",)
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj and obj.network in ['ARB', 'BASE', 'OP']:  # L2 Ethereum networks
+            return ['coingecko_id']  # Make coingecko_id read-only
+        return []
+
+    def save_model(self, request, obj, form, change):
+        if obj.network in ['ARB', 'BASE', 'OP']:  # If L2 Ethereum
+            obj.coingecko_id = 'ethereum'  # Enforce coingecko_id
+        super().save_model(request, obj, form, change)
+        
 
 @admin.register(CryptoPurchase)
 class CryptoPurchaseAdmin(admin.ModelAdmin):

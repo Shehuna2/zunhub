@@ -56,7 +56,7 @@ def dashboard(request):
     total_sales = Order.objects.filter(sell_offer__merchant=request.user, status="completed").count()
     merchant_total_orders = Order.objects.filter(sell_offer__merchant=request.user).count()
     open_disputes = Dispute.objects.filter(order__buyer=request.user, status="pending").count()
-    purchase_history = CryptoPurchase.objects.filter(user=request.user).order_by('created_at')
+    purchase_history = CryptoPurchase.objects.filter(user=request.user).order_by('-created_at')
 
     if request.user.is_merchant:
         total_orders = Order.objects.filter(sell_offer__merchant=request.user).count()
