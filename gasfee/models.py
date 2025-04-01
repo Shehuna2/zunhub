@@ -10,6 +10,7 @@ class Crypto(models.Model):
         ('ARB', 'Arbitrum'),
         ('BASE', 'Base'),
         ('OP', 'Optimism'),
+        ('SOL', 'Solana'),
     ]
     name = models.CharField(max_length=50)
     symbol = models.CharField(max_length=10, unique=True)

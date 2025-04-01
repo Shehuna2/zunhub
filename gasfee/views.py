@@ -2,7 +2,10 @@ import os
 import requests
 import logging
 import traceback
+import base58
 from decimal import Decimal
+from solders.pubkey import Pubkey
+
 
 from django.core.cache import cache
 from django.shortcuts import render, get_object_or_404
@@ -15,7 +18,10 @@ from web3 import Web3
 
 from p2p.models import Wallet
 from .models import CryptoPurchase, Crypto
-from .utils import get_crypto_price, get_exchange_rate, send_bsc, send_evm
+from .utils import (
+    get_crypto_price, get_exchange_rate, send_bsc, 
+    send_evm, send_solana, validate_solana_address,
+)
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -26,6 +32,7 @@ logger = logging.getLogger(__name__)
 @login_required
 def buy_crypto(request, crypto_id):
     crypto = get_object_or_404(Crypto, id=crypto_id)
+    logger.info(f"Crypto Symbol: {crypto.symbol}, Upper: {crypto.symbol.upper()}")
 
     # Fetch cached prices
     network = crypto.network if hasattr(crypto, "network") else "Ethereum"
@@ -85,19 +92,30 @@ def buy_crypto(request, crypto_id):
                     status="pending"
                 )
 
-            # Ensure wallet address is properly formatted
-            try:
-                checksum_wallet_address = Web3.to_checksum_address(wallet_address)  # ✅ Fix non-checksum address
-            except ValueError:
-                return JsonResponse({"success": False, "error": "Invalid Ethereum address format."})
+            # Validate wallet address based on the crypto type
+            if crypto.symbol.upper() == "BNB" or "ETH" in crypto.symbol.upper():
+                try:
+                    wallet_address = Web3.to_checksum_address(wallet_address)
+                except ValueError:
+                    return JsonResponse({"success": False, "error": "Invalid Ethereum address format."})
+            elif crypto.symbol.upper() == "SOL":
+                if not validate_solana_address(wallet_address):
+                    logger.warning(f"Invalid Solana address: {wallet_address}")
+                    return JsonResponse({"success": False, "error": "Invalid Solana address format."})
+                logger.info(f"Valid Solana address: {wallet_address}")
+            else:
+                return JsonResponse({"success": False, "error": "Unsupported token."})
 
             # Handle different chains
             try:
+                logger.info(f"Attempting transfer for symbol: {crypto.symbol.upper()}")
                 if crypto.symbol.upper() == "BNB":
-                    tx_hash = send_bsc(checksum_wallet_address, crypto_received)  # ✅ Use corrected address
+                    tx_hash = send_bsc(wallet_address, crypto_received)  # ✅ Use corrected address
+                elif crypto.symbol.upper() == "SOL":
+                    tx_hash = send_solana(wallet_address, crypto_received)
                 elif "ETH" in crypto.symbol.upper():
                     evm_network = crypto.symbol.split("-")[-1]  # Extract L2 network
-                    tx_hash = send_evm(evm_network, checksum_wallet_address, Web3.to_wei(crypto_received, "ether"))
+                    tx_hash = send_evm(evm_network, wallet_address, Web3.to_wei(crypto_received, "ether"))
                 else:
                     return JsonResponse({"success": False, "error": "Unsupported token."})
 

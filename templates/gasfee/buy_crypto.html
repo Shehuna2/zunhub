@@ -98,6 +98,8 @@
             if (symbol === "TON") {
                 const tonRegex = /^(EQ|UQ)[A-Za-z0-9_-]{46}$/;
                 return tonRegex.test(address);
+            } else if (symbol === "SOL") {
+                return true
             } else {
                 return Web3.utils.isAddress(address);
             }
