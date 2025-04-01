@@ -1,15 +1,23 @@
 import os
 import time
+import base58
 import requests
 import logging
 import traceback
 from decimal import Decimal
 from django.core.cache import cache
-from tonsdk.contract.wallet import WalletVersionEnum, Wallets
-from tonsdk.provider import ToncenterClient
-from tonsdk.utils import to_nano
 from web3 import Web3
 from dotenv import load_dotenv
+
+from solders.keypair import Keypair
+from solders.pubkey import Pubkey
+from solana.rpc.api import Client
+from solders.system_program import TransferParams, transfer
+from solders.transaction import Transaction
+from solders.message import Message  # Add this import
+
+
+
 
 # Load environment variables
 load_dotenv()
@@ -24,8 +32,113 @@ def get_env_var(var_name, required=True):
         raise ValueError(f"Missing required environment variable: {var_name}")
     return value
 
-from web3 import Web3
-import os
+
+
+# Solana setup
+# Fetch and validate Solana private key
+SOLANA_PRIVATE_KEY_B58 = get_env_var("SOLANA_PRIVATE_KEY", required=True).strip('"')
+SOLANA_RPC_URL = get_env_var("SOLANA_RPC_URL", required=True)
+SOLANA_SENDER_KEYPAIR = Keypair.from_bytes(base58.b58decode(SOLANA_PRIVATE_KEY_B58))
+
+if not SOLANA_PRIVATE_KEY_B58:
+    raise ValueError("SOLANA_PRIVATE_KEY is empty")
+try:
+    decoded_key = base58.b58decode(SOLANA_PRIVATE_KEY_B58)
+    SOLANA_SENDER_KEYPAIR = Keypair.from_bytes(decoded_key)
+except Exception as e:
+    logger.error(f"Invalid SOLANA_PRIVATE_KEY: {e}")
+    raise ValueError(f"Invalid SOLANA_PRIVATE_KEY format: {e}")
+
+# Solana client connection
+solana_client = Client(SOLANA_RPC_URL)
+
+
+def check_solana_balance(wallet_address) -> float:
+    try:
+        # If it's already a Pubkey, use it directly
+        if isinstance(wallet_address, Pubkey):
+            pubkey = wallet_address
+        else:
+            pubkey = Pubkey.from_string(wallet_address)
+            
+        balance = solana_client.get_balance(pubkey)
+        sol_balance = balance.value / 1_000_000_000  
+        
+        if sol_balance < 0:
+            raise ValueError(f"Insufficient balance: {sol_balance} SOL")
+            
+        logger.info(f"Balance for {pubkey}: {sol_balance} SOL")
+        return sol_balance
+        
+    except Exception as e:
+        logger.error(f"Failed to fetch balance for {pubkey}: {e}")
+        raise ValueError(f"Failed to fetch balance: {e}")
+    
+
+def validate_solana_address(wallet_address: str) -> bool:
+    """
+    Validate if a given address is a valid Solana public key.
+    :param wallet_address: Solana wallet address (base58 string)
+    :return: True if valid, False otherwise
+    """
+    try:
+        Pubkey.from_string(wallet_address)
+        return True
+    except Exception:
+        return False
+
+def send_solana(receiver_address: str, amount_sol: float) -> str:
+    logger.info(f"Initiating SOL transfer: {amount_sol} SOL -> {receiver_address}")
+    
+    if not validate_solana_address(receiver_address):
+        raise ValueError(f"Invalid receiver address: {receiver_address}")
+    
+    sender_pubkey = SOLANA_SENDER_KEYPAIR.pubkey()  # solders syntax
+    sender_balance = check_solana_balance(str(sender_pubkey))
+    
+    if sender_balance < amount_sol:
+        raise ValueError(f"Insufficient balance: {sender_balance} SOL, need {amount_sol} SOL")
+
+    try:
+        receiver_pubkey = Pubkey.from_string(receiver_address)
+        transfer_ix = transfer(TransferParams(
+            from_pubkey=sender_pubkey,
+            to_pubkey=receiver_pubkey,
+            lamports=int(amount_sol * 1_000_000_000)
+        ))
+        
+        # Fetch recent blockhash
+        blockhash_resp = solana_client.get_latest_blockhash()
+        recent_blockhash = blockhash_resp.value.blockhash
+        
+        # Create message with instructions and blockhash
+        msg = Message.new_with_blockhash(
+            instructions=[transfer_ix],
+            payer=sender_pubkey,
+            blockhash=recent_blockhash
+        )
+        
+        # Create transaction with all required args
+        txn = Transaction(
+            from_keypairs=[SOLANA_SENDER_KEYPAIR],
+            message=msg,
+            recent_blockhash=recent_blockhash
+        )
+        
+        # Send transaction (no signers kwarg)
+        result = solana_client.send_transaction(txn)
+        tx_signature = str(result.value)
+        
+        logger.info(f"Solana transaction successful: {tx_signature}")
+        return tx_signature
+
+    except Exception as e:
+        logger.error(f"Transaction failed: {e}\n{traceback.format_exc()}")  
+        raise ValueError(f"Transaction failed: {e}")
+
+
+
+
 
 # Load environment variables
 ARBITRUM_RPC = os.getenv("ARBITRUM_RPC_URL", "https://arb1.arbitrum.io/rpc")
