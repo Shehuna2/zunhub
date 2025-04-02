@@ -87,50 +87,62 @@ def validate_solana_address(wallet_address: str) -> bool:
     except Exception:
         return False
 
-def send_solana(receiver_address: str, amount_sol: float) -> str:
-    logger.info(f"Initiating SOL transfer: {amount_sol} SOL -> {receiver_address}")
+def send_solana(receiver_address: str, purchase_sol: float) -> tuple[str, float]:
+    """
+    Send SOL to a recipient, including rent if the wallet is unfunded.
+    
+    Args:
+        receiver_address (str): Recipient's Solana wallet address.
+        purchase_sol (float): SOL amount the user is buying.
+    
+    Returns:
+        tuple[str, float]: Transaction signature and rent amount included (0 if funded).
+    """
+    logger.info(f"Initiating SOL transfer: {purchase_sol} SOL -> {receiver_address}")
     
     if not validate_solana_address(receiver_address):
         raise ValueError(f"Invalid receiver address: {receiver_address}")
     
-    sender_pubkey = SOLANA_SENDER_KEYPAIR.pubkey()  # solders syntax
+    sender_pubkey = SOLANA_SENDER_KEYPAIR.pubkey()
     sender_balance = check_solana_balance(str(sender_pubkey))
     
-    if sender_balance < amount_sol:
-        raise ValueError(f"Insufficient balance: {sender_balance} SOL, need {amount_sol} SOL")
+    # Check recipient balance for rent requirement
+    receiver_balance = check_solana_balance(receiver_address)
+    rent_exemption = 0.00089  # Rent-exempt amount for a basic account
+    rent_sol = rent_exemption if receiver_balance == 0 else 0
+    total_sol = purchase_sol + rent_sol  # Total to send (excludes gas, paid separately)
+    
+    if sender_balance < total_sol:
+        raise ValueError(f"Insufficient balance: {sender_balance} SOL, need {total_sol} SOL")
 
     try:
         receiver_pubkey = Pubkey.from_string(receiver_address)
         transfer_ix = transfer(TransferParams(
             from_pubkey=sender_pubkey,
             to_pubkey=receiver_pubkey,
-            lamports=int(amount_sol * 1_000_000_000)
+            lamports=int(total_sol * 1_000_000_000)
         ))
         
-        # Fetch recent blockhash
         blockhash_resp = solana_client.get_latest_blockhash()
         recent_blockhash = blockhash_resp.value.blockhash
         
-        # Create message with instructions and blockhash
         msg = Message.new_with_blockhash(
             instructions=[transfer_ix],
             payer=sender_pubkey,
             blockhash=recent_blockhash
         )
         
-        # Create transaction with all required args
         txn = Transaction(
             from_keypairs=[SOLANA_SENDER_KEYPAIR],
             message=msg,
             recent_blockhash=recent_blockhash
         )
         
-        # Send transaction (no signers kwarg)
         result = solana_client.send_transaction(txn)
         tx_signature = str(result.value)
         
         logger.info(f"Solana transaction successful: {tx_signature}")
-        return tx_signature
+        return tx_signature, rent_sol
 
     except Exception as e:
         logger.error(f"Transaction failed: {e}\n{traceback.format_exc()}")  
