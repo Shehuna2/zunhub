@@ -78,6 +78,29 @@
     </div>
   </div>
 
+  <!-- Success Modal -->
+  <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 transform transition-all duration-300 scale-95">
+      <div class="flex items-center mb-4">
+        <svg class="w-8 h-8 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        <h3 class="text-xl font-semibold text-white">Purchase Successful!</h3>
+      </div>
+      <p id="successMessage" class="text-gray-300 mb-4"></p>
+      <div class="bg-gray-700 p-3 rounded-md flex items-center justify-between mb-4">
+        <span id="txHash" class="text-gray-200 text-sm break-all"></span>
+        <button id="copyTxHash" class="ml-2 bg-blue-600 hover:bg-blue-700 text-white text-sm px-2 py-1 rounded flex items-center">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+          </svg>
+          Copy
+        </button>
+      </div>
+      <button id="closeModal" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">Got it!</button>
+    </div>
+  </div>
+
   <script>
     document.addEventListener("DOMContentLoaded", function () {
         const amountInput = document.getElementById("amountInput");
@@ -90,6 +113,11 @@
         const confirmPurchaseBtn = document.getElementById("confirmPurchaseBtn");
         const processingText = document.getElementById("processingText");
         const csrfToken = document.getElementById("csrfToken").value;
+        const successModal = document.getElementById("successModal");
+        const successMessage = document.getElementById("successMessage");
+        const txHashDisplay = document.getElementById("txHash");
+        const copyTxHashBtn = document.getElementById("copyTxHash");
+        const closeModalBtn = document.getElementById("closeModal");
 
         let cryptoPrice = parseFloat("{{ crypto_price|floatformat:2 }}");
         const exchangeRate = parseFloat("{{ exchange_rate|floatformat:2 }}");
@@ -99,7 +127,7 @@
                 const tonRegex = /^(EQ|UQ)[A-Za-z0-9_-]{46}$/;
                 return tonRegex.test(address);
             } else if (symbol === "SOL") {
-                return true
+                return true;
             } else {
                 return Web3.utils.isAddress(address);
             }
@@ -157,13 +185,33 @@
                 confirmPurchaseBtn.disabled = false;
                 processingText.classList.add("hidden");
                 if (data.success) {
-                    alert("Purchase successful!");
-                    window.location.href = "{% url 'asset_list' %}";
+                    successMessage.innerText = data.message;
+                    txHashDisplay.innerText = data.tx_hash;
+                    successModal.classList.remove("hidden");
+                    setTimeout(() => successModal.querySelector("div").classList.remove("scale-95"), 10);
                 } else {
                     walletError.classList.remove("hidden");
                     walletError.innerText = data.error || "Transaction failed.";
                 }
             });
+        });
+
+        copyTxHashBtn.addEventListener("click", function () {
+            navigator.clipboard.writeText(txHashDisplay.innerText).then(() => {
+                copyTxHashBtn.innerText = "Copied!";
+                copyTxHashBtn.classList.remove("bg-blue-600");
+                copyTxHashBtn.classList.add("bg-green-600");
+                setTimeout(() => {
+                    copyTxHashBtn.innerText = "Copy";
+                    copyTxHashBtn.classList.remove("bg-green-600");
+                    copyTxHashBtn.classList.add("bg-blue-600");
+                }, 2000);
+            });
+        });
+
+        closeModalBtn.addEventListener("click", function () {
+            successModal.classList.add("hidden");
+            window.location.href = "{% url 'asset_list' %}";
         });
 
         amountInput.addEventListener("input", updateCostAndCrypto);
