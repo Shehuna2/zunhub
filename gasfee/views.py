@@ -20,7 +20,7 @@ from p2p.models import Wallet
 from .models import CryptoPurchase, Crypto
 from .utils import (
     get_crypto_price, get_exchange_rate, send_bsc, check_solana_balance, 
-    send_evm, send_solana, validate_solana_address,
+    send_evm, send_solana, validate_solana_address, send_ton, validate_ton_address
 )
 from dotenv import load_dotenv
 
@@ -120,6 +120,11 @@ def buy_crypto(request, crypto_id):
                     logger.warning(f"Invalid Solana address: {wallet_address}")
                     return JsonResponse({"success": False, "error": "Invalid Solana address format."})
                 logger.info(f"Valid Solana address: {wallet_address}")
+            elif crypto.symbol.upper() == "TON":
+                if not validate_ton_address(wallet_address):
+                    logger.warning(f"Invalid TON address: {wallet_address}")
+                    return JsonResponse({"success": False, "error": "Invalid TON address format."})
+                logger.info(f"Valid TON address: {wallet_address}")
             else:
                 return JsonResponse({"success": False, "error": "Unsupported token."})
 
@@ -133,6 +138,8 @@ def buy_crypto(request, crypto_id):
                     # Verify rent consistency (optional safety check)
                     if Decimal(str(actual_rent_sol)) != rent_sol:
                         logger.warning(f"Rent mismatch: expected {rent_sol}, sent {actual_rent_sol}")
+                elif crypto.symbol.upper() == "TON":
+                    tx_hash = send_ton(wallet_address, float(crypto_received))
                 elif "ETH" in crypto.symbol.upper():
                     evm_network = crypto.symbol.split("-")[-1]
                     tx_hash = send_evm(evm_network, wallet_address, Web3.to_wei(crypto_received, "ether"))
@@ -169,7 +176,7 @@ def buy_crypto(request, crypto_id):
         "crypto_price": crypto_price,
     })
 
-
+    
 def asset_list(request):
     """Returns a list of available crypto assets."""
     cryptos = Crypto.objects.all()
