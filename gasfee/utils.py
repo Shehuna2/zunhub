@@ -1,6 +1,8 @@
 import os
+import json 
 import time
 import base58
+import base64
 import requests
 import logging
 import traceback
@@ -8,6 +10,10 @@ from decimal import Decimal
 from django.core.cache import cache
 from web3 import Web3
 from dotenv import load_dotenv
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+import requests.exceptions
+from requests.exceptions import HTTPError
+
 
 from solders.keypair import Keypair
 from solders.pubkey import Pubkey
@@ -19,6 +25,7 @@ from solders.message import Message
 # TON-specific imports
 from tonsdk.contract.wallet import Wallets, WalletVersionEnum
 from tonsdk.utils import to_nano, Address
+
 
 # Load environment variables
 load_dotenv()
@@ -58,9 +65,14 @@ except Exception as e:
     logger.error(f"Invalid SOLANA_PRIVATE_KEY: {e}")
     raise ValueError(f"Invalid SOLANA_PRIVATE_KEY format: {e}")
 
+
+
 # TON setup
 TON_MNEMONIC = get_env_var("TON_MNEMONIC", required=True).split()
-TON_API_URL = "https://toncenter.com/api/v2/jsonRPC"
+PRIMARY_TON_URL = "https://toncenter.com/api/v2/jsonRPC"
+SECONDARY_TON_URL = "https://tonapi.io/api/v2/jsonRPC"  # Adjust if different
+TON_API_KEY = get_env_var("TON_API_KEY", required=True)
+
 
 if len(TON_MNEMONIC) != 24:
     raise ValueError(f"TON_MNEMONIC must contain exactly 24 words, got {len(TON_MNEMONIC)}")
@@ -137,7 +149,44 @@ def send_solana(receiver_address: str, purchase_sol: float) -> tuple[str, float]
         logger.error(f"Transaction failed: {e}\n{traceback.format_exc()}")
         raise ValueError(f"Transaction failed: {e}")
 
-# TON-specific functions
+
+
+def make_ton_api_call(payload):
+    """Make a TON API call with fallback to secondary endpoint."""
+    headers = {"X-API-Key": TON_API_KEY} if TON_API_KEY else {}
+    
+    # Attempt Primary Endpoint
+    try:
+        response = requests.post(PRIMARY_TON_URL, json=payload, headers=headers)
+        logger.debug(f"[Primary] Request: {json.dumps(payload, indent=2)}")
+        logger.debug(f"[Primary] Response: {response.text}")
+        response.raise_for_status()
+        return response.json()
+    except requests.HTTPError as e:
+        logger.error(f"Primary TON API failed: {e} - Response: {response.text}")
+        
+        # Attempt Secondary Endpoint
+        try:
+            response = requests.post(SECONDARY_TON_URL, json=payload, headers=headers)
+            logger.debug(f"[Fallback] Request: {json.dumps(payload, indent=2)}")
+            logger.debug(f"[Fallback] Response: {response.text}")
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e2:
+            logger.error(f"Fallback TON API failed: {e2} - Response: {response.text}")
+            raise ValueError(f"Both TON API calls failed: {e2} - Last response: {response.text}")
+
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=1, max=10),
+    retry=retry_if_exception_type((requests.exceptions.RequestException, ValueError))
+)
+def ensure_wallet_active(address: str):
+    """Ensure the wallet is active/deployed with retry."""
+    if not is_ton_wallet_deployed(address):
+        raise ValueError(f"Wallet {address} is not active/deployed")
+    logger.info(f"Wallet {address} is active/deployed")
+
 def check_ton_balance(address: str) -> float:
     """Check the TON balance of an address."""
     try:
@@ -147,9 +196,8 @@ def check_ton_balance(address: str) -> float:
             "method": "getAddressBalance",
             "params": {"address": address}
         }
-        response = requests.post(TON_API_URL, json=payload)
-        response.raise_for_status()
-        result = response.json()
+        print("Sending TON Payload:", json.dumps(payload, indent=2))
+        result = make_ton_api_call(payload)
         if 'result' in result:
             balance = int(result['result']) / 1_000_000_000  # TON uses 9 decimals
             logger.info(f"Balance for {address}: {balance} TON")
@@ -159,6 +207,30 @@ def check_ton_balance(address: str) -> float:
         logger.error(f"Failed to fetch TON balance for {address}: {e}")
         raise ValueError(f"Failed to fetch TON balance: {e}")
 
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=1, max=10),
+    retry=retry_if_exception_type((requests.exceptions.RequestException, ValueError))
+)
+def is_ton_wallet_deployed(address: str) -> bool:
+    """Check if a TON wallet is deployed by querying its state with retry."""
+    try:
+        payload = {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "getAddressInformation",
+            "params": {"address": address}
+        }
+        print("Sending TON Payload:", json.dumps(payload, indent=2))
+        result = make_ton_api_call(payload)
+        if 'result' in result:
+            state = result['result']['state']
+            return state == "active"
+        return False
+    except Exception as e:
+        logger.error(f"Failed to check TON wallet state for {address}: {e}")
+        return False  # Fallback to assume undeployed on error
+
 def validate_ton_address(address: str) -> bool:
     """Validate a TON address."""
     try:
@@ -167,8 +239,13 @@ def validate_ton_address(address: str) -> bool:
     except Exception:
         return False
 
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=1, max=10),
+    retry=retry_if_exception_type((requests.exceptions.RequestException, ValueError))
+)
 def get_ton_seqno(address: str) -> int:
-    """Get the sequence number (seqno) for the sender's wallet."""
+    """Get the sequence number (seqno) for the sender's wallet with retry."""
     try:
         payload = {
             "id": 1,
@@ -180,28 +257,80 @@ def get_ton_seqno(address: str) -> int:
                 "stack": []
             }
         }
-        response = requests.post(TON_API_URL, json=payload)
-        response.raise_for_status()
-        result = response.json()
+        print("Sending TON Payload:", json.dumps(payload, indent=2))
+        result = make_ton_api_call(payload)
         if 'result' in result and result['result']['stack']:
             seqno = int(result['result']['stack'][0][1], 16)
             return seqno
         raise ValueError("No seqno data in response")
     except Exception as e:
         logger.error(f"Failed to get TON seqno for {address}: {e}")
-        raise ValueError(f"Failed to get TON seqno: {e}")
+        raise
 
-def send_ton(receiver_address: str, amount_ton: float) -> str:
-    """Send TON to a recipient address."""
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=1, max=10),
+    retry=retry_if_exception_type((requests.exceptions.RequestException, ValueError))
+)
+def send_ton(receiver_address: str, amount_ton: float) -> tuple[str, float]:
+    """Send TON to the receiver address with transaction confirmation."""
     logger.info(f"Initiating TON transfer: {amount_ton} TON -> {receiver_address}")
     if not validate_ton_address(receiver_address):
         raise ValueError(f"Invalid TON receiver address: {receiver_address}")
+
+    ensure_wallet_active(TON_SENDER_ADDRESS)
     sender_balance = check_ton_balance(TON_SENDER_ADDRESS)
-    total_ton = amount_ton + 0.01  # Add 0.01 TON as a fee buffer
+    deployment_amount = 0.05  # TON deployment cost
+    fee_buffer = 0.01  # Fee buffer
+    total_ton = amount_ton + fee_buffer
+
+    is_deployed = is_ton_wallet_deployed(receiver_address)
+    if not is_deployed:
+        logger.info(f"Recipient wallet {receiver_address} is not deployed. Deploying...")
+        total_ton += deployment_amount + fee_buffer
+
     if sender_balance < total_ton:
         raise ValueError(f"Insufficient balance: {sender_balance} TON, need {total_ton} TON")
+
+    # Get initial seqno before any transaction
+    initial_seqno = get_ton_seqno(TON_SENDER_ADDRESS)
+    logger.info(f"Current seqno: {initial_seqno}")
+
     try:
-        seqno = get_ton_seqno(TON_SENDER_ADDRESS)
+        seqno = initial_seqno
+
+        # Handle wallet deployment if needed
+        if not is_deployed:
+            destination = Address(receiver_address)
+            deploy_amount = to_nano(deployment_amount, 'ton')
+            deploy_transfer = TON_SENDER_WALLET.create_transfer_message(
+                to_addr=destination,
+                amount=deploy_amount,
+                seqno=seqno,
+                payload=None
+            )
+            deploy_boc = base64.b64encode(deploy_transfer["message"].to_boc(False)).decode('ascii')
+            logger.debug(f"Deployment BoC: {deploy_boc}")
+            payload = {
+                "id": 1,
+                "jsonrpc": "2.0",
+                "method": "sendBoc",
+                "params": {"boc": deploy_boc}
+            }
+            print("Sending Deployment TON Payload:", json.dumps(payload, indent=2))
+            result = make_ton_api_call(payload)
+            if not result.get('ok', False):
+                raise ValueError(f"Deployment failed: {result}")
+            
+            # Wait and confirm deployment
+            time.sleep(10)
+            while not is_ton_wallet_deployed(receiver_address):
+                logger.info("Waiting for wallet deployment...")
+                time.sleep(5)
+            seqno = get_ton_seqno(TON_SENDER_ADDRESS)  # Refresh seqno after deployment
+            logger.info(f"Updated seqno after deployment: {seqno}")
+
+        # Send the actual transfer
         destination = Address(receiver_address)
         amount = to_nano(amount_ton, 'ton')
         transfer = TON_SENDER_WALLET.create_transfer_message(
@@ -210,24 +339,37 @@ def send_ton(receiver_address: str, amount_ton: float) -> str:
             seqno=seqno,
             payload=None
         )
-        message_boc = transfer["message"].to_boc(False).hex()
+        message_boc = base64.b64encode(transfer["message"].to_boc(False)).decode('ascii')
+        logger.debug(f"Transfer BoC: {message_boc}")
         payload = {
             "id": 1,
             "jsonrpc": "2.0",
             "method": "sendBoc",
             "params": {"boc": message_boc}
         }
-        response = requests.post(TON_API_URL, json=payload)
-        response.raise_for_status()
-        result = response.json()
-        if 'result' in result:
-            tx_hash = result['result']['transaction_id']['hash']
-            logger.info(f"TON transaction successful: {tx_hash}")
-            return tx_hash
-        raise ValueError("Transaction failed: no result in response")
+        print("Sending Transfer TON Payload:", json.dumps(payload, indent=2))
+        result = make_ton_api_call(payload)
+        
+        # Confirm transaction success by checking seqno
+        if result.get('ok', False):
+            max_attempts = 5
+            for attempt in range(max_attempts):
+                time.sleep(10)  # Wait for blockchain processing
+                new_seqno = get_ton_seqno(TON_SENDER_ADDRESS)
+                if new_seqno > seqno:
+                    logger.info(f"Transaction confirmed with seqno: {new_seqno}")
+                    # Attempt to retrieve transaction hash (TON doesn't return it directly in sendBoc)
+                    tx_hash = "unknown"  # Placeholder; see note below
+                    return tx_hash, deployment_amount if not is_deployed else 0
+                logger.info(f"Attempt {attempt + 1}/{max_attempts}: seqno still {new_seqno}")
+            raise ValueError("Transaction not confirmed: seqno did not increment")
+        else:
+            raise ValueError(f"Transaction failed: invalid response - {result}")
+
     except Exception as e:
         logger.error(f"TON transaction failed: {e}\n{traceback.format_exc()}")
         raise ValueError(f"TON transaction failed: {e}")
+    
 
 # EVM setup (unchanged)
 ARBITRUM_RPC = os.getenv("ARBITRUM_RPC_URL", "https://arb1.arbitrum.io/rpc")
