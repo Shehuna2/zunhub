@@ -72,29 +72,31 @@ def buy_crypto(request, crypto_id):
             
             logger.info(f"Processing purchase: {amount} {currency} for {crypto_received:.6f} {crypto.symbol} to {wallet_address}")
 
-            # Handle SOL rent cost within atomic transaction
+            # Handle rent/deployment costs within atomic transaction
             with transaction.atomic():
                 wallet = Wallet.objects.select_for_update().get(user=request.user)
                 total_ngn_deducted = total_price_ngn
                 
                 if crypto.symbol.upper() == "SOL":
-                    # Check recipient balance to estimate rent cost
                     receiver_balance = check_solana_balance(wallet_address)
                     rent_exemption = Decimal('0.00089')
                     rent_sol = rent_exemption if receiver_balance == 0 else Decimal('0')
                     rent_ngn = (rent_sol * crypto_price * exchange_rate).quantize(Decimal('0.01'))
                     total_ngn_deducted += rent_ngn
+                elif crypto.symbol.upper() == "TON":
+                    # Assume max deployment cost upfront
+                    deployment_ton = Decimal('0.05')  # Match utils.py
+                    deployment_ngn = (deployment_ton * crypto_price * exchange_rate).quantize(Decimal('0.01'))
+                    total_ngn_deducted += deployment_ngn
                 else:
-                    rent_sol = Decimal('0')  # No rent for non-SOL
-                    
-                # Check balance with rent included
+                    rent_sol = Decimal('0')  # No rent/deployment for others
+                
                 if wallet.balance < total_ngn_deducted:
                     return JsonResponse({
                         "success": False,
                         "error": f"Insufficient NGN balance. Required: {total_ngn_deducted}, Available: {wallet.balance}"
                     })
 
-                # Deduct total NGN (purchase + rent if applicable)
                 wallet.balance -= total_ngn_deducted
                 wallet.save(update_fields=["balance"])
 
@@ -104,12 +106,12 @@ def buy_crypto(request, crypto_id):
                     input_amount=amount,
                     input_currency=currency,
                     crypto_amount=crypto_received,
-                    total_price=total_ngn_deducted,  # Reflects total including rent
+                    total_price=total_ngn_deducted,  # Includes potential deployment/rent
                     wallet_address=wallet_address,
                     status="pending"
                 )
 
-            # Validate wallet address based on the crypto type
+            # Validate wallet address
             if crypto.symbol.upper() == "BNB" or "ETH" in crypto.symbol.upper():
                 try:
                     wallet_address = Web3.to_checksum_address(wallet_address)
@@ -128,18 +130,25 @@ def buy_crypto(request, crypto_id):
             else:
                 return JsonResponse({"success": False, "error": "Unsupported token."})
 
-            # Handle different chains
+            # Handle transaction
             try:
                 logger.info(f"Attempting transfer for symbol: {crypto.symbol.upper()}")
                 if crypto.symbol.upper() == "BNB":
                     tx_hash = send_bsc(wallet_address, crypto_received)
                 elif crypto.symbol.upper() == "SOL":
                     tx_hash, actual_rent_sol = send_solana(wallet_address, float(crypto_received))
-                    # Verify rent consistency (optional safety check)
                     if Decimal(str(actual_rent_sol)) != rent_sol:
                         logger.warning(f"Rent mismatch: expected {rent_sol}, sent {actual_rent_sol}")
                 elif crypto.symbol.upper() == "TON":
-                    tx_hash = send_ton(wallet_address, float(crypto_received))
+                    tx_hash, actual_deployment_ton = send_ton(wallet_address, float(crypto_received))
+                    # Adjust if deployment wasn’t needed
+                    if actual_deployment_ton == 0:
+                        refund_amount = deployment_ngn
+                        wallet.balance += refund_amount
+                        wallet.save(update_fields=["balance"])
+                        total_ngn_deducted -= refund_amount
+                        order.total_price = total_ngn_deducted
+                        order.save(update_fields=["total_price"])
                 elif "ETH" in crypto.symbol.upper():
                     evm_network = crypto.symbol.split("-")[-1]
                     tx_hash = send_evm(evm_network, wallet_address, Web3.to_wei(crypto_received, "ether"))
@@ -153,6 +162,8 @@ def buy_crypto(request, crypto_id):
                 message = f"Your {crypto_received:.6f} {crypto.symbol} has been sent!"
                 if crypto.symbol.upper() == "SOL" and rent_sol > 0:
                     message += f" (includes {rent_sol:.6f} SOL rent for unfunded wallet)"
+                elif crypto.symbol.upper() == "TON" and actual_deployment_ton > 0:
+                    message += f" (includes {actual_deployment_ton:.6f} TON for wallet deployment)"
 
                 return JsonResponse({
                     "success": True,
@@ -162,8 +173,6 @@ def buy_crypto(request, crypto_id):
                 })
             except Exception as tx_error:
                 logger.error(f"Crypto transfer failed: {tx_error}\n{traceback.format_exc()}")
-
-                # Refund on failure
                 refund_user(request, order)
                 return JsonResponse({"success": False, "error": "Transaction failed. Refund issued."})
 
