@@ -11,6 +11,20 @@ class Crypto(models.Model):
         ('BASE', 'Base'),
         ('OP', 'Optimism'),
         ('SOL', 'Solana'),
+        ('TON', 'The-Open-Network'),
+        ('SUI', 'Sui-Network'),
+        ('NEAR', 'Near-Protocol'),
+        ('POL', 'Polygon'),
+        ('AVAX', 'Avalanche'),
+        ('TRON', 'Tron'),
+        ('XRP', 'XRP Ledger'),
+        ('ADA', 'Cardano'),
+        ('DOT', 'Polkadot'),
+        ('LTC', 'Litecoin'),
+        ('DOGE', 'Dogecoin'),
+        ('SHIB', 'Shiba Inu'),
+        ('MATIC', 'Polygon-MATIC'),
+        ('FIL', 'Filecoin'),
     ]
     name = models.CharField(max_length=50)
     symbol = models.CharField(max_length=10, unique=True)
