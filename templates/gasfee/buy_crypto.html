@@ -186,6 +186,7 @@
             })
             .then(response => response.json())
             .then(data => {
+                console.log("Server response:", data); 
                 confirmPurchaseBtn.disabled = false;
                 processingText.classList.add("hidden");
                 if (data.success) {

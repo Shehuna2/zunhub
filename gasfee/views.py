@@ -140,7 +140,8 @@ def buy_crypto(request, crypto_id):
                     if Decimal(str(actual_rent_sol)) != rent_sol:
                         logger.warning(f"Rent mismatch: expected {rent_sol}, sent {actual_rent_sol}")
                 elif crypto.symbol.upper() == "TON":
-                    tx_hash, actual_deployment_ton = send_ton(wallet_address, float(crypto_received))
+                    tx_hash, actual_deployment_ton = send_ton(wallet_address, float(crypto_received), order.id)
+                    logger.info(f"Transaction hash from send_ton: {tx_hash}")  
                     # Adjust if deployment wasn’t needed
                     if actual_deployment_ton == 0:
                         refund_amount = deployment_ngn
