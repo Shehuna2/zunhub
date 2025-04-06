@@ -8,6 +8,7 @@ import logging
 import traceback
 from decimal import Decimal
 from django.core.cache import cache
+from django.conf import settings
 from web3 import Web3
 from dotenv import load_dotenv
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
@@ -85,70 +86,6 @@ mnemonics_returned, pub_k, priv_k, TON_SENDER_WALLET = Wallets.from_mnemonics(
 )
 TON_SENDER_ADDRESS = TON_SENDER_WALLET.address.to_string(True, True, True)
 logger.info(f"TON Sender Address: {TON_SENDER_ADDRESS}")
-
-# Solana functions (unchanged)
-def check_solana_balance(wallet_address) -> float:
-    try:
-        if isinstance(wallet_address, Pubkey):
-            pubkey = wallet_address
-        else:
-            pubkey = Pubkey.from_string(wallet_address)
-        balance = solana_client.get_balance(pubkey)
-        sol_balance = balance.value / 1_000_000_000
-        if sol_balance < 0:
-            raise ValueError(f"Insufficient balance: {sol_balance} SOL")
-        logger.info(f"Balance for {pubkey}: {sol_balance} SOL")
-        return sol_balance
-    except Exception as e:
-        logger.error(f"Failed to fetch balance for {pubkey}: {e}")
-        raise ValueError(f"Failed to fetch balance: {e}")
-
-def validate_solana_address(wallet_address: str) -> bool:
-    try:
-        Pubkey.from_string(wallet_address)
-        return True
-    except Exception:
-        return False
-
-def send_solana(receiver_address: str, purchase_sol: float) -> tuple[str, float]:
-    logger.info(f"Initiating SOL transfer: {purchase_sol} SOL -> {receiver_address}")
-    if not validate_solana_address(receiver_address):
-        raise ValueError(f"Invalid receiver address: {receiver_address}")
-    sender_pubkey = SOLANA_SENDER_KEYPAIR.pubkey()
-    sender_balance = check_solana_balance(str(sender_pubkey))
-    receiver_balance = check_solana_balance(receiver_address)
-    rent_exemption = 0.00089
-    rent_sol = rent_exemption if receiver_balance == 0 else 0
-    total_sol = purchase_sol + rent_sol
-    if sender_balance < total_sol:
-        raise ValueError(f"Insufficient balance: {sender_balance} SOL, need {total_sol} SOL")
-    try:
-        receiver_pubkey = Pubkey.from_string(receiver_address)
-        transfer_ix = transfer(TransferParams(
-            from_pubkey=sender_pubkey,
-            to_pubkey=receiver_pubkey,
-            lamports=int(total_sol * 1_000_000_000)
-        ))
-        blockhash_resp = solana_client.get_latest_blockhash()
-        recent_blockhash = blockhash_resp.value.blockhash
-        msg = Message.new_with_blockhash(
-            instructions=[transfer_ix],
-            payer=sender_pubkey,
-            blockhash=recent_blockhash
-        )
-        txn = Transaction(
-            from_keypairs=[SOLANA_SENDER_KEYPAIR],
-            message=msg,
-            recent_blockhash=recent_blockhash
-        )
-        result = solana_client.send_transaction(txn)
-        tx_signature = str(result.value)
-        logger.info(f"Solana transaction successful: {tx_signature}")
-        return tx_signature, rent_sol
-    except Exception as e:
-        logger.error(f"Transaction failed: {e}\n{traceback.format_exc()}")
-        raise ValueError(f"Transaction failed: {e}")
-
 
 
 def make_ton_api_call(payload):
@@ -267,12 +204,36 @@ def get_ton_seqno(address: str) -> int:
         logger.error(f"Failed to get TON seqno for {address}: {e}")
         raise
 
+
+def estimate_ton_fee(sender_address: str) -> float:
+    """Estimate the TON transfer fee based on recent transactions."""
+    try:
+        payload = {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "getTransactions",
+            "params": {
+                "address": sender_address,
+                "limit": 5  # Look at the last 5 transactions
+            }
+        }
+        result = make_ton_api_call(payload)  # Your existing API call function
+        if 'result' in result:
+            fees = [int(tx['fee']) / 1_000_000_000 for tx in result['result'] if 'fee' in tx]
+            if fees:
+                avg_fee = sum(fees) / len(fees)
+                return avg_fee * 1.5  # Add a 50% buffer
+        return 0.01  # Default to 0.01 TON if no data
+    except Exception as e:
+        print(f"Fee estimation failed: {e}")
+        return 0.01  # Fallback value
+
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=1, max=10),
     retry=retry_if_exception_type((requests.exceptions.RequestException, ValueError))
 )
-def send_ton(receiver_address: str, amount_ton: float) -> tuple[str, float]:
+def send_ton(receiver_address: str, amount_ton: float, order_id: int) -> tuple[str, float]:
     """Send TON to the receiver address with transaction confirmation."""
     logger.info(f"Initiating TON transfer: {amount_ton} TON -> {receiver_address}")
     if not validate_ton_address(receiver_address):
@@ -281,7 +242,7 @@ def send_ton(receiver_address: str, amount_ton: float) -> tuple[str, float]:
     ensure_wallet_active(TON_SENDER_ADDRESS)
     sender_balance = check_ton_balance(TON_SENDER_ADDRESS)
     deployment_amount = 0.05  # TON deployment cost
-    fee_buffer = 0.01  # Fee buffer
+    fee_buffer = estimate_ton_fee(TON_SENDER_ADDRESS)
     total_ton = amount_ton + fee_buffer
 
     is_deployed = is_ton_wallet_deployed(receiver_address)
@@ -340,26 +301,27 @@ def send_ton(receiver_address: str, amount_ton: float) -> tuple[str, float]:
             payload=None
         )
         message_boc = base64.b64encode(transfer["message"].to_boc(False)).decode('ascii')
-        logger.debug(f"Transfer BoC: {message_boc}")
         payload = {
             "id": 1,
             "jsonrpc": "2.0",
             "method": "sendBoc",
             "params": {"boc": message_boc}
         }
-        print("Sending Transfer TON Payload:", json.dumps(payload, indent=2))
         result = make_ton_api_call(payload)
         
         # Confirm transaction success by checking seqno
         if result.get('ok', False):
             max_attempts = 5
-            for attempt in range(max_attempts):
-                time.sleep(10)  # Wait for blockchain processing
+            for attempt in range(settings.TON_SEQNO_MAX_ATTEMPTS):
+                time.sleep(settings.TON_SEQNO_CHECK_INTERVAL)
                 new_seqno = get_ton_seqno(TON_SENDER_ADDRESS)
                 if new_seqno > seqno:
                     logger.info(f"Transaction confirmed with seqno: {new_seqno}")
-                    # Attempt to retrieve transaction hash (TON doesn't return it directly in sendBoc)
-                    tx_hash = "unknown"  # Placeholder; see note below
+                    # Attempt to get the hash, but don’t fail if it’s not found
+                    tx_hash = get_transaction_hash(TON_SENDER_ADDRESS, receiver_address, amount_ton)
+                    if tx_hash == "pending":
+                        from .tasks import update_ton_tx_hash
+                        update_ton_tx_hash.delay(order_id, TON_SENDER_ADDRESS, receiver_address, amount_ton)
                     return tx_hash, deployment_amount if not is_deployed else 0
                 logger.info(f"Attempt {attempt + 1}/{max_attempts}: seqno still {new_seqno}")
             raise ValueError("Transaction not confirmed: seqno did not increment")
@@ -369,7 +331,109 @@ def send_ton(receiver_address: str, amount_ton: float) -> tuple[str, float]:
     except Exception as e:
         logger.error(f"TON transaction failed: {e}\n{traceback.format_exc()}")
         raise ValueError(f"TON transaction failed: {e}")
-    
+
+def get_transaction_hash(sender_address: str, receiver_address: str, amount_ton: float) -> str:
+    """Retrieve the transaction hash with retries and fallback."""
+    max_attempts = 3
+    for attempt in range(max_attempts):
+        try:
+            payload = {
+                "id": 1,
+                "jsonrpc": "2.0",
+                "method": "getTransactions",
+                "params": {
+                    "address": sender_address,
+                    "limit": 20  # Increase limit to catch more transactions
+                }
+            }
+            result = make_ton_api_call(payload)
+            if 'result' in result:
+                transactions = result['result']
+                amount_nano = to_nano(amount_ton, 'ton')
+                for tx in transactions:
+                    if tx['out_msgs']:
+                        for out_msg in tx['out_msgs']:
+                            tx_value = int(out_msg['value'])
+                            # Allow some tolerance for fees
+                            if (out_msg['destination'] == receiver_address and 
+                                abs(tx_value - amount_nano) < 10_000_000):  # 0.01 TON tolerance
+                                return tx['transaction_id']['hash']
+                logger.warning(f"Attempt {attempt + 1}/{max_attempts}: No matching transaction found for {amount_ton} TON to {receiver_address}")
+            else:
+                logger.warning(f"Attempt {attempt + 1}/{max_attempts}: No transaction data in response")
+        except Exception as e:
+            logger.error(f"Attempt {attempt + 1}/{max_attempts}: Failed to retrieve transaction hash: {e}")
+        
+        if attempt < max_attempts - 1:
+            time.sleep(5)  # Wait before retrying
+
+    logger.warning(f"Could not retrieve transaction hash after {max_attempts} attempts")
+    return "pending"  # Fallback to indicate success without hash
+
+# Solana functions (unchanged)
+def check_solana_balance(wallet_address) -> float:
+    try:
+        if isinstance(wallet_address, Pubkey):
+            pubkey = wallet_address
+        else:
+            pubkey = Pubkey.from_string(wallet_address)
+        balance = solana_client.get_balance(pubkey)
+        sol_balance = balance.value / 1_000_000_000
+        if sol_balance < 0:
+            raise ValueError(f"Insufficient balance: {sol_balance} SOL")
+        logger.info(f"Balance for {pubkey}: {sol_balance} SOL")
+        return sol_balance
+    except Exception as e:
+        logger.error(f"Failed to fetch balance for {pubkey}: {e}")
+        raise ValueError(f"Failed to fetch balance: {e}")
+
+def validate_solana_address(wallet_address: str) -> bool:
+    try:
+        Pubkey.from_string(wallet_address)
+        return True
+    except Exception:
+        return False
+
+def send_solana(receiver_address: str, purchase_sol: float) -> tuple[str, float]:
+    logger.info(f"Initiating SOL transfer: {purchase_sol} SOL -> {receiver_address}")
+    if not validate_solana_address(receiver_address):
+        raise ValueError(f"Invalid receiver address: {receiver_address}")
+    sender_pubkey = SOLANA_SENDER_KEYPAIR.pubkey()
+    sender_balance = check_solana_balance(str(sender_pubkey))
+    receiver_balance = check_solana_balance(receiver_address)
+    rent_exemption = 0.00089
+    rent_sol = rent_exemption if receiver_balance == 0 else 0
+    total_sol = purchase_sol + rent_sol
+    if sender_balance < total_sol:
+        raise ValueError(f"Insufficient balance: {sender_balance} SOL, need {total_sol} SOL")
+    try:
+        receiver_pubkey = Pubkey.from_string(receiver_address)
+        transfer_ix = transfer(TransferParams(
+            from_pubkey=sender_pubkey,
+            to_pubkey=receiver_pubkey,
+            lamports=int(total_sol * 1_000_000_000)
+        ))
+        blockhash_resp = solana_client.get_latest_blockhash()
+        recent_blockhash = blockhash_resp.value.blockhash
+        msg = Message.new_with_blockhash(
+            instructions=[transfer_ix],
+            payer=sender_pubkey,
+            blockhash=recent_blockhash
+        )
+        txn = Transaction(
+            from_keypairs=[SOLANA_SENDER_KEYPAIR],
+            message=msg,
+            recent_blockhash=recent_blockhash
+        )
+        result = solana_client.send_transaction(txn)
+        tx_signature = str(result.value)
+        logger.info(f"Solana transaction successful: {tx_signature}")
+        return tx_signature, rent_sol
+    except Exception as e:
+        logger.error(f"Transaction failed: {e}\n{traceback.format_exc()}")
+        raise ValueError(f"Transaction failed: {e}")
+
+
 
 # EVM setup (unchanged)
 ARBITRUM_RPC = os.getenv("ARBITRUM_RPC_URL", "https://arb1.arbitrum.io/rpc")

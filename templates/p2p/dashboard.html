@@ -6,14 +6,23 @@
     <title>Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
-    
+    <style>
+        /* Custom animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        /* Hide scrollbar but keep functionality */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             // Balance Toggle
             document.getElementById("toggle-balance").addEventListener("click", function() {
                 let balance = document.getElementById("wallet-balance");
                 let eyeIcon = document.getElementById("eye-icon");
-
                 if (balance.innerText === "****") {
                     balance.innerText = "₦{{ user.wallet.balance|default:0 }}";
                     eyeIcon.classList.remove("fa-eye-slash");
@@ -26,7 +35,8 @@
             });
 
             // Profile Dropdown
-            document.getElementById("profile-btn").addEventListener("click", function() {
+            document.getElementById("profile-btn").addEventListener("click", function(e) {
+                e.stopPropagation();
                 document.getElementById("profile-menu").classList.toggle("hidden");
             });
 
@@ -37,146 +47,137 @@
                     profileMenu.classList.add("hidden");
                 }
             });
+
+            // Sidebar Toggle for Mobile
+            document.getElementById("sidebar-toggle").addEventListener("click", function() {
+                document.getElementById("sidebar").classList.toggle("hidden");
+            });
         });
     </script>
 </head>
 
-<body class="bg-gray-900 text-white min-h-screen">
-
-<!-- Sticky Header -->
-<header class="bg-gray-900 text-white p-4 fixed top-0 w-full flex items-center justify-between shadow-md z-50">
-    
-    <!-- Profile Icon -->
-    <div class="relative">
-        <button id="profile-btn" class="flex items-center space-x-2">
-            <img src="#" alt="Profile" class="w-8 h-8 rounded-full border border-gray-300">
-            <span class="hidden md:inline">{{ user.username }}</span>
-        </button>
-        
-        <!-- Profile Dropdown (Hidden by Default) -->
-        <div id="profile-menu" class="absolute right-0 mt-2 w-48 bg-white text-black shadow-lg rounded-md hidden">
-            <a href="#" class="block px-4 py-2 hover:bg-gray-200">My Profile</a>
-            <a href="#" class="block px-4 py-2 hover:bg-gray-200 text-red-500">Logout</a>
+<body class="bg-gradient-to-br from-gray-900 to-gray-800 text-white min-h-screen font-sans">
+    <!-- Header -->
+    <header class="bg-gray-900 p-4 fixed top-0 w-full flex items-center justify-between shadow-lg z-50">
+        <div class="flex items-center space-x-3">
+            <!-- Sidebar Toggle (Mobile Only) -->
+            <button id="sidebar-toggle" class="md:hidden text-white text-2xl">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <h1 class="text-xl font-bold">Dashboard</h1>
         </div>
-    </div>
-
-    <!-- Search Bar -->
-    <div class="relative flex items-center bg-gray-800 px-2 rounded-md border border-gray-600">
-        <input type="text" placeholder="Search..." class="w-60 md:w-80 px-3 py-2 bg-transparent text-white focus:outline-none">
-        <button class="text-gray-400 hover:text-white px-2">
-            🔍 <!-- Search Icon -->
-        </button>
-    </div>
-
-    <!-- Icons Section -->
-    <div class="flex items-center space-x-4">
-
-        <!-- Notification Icon -->
-        <button id="notif-btn" class="relative">
-            🔔
-            <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
-                3 <!-- Example notification count -->
-            </span>
-        </button>
-
-        <!-- Additional Icons -->
-        <button class="text-gray-400 hover:text-white">⚙️</button>  <!-- Settings -->
-        <button class="text-gray-400 hover:text-white">📜</button>  <!-- Transactions -->
-        
-    </div>
-</header>
-
-
-<!-- Sidebar + Content -->
-<div class="flex pt-16">
-
-    <!-- Sidebar -->
-    <nav class="bg-gray-800 text-white p-4 fixed bottom-0 w-full flex justify-around items-center 
-            md:relative md:flex-col md:w-64 md:h-screen md:justify-start md:items-start md:space-y-6">
-        {% if request.user.is_merchant %}
-        <a href="{% url 'buyer_orders' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white">
-        📦 <span class="text-xs md:text-base">Orders</span>
-        </a>
-        {% else %}
-        <a href="{% url 'merchant_orders' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white">
-        💰 <span class="text-xs md:text-base">Sales</span>
-        </a>
-        {% endif %}
-        <a href="#" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white">
-        ⚖ <span class="text-xs md:text-base">Disputes</span>
-        </a>
-        <a href="{% url 'logout' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-red-400">
-        🚪 <span class="text-xs md:text-base">Logout</span>
-        </a>
-    </nav>
-
-    <!-- Main Content -->
-    <div class="flex-1 p-6 pt-4 mt-16 md:mt-0">
-        <h2 class="text-3xl font-semibold">Welcome, {{ user.username }} 👋</h2>
-        <p class="text-gray-400">Here’s a quick overview of your account.</p>
-
-        <!-- Wallet Section -->
-        <div class="bg-gray-800 p-6 rounded-lg shadow-md mt-6 text-center">
-            <h3 class="text-xl font-semibold text-green-400">💰 Wallet Balance</h3>
-            <div class="flex items-center justify-center mt-2">
-                <span class="text-3xl font-bold" id="wallet-balance">****</span>
-                <button id="toggle-balance" class="ml-3 text-gray-400 hover:text-white">
-                    <i id="eye-icon" class="fa-solid fa-eye-slash"></i>
+        <div class="flex items-center space-x-4">
+            <!-- Search Bar -->
+            <div class="hidden md:flex relative items-center bg-gray-700 px-2 py-1 rounded-full border border-gray-600">
+                <input type="text" placeholder="Search..." class="w-32 lg:w-48 px-2 py-1 bg-transparent text-white focus:outline-none text-sm">
+                <button class="text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
             </div>
-
-            <!-- Wallet Action Buttons -->
-            <div class="grid grid-cols-2 gap-4 mt-4">
-                <a href="{% url 'marketplace' %}" class="bg-blue-500 p-3 rounded-lg text-white font-semibold hover:bg-blue-600">Deposit</a>
-                <a href="{% url 'withdraw' %}" class="bg-red-500 p-3 rounded-lg text-white font-semibold hover:bg-red-600">Withdraw</a>
-                <a href="{% url 'asset_list' %}" class="bg-green-500 p-3 rounded-lg text-white font-semibold hover:bg-green-600">Buy</a>
-                <a href="#" class="bg-yellow-500 p-3 rounded-lg text-white font-semibold hover:bg-yellow-600">Sell</a>
+            <!-- Profile -->
+            <div class="relative">
+                <button id="profile-btn" class="flex items-center space-x-2">
+                    <img src="#" alt="Profile" class="w-8 h-8 rounded-full border-2 border-blue-500">
+                    <span class="hidden md:inline text-sm">{{ user.username }}</span>
+                </button>
+                <div id="profile-menu" class="absolute right-0 mt-2 w-48 bg-gray-800 text-white shadow-xl rounded-lg hidden fade-in">
+                    <a href="#" class="block px-4 py-2 hover:bg-gray-700">My Profile</a>
+                    <a href="{% url 'logout' %}" class="block px-4 py-2 hover:bg-red-600 text-red-400">Logout</a>
+                </div>
             </div>
         </div>
+    </header>
 
-        <!-- Recent Orders -->
-        <div class="mt-8">
-            <h3 class="text-2xl font-semibold">Recent Orders</h3>
-            <div class="bg-gray-800 p-4 rounded-lg mt-4">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="border-b border-gray-700">
-                            <th class="p-2">Order ID</th>
-                            <th class="p-2">Asset</th>
-                            <th class="p-2">Amount</th>
-                            <th class="p-2">Status</th>
-                            <th class="p-2">Date</th>
-                            <!-- <th class="p-2">Actions</th> -->
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for order in purchase_history %}
-                        <tr class="border-b border-gray-700">
-                            <td class="p-2">#{{ order.id }}</td>
-                            <td class="p-2">{{ order.crypto_amount }} {{ order.crypto.symbol }}</td>
-                            <td class="p-2">₦{{ order.total_price }}</td>
-                            <td class="p-2">
-                                <span class="{% if order.status == 'completed' %}text-green-400{% elif order.status == 'pending' %}text-yellow-400{% else %}text-red-400{% endif %}">
-                                    {{ order.status }}
-                                </span>
-                            </td>
-                            <td class="p-2">{{ order.created_at|date:"M d, Y" }}</td>
-                            <td class="p-2">
-                                <a href="{% url 'order_details' order.id %}" class="text-blue-400 hover:underline">View</a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="5" class="p-4 text-center text-gray-400">No recent orders.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <!-- Main Layout -->
+    <div class="flex pt-16">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="bg-gray-800 text-white p-4 fixed bottom-0 left-0 w-full flex justify-around items-center md:flex-col md:w-20 lg:w-64 md:h-screen md:justify-start md:space-y-6 md:pt-6 shadow-lg z-40 hidden md:block">
+            {% if request.user.is_merchant %}
+            <a href="{% url 'buyer_orders' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors">
+                <i class="fa-solid fa-box text-lg"></i>
+                <span class="text-xs md:text-sm lg:inline hidden">Orders</span>
+            </a>
+            {% else %}
+            <a href="{% url 'merchant_orders' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors">
+                <i class="fa-solid fa-money-bill-wave text-lg"></i>
+                <span class="text-xs md:text-sm lg:inline hidden">Sales</span>
+            </a>
+            {% endif %}
+            <a href="#" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors">
+                <i class="fa-solid fa-scale-balanced text-lg"></i>
+                <span class="text-xs md:text-sm lg:inline hidden">Disputes</span>
+            </a>
+            <a href="{% url 'logout' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-red-400 hover:bg-gray-700 p-2 rounded-lg transition-colors">
+                <i class="fa-solid fa-right-from-bracket text-lg"></i>
+                <span class="text-xs md:text-sm lg:inline hidden">Logout</span>
+            </a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-4 md:p-6 mt-0 md:ml-20 lg:ml-64">
+            <div class="fade-in">
+                <h2 class="text-2xl md:text-3xl font-bold mb-2">Welcome, {{ user.username }} <span class="text-blue-400">👋</span></h2>
+                <p class="text-gray-400 text-sm">Your account overview at a glance.</p>
+
+                <!-- Wallet Card -->
+                <div class="bg-gray-800 p-4 md:p-6 rounded-xl shadow-lg mt-6 border border-gray-700">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg md:text-xl font-semibold text-green-400"><i class="fa-solid fa-wallet mr-2"></i>Wallet Balance</h3>
+                        <button id="toggle-balance" class="text-gray-400 hover:text-white">
+                            <i id="eye-icon" class="fa-solid fa-eye-slash"></i>
+                        </button>
+                    </div>
+                    <p class="text-2xl md:text-3xl font-bold mt-2" id="wallet-balance">****</p>
+                    <div class="grid grid-cols-2 gap-3 mt-4 md:flex md:space-x-3">
+                        <a href="{% url 'marketplace' %}" class="bg-blue-600 p-2 rounded-lg text-center text-sm font-semibold hover:bg-blue-700 transition-colors">Deposit</a>
+                        <a href="{% url 'withdraw' %}" class="bg-red-600 p-2 rounded-lg text-center text-sm font-semibold hover:bg-red-700 transition-colors">Withdraw</a>
+                        <a href="{% url 'asset_list' %}" class="bg-green-600 p-2 rounded-lg text-center text-sm font-semibold hover:bg-green-700 transition-colors">Buy Services</a>
+                        <a href="#" class="bg-yellow-600 p-2 rounded-lg text-center text-sm font-semibold hover:bg-yellow-700 transition-colors">Sell Assets</a>
+                    </div>
+                </div>
+
+                <!-- Recent Orders -->
+                <div class="mt-8">
+                    <h3 class="text-xl md:text-2xl font-semibold mb-4">Recent Orders</h3>
+                    <div class="bg-gray-800 p-4 rounded-xl shadow-lg border border-gray-700 overflow-x-auto no-scrollbar">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="border-b border-gray-700">
+                                    <th class="p-3">Order ID</th>
+                                    <th class="p-3">Asset</th>
+                                    <th class="p-3">Amount</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3">Date</th>
+                                    <th class="p-3 hidden md:table-cell">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in purchase_history %}
+                                <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors">
+                                    <td class="p-3">#{{ order.id }}</td>
+                                    <td class="p-3">{{ order.crypto_amount }} {{ order.crypto.symbol }}</td>
+                                    <td class="p-3">₦{{ order.total_price }}</td>
+                                    <td class="p-3">
+                                        <span class="{% if order.status == 'completed' %}text-green-400{% elif order.status == 'pending' %}text-yellow-400{% else %}text-red-400{% endif %}">
+                                            {{ order.status|capfirst }}
+                                        </span>
+                                    </td>
+                                    <td class="p-3">{{ order.created_at|date:"M d, Y" }}</td>
+                                    <td class="p-3 hidden md:table-cell">
+                                        <a href="{% url 'order_details' order.id %}" class="text-blue-400 hover:underline">View</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="p-4 text-center text-gray-400">No recent orders.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-        </div>
-
+        </main>
     </div>
-</div>
-
 </body>
 </html>
