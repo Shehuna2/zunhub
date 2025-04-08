@@ -16,6 +16,13 @@
         /* Hide scrollbar but keep functionality */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* Button hover effect */
+        .lovely-btn {
+            transition: transform 0.2s ease-in-out;
+        }
+        .lovely-btn:hover {
+            transform: scale(1.05);
+        }
     </style>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -39,8 +46,6 @@
                 e.stopPropagation();
                 document.getElementById("profile-menu").classList.toggle("hidden");
             });
-
-            // Close dropdown if clicked outside
             document.addEventListener("click", function(event) {
                 let profileMenu = document.getElementById("profile-menu");
                 if (!document.getElementById("profile-btn").contains(event.target)) {
@@ -52,6 +57,11 @@
             document.getElementById("sidebar-toggle").addEventListener("click", function() {
                 document.getElementById("sidebar").classList.toggle("hidden");
             });
+
+            // Search Toggle for Mobile
+            document.getElementById("search-toggle").addEventListener("click", function() {
+                document.getElementById("search-input").classList.toggle("hidden");
+            });
         });
     </script>
 </head>
@@ -60,29 +70,36 @@
     <!-- Header -->
     <header class="bg-gray-900 p-4 fixed top-0 w-full flex items-center justify-between shadow-lg z-50">
         <div class="flex items-center space-x-3">
-            <!-- Sidebar Toggle (Mobile Only) -->
-            <button id="sidebar-toggle" class="md:hidden text-white text-2xl">
+            <button id="sidebar-toggle" class="md:hidden text-white text-2xl p-2">
                 <i class="fa-solid fa-bars"></i>
             </button>
             <h1 class="text-xl font-bold">Dashboard</h1>
         </div>
         <div class="flex items-center space-x-4">
             <!-- Search Bar -->
-            <div class="hidden md:flex relative items-center bg-gray-700 px-2 py-1 rounded-full border border-gray-600">
-                <input type="text" placeholder="Search..." class="w-32 lg:w-48 px-2 py-1 bg-transparent text-white focus:outline-none text-sm">
-                <button class="text-gray-400 hover:text-white">
-                    <i class="fa-solid fa-magnifying-glass"></i>
+            <div class="relative">
+                <button id="search-toggle" class="md:hidden text-gray-400 hover:text-white p-2">
+                    <i class="fa-solid fa-magnifying-glass text-xl"></i>
                 </button>
+                <div id="search-input" class="hidden md:flex absolute md:static top-12 left-0 w-full md:w-auto bg-gray-700 px-2 py-1 rounded-full border border-gray-600 md:border-0">
+                    <input type="text" placeholder="Search..." class="w-full md:w-32 lg:w-48 px-2 py-1 bg-transparent text-white focus:outline-none text-sm">
+                    <button class="text-gray-400 hover:text-white p-2">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </div>
             </div>
             <!-- Profile -->
             <div class="relative">
-                <button id="profile-btn" class="flex items-center space-x-2">
+                <button id="profile-btn" class="flex items-center space-x-2 p-2">
                     <img src="#" alt="Profile" class="w-8 h-8 rounded-full border-2 border-blue-500">
                     <span class="hidden md:inline text-sm">{{ user.username }}</span>
                 </button>
-                <div id="profile-menu" class="absolute right-0 mt-2 w-48 bg-gray-800 text-white shadow-xl rounded-lg hidden fade-in">
-                    <a href="#" class="block px-4 py-2 hover:bg-gray-700">My Profile</a>
-                    <a href="{% url 'logout' %}" class="block px-4 py-2 hover:bg-red-600 text-red-400">Logout</a>
+                <div id="profile-menu" class="fixed inset-0 bg-gray-800 text-white shadow-xl hidden fade-in md:absolute md:inset-auto md:right-0 md:mt-2 md:w-48 md:rounded-lg">
+                    <div class="p-4 md:p-0">
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-700">My Profile</a>
+                        <a href="{% url 'logout' %}" class="block px-4 py-2 hover:bg-red-600 text-red-400">Logout</a>
+                        <button id="close-menu" class="md:hidden w-full mt-4 text-center text-gray-400 hover:text-white">Close</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -91,24 +108,32 @@
     <!-- Main Layout -->
     <div class="flex pt-16">
         <!-- Sidebar -->
-        <nav id="sidebar" class="bg-gray-800 text-white p-4 fixed bottom-0 left-0 w-full flex justify-around items-center md:flex-col md:w-20 lg:w-64 md:h-screen md:justify-start md:space-y-6 md:pt-6 shadow-lg z-40 hidden md:block">
+        <nav id="sidebar" class="bg-gray-800 text-white p-4 fixed bottom-0 left-0 w-full flex justify-around items-center md:flex-col md:w-20 lg:w-64 md:h-screen md:justify-start md:space-y-6 md:pt-6 shadow-lg z-40 hidden md:block bg-opacity-90">
+          <a href="{% url 'buyer_orders' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
+            <i class="fa-solid fa-box text-2xl md:text-lg"></i>
+            <span class="text-xs md:text-sm lg:inline hidden">Orders</span>
+          </a>
+          <a href="{% url 'buyer_orders' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
+            <i class="fa-solid fa-box text-2xl md:text-lg"></i>
+            <span class="text-xs md:text-sm lg:inline hidden">Orders</span>
+          </a>
             {% if request.user.is_merchant %}
-            <a href="{% url 'buyer_orders' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors">
-                <i class="fa-solid fa-box text-lg"></i>
+            <a href="{% url 'buyer_orders' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
+                <i class="fa-solid fa-box text-2xl md:text-lg"></i>
                 <span class="text-xs md:text-sm lg:inline hidden">Orders</span>
             </a>
             {% else %}
-            <a href="{% url 'merchant_orders' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors">
-                <i class="fa-solid fa-money-bill-wave text-lg"></i>
+            <a href="{% url 'merchant_orders' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
+                <i class="fa-solid fa-money-bill-wave text-2xl md:text-lg"></i>
                 <span class="text-xs md:text-sm lg:inline hidden">Sales</span>
             </a>
             {% endif %}
-            <a href="#" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors">
-                <i class="fa-solid fa-scale-balanced text-lg"></i>
+            <a href="{% url 'dispute_list' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
+                <i class="fa-solid fa-scale-balanced text-2xl md:text-lg"></i>
                 <span class="text-xs md:text-sm lg:inline hidden">Disputes</span>
             </a>
-            <a href="{% url 'logout' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-red-400 hover:bg-gray-700 p-2 rounded-lg transition-colors">
-                <i class="fa-solid fa-right-from-bracket text-lg"></i>
+            <a href="{% url 'logout' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-red-400 hover:bg-gray-700 p-3 rounded-lg transition-colors">
+                <i class="fa-solid fa-right-from-bracket text-2xl md:text-lg"></i>
                 <span class="text-xs md:text-sm lg:inline hidden">Logout</span>
             </a>
         </nav>
@@ -123,57 +148,106 @@
                 <div class="bg-gray-800 p-4 md:p-6 rounded-xl shadow-lg mt-6 border border-gray-700">
                     <div class="flex justify-between items-center">
                         <h3 class="text-lg md:text-xl font-semibold text-green-400"><i class="fa-solid fa-wallet mr-2"></i>Wallet Balance</h3>
-                        <button id="toggle-balance" class="text-gray-400 hover:text-white">
-                            <i id="eye-icon" class="fa-solid fa-eye-slash"></i>
+                        <button id="toggle-balance" class="text-gray-400 hover:text-white p-2">
+                            <i id="eye-icon" class="fa-solid fa-eye-slash text-lg"></i>
                         </button>
                     </div>
                     <p class="text-2xl md:text-3xl font-bold mt-2" id="wallet-balance">****</p>
-                    <div class="grid grid-cols-2 gap-3 mt-4 md:flex md:space-x-3">
-                        <a href="{% url 'marketplace' %}" class="bg-blue-600 p-2 rounded-lg text-center text-sm font-semibold hover:bg-blue-700 transition-colors">Deposit</a>
-                        <a href="{% url 'withdraw' %}" class="bg-red-600 p-2 rounded-lg text-center text-sm font-semibold hover:bg-red-700 transition-colors">Withdraw</a>
-                        <a href="{% url 'asset_list' %}" class="bg-green-600 p-2 rounded-lg text-center text-sm font-semibold hover:bg-green-700 transition-colors">Buy Services</a>
-                        <a href="#" class="bg-yellow-600 p-2 rounded-lg text-center text-sm font-semibold hover:bg-yellow-700 transition-colors">Sell Assets</a>
+                    <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <a
+                        href="{% url 'marketplace' %}"
+                        class="block text-center py-2 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-700 transition"
+                      ><i class="fa-solid fa-arrow-down mr-1"></i>Deposit</a>
+                      <a
+                        href="{% url 'withdraw' %}"
+                        class="block text-center py-2 rounded-lg font-semibold bg-red-600 text-white hover:bg-red-700 transition"
+                      ><i class="fa-solid fa-arrow-up mr-1"></i>Withdraw</a>
+                      <a
+                        href="{% url 'asset_list' %}"
+                        class="block text-center py-2 rounded-lg font-semibold bg-green-600 text-white hover:bg-green-700 transition"
+                      ><i class="fa-solid fa-shopping-cart mr-1"></i>Buy Services</a>
+                      <a
+                        href="#"
+                        class="block text-center py-2 rounded-lg font-semibold bg-yellow-600 text-white hover:bg-yellow-700 transition"
+                      ><i class="fa-solid fa-coins mr-1"></i>Sell Assets</a>
                     </div>
                 </div>
 
                 <!-- Recent Orders -->
                 <div class="mt-8">
                     <h3 class="text-xl md:text-2xl font-semibold mb-4">Recent Orders</h3>
-                    <div class="bg-gray-800 p-4 rounded-xl shadow-lg border border-gray-700 overflow-x-auto no-scrollbar">
-                        <table class="w-full text-left text-sm">
-                            <thead>
-                                <tr class="border-b border-gray-700">
-                                    <th class="p-3">Order ID</th>
-                                    <th class="p-3">Asset</th>
-                                    <th class="p-3">Amount</th>
-                                    <th class="p-3">Status</th>
-                                    <th class="p-3">Date</th>
-                                    <th class="p-3 hidden md:table-cell">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for order in purchase_history %}
-                                <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors">
-                                    <td class="p-3">#{{ order.id }}</td>
-                                    <td class="p-3">{{ order.crypto_amount }} {{ order.crypto.symbol }}</td>
-                                    <td class="p-3">₦{{ order.total_price }}</td>
-                                    <td class="p-3">
-                                        <span class="{% if order.status == 'completed' %}text-green-400{% elif order.status == 'pending' %}text-yellow-400{% else %}text-red-400{% endif %}">
-                                            {{ order.status|capfirst }}
-                                        </span>
-                                    </td>
-                                    <td class="p-3">{{ order.created_at|date:"M d, Y" }}</td>
-                                    <td class="p-3 hidden md:table-cell">
-                                        <a href="{% url 'order_details' order.id %}" class="text-blue-400 hover:underline">View</a>
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="6" class="p-4 text-center text-gray-400">No recent orders.</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    <div class="bg-gray-800 p-4 rounded-xl shadow-lg border border-gray-700">
+                        <!-- Desktop Table -->
+                        <div class="hidden md:block overflow-x-auto no-scrollbar">
+                            <table class="w-full text-left text-sm">
+                                <thead>
+                                    <tr class="border-b border-gray-700">
+                                        <th class="p-3">Order ID</th>
+                                        <th class="p-3">Asset</th>
+                                        <th class="p-3">Amount</th>
+                                        <th class="p-3">Status</th>
+                                        <th class="p-3">Date</th>
+                                        <th class="p-3">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in purchase_history %}
+                                    <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors">
+                                        <td class="p-3">#{{ order.id }}</td>
+                                        <td class="p-3">{{ order.crypto_amount }} {{ order.crypto.symbol }}</td>
+                                        <td class="p-3">₦{{ order.total_price }}</td>
+                                        <td class="p-3">
+                                            <span class="{% if order.status == 'completed' %}text-green-400{% elif order.status == 'pending' %}text-yellow-400{% else %}text-red-400{% endif %}">
+                                                {{ order.status|capfirst }}
+                                            </span>
+                                        </td>
+                                        <td class="p-3">{{ order.created_at|date:"M d, Y" }}</td>
+                                        <td class="p-3">
+                                            <a href="{% url 'order_details' order.id %}" class="text-blue-400 hover:underline">View</a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="p-4 text-center text-gray-400">No recent orders.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Mobile Stacked Layout -->
+                        <div class="block md:hidden">
+                            {% for order in purchase_history %}
+                            <div class="mb-2 p-3 bg-gray-700 rounded-lg text-sm">
+                                <div class="flex justify-between">
+                                    <span class="font-semibold">Order ID:</span>
+                                    <span>#{{ order.id }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="font-semibold">Asset:</span>
+                                    <span>{{ order.crypto_amount }} {{ order.crypto.symbol }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="font-semibold">Amount:</span>
+                                    <span>₦{{ order.total_price }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="font-semibold">Status:</span>
+                                    <span class="{% if order.status == 'completed' %}text-green-400{% elif order.status == 'pending' %}text-yellow-400{% else %}text-red-400{% endif %}">
+                                        {{ order.status|capfirst }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="font-semibold">Date:</span>
+                                    <span>{{ order.created_at|date:"M d, Y" }}</span>
+                                </div>
+                                <div class="mt-2">
+                                    <a href="{% url 'order_details' order.id %}" class="text-blue-400 hover:underline">View</a>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="p-4 text-center text-gray-400">No recent orders.</div>
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
             </div>
