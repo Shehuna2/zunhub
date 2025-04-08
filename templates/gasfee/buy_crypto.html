@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Buy {{ crypto.name }}</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script> 
+  <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
 </head>
 <body class="bg-gray-900 text-white">
   {% include "gasfee/header.html" %}
@@ -65,7 +65,7 @@
           </div>
         </div>
 
-        <button type="submit" id="confirmPurchaseBtn" 
+        <button type="submit" id="confirmPurchaseBtn"
                 class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg shadow">
           Confirm Purchase
         </button>
@@ -103,125 +103,133 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const amountInput = document.getElementById("amountInput");
-        const currencySelect = document.getElementById("currencySelect");
-        const totalCostDisplay = document.getElementById("totalCost");
-        const cryptoReceivedDisplay = document.getElementById("cryptoReceived");
-        const buyCryptoForm = document.getElementById("buyCryptoForm");
-        const walletAddressInput = document.getElementById("walletAddress");
-        const walletError = document.getElementById("walletError");
-        const confirmPurchaseBtn = document.getElementById("confirmPurchaseBtn");
-        const processingText = document.getElementById("processingText");
-        const csrfToken = document.getElementById("csrfToken").value;
-        const successModal = document.getElementById("successModal");
-        const successMessage = document.getElementById("successMessage");
-        const txHashDisplay = document.getElementById("txHash");
-        const copyTxHashBtn = document.getElementById("copyTxHash");
-        const closeModalBtn = document.getElementById("closeModal");
+      const amountInput = document.getElementById("amountInput");
+      const currencySelect = document.getElementById("currencySelect");
+      const totalCostDisplay = document.getElementById("totalCost");
+      const cryptoReceivedDisplay = document.getElementById("cryptoReceived");
+      const buyCryptoForm = document.getElementById("buyCryptoForm");
+      const walletAddressInput = document.getElementById("walletAddress");
+      const walletError = document.getElementById("walletError");
+      const confirmPurchaseBtn = document.getElementById("confirmPurchaseBtn");
+      const processingText = document.getElementById("processingText");
+      const csrfToken = document.getElementById("csrfToken").value;
+      const successModal = document.getElementById("successModal");
+      const successMessage = document.getElementById("successMessage");
+      const txHashDisplay = document.getElementById("txHash");
+      const copyTxHashBtn = document.getElementById("copyTxHash");
+      const closeModalBtn = document.getElementById("closeModal");
 
-        let cryptoPrice = parseFloat("{{ crypto_price|floatformat:2 }}");
-        const exchangeRate = parseFloat("{{ exchange_rate|floatformat:2 }}");
+      let cryptoPrice = parseFloat("{{ crypto_price|floatformat:2 }}");
+      const exchangeRate = parseFloat("{{ exchange_rate|floatformat:2 }}");
 
-        function validateWalletAddress(address, symbol) {
-          if (symbol === "TON") {
-              try {
-                  // Basic check; server-side validation with tonsdk is authoritative
-                  return address.length > 0 && (address.startsWith("EQ") || address.startsWith("UQ"));
-              } catch (e) {
-                  return false;
-              }
-          } else if (symbol === "SOL") {
-              return true;  // Rely on server-side for SOL
-          } else {
-              return Web3.utils.isAddress(address);
+      function validateWalletAddress(address, symbol) {
+        if (symbol === "TON") {
+          return address.length > 0 && (address.startsWith("EQ") || address.startsWith("UQ"));
+        } else if (symbol === "SOL") {
+          return address.length > 0 && /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
+        } else if (symbol === "NEAR") {
+          // NEAR Mainnet validation
+          if (!address || address.length < 2 || address.length > 64) return false;
+          if (!/^[a-z0-9._-]+$/.test(address)) return false;
+          return address.endsWith(".near") || address.endsWith(".tg");  // Keep .testnet for flexibility
+        } else {
+          return Web3.utils.isAddress(address);  // EVM (ETH, BSC)
+        }
+      }
+
+      function updateCostAndCrypto() {
+        const amount = parseFloat(amountInput.value) || 0;
+        const currency = currencySelect.value.toLowerCase();
+
+        let totalCostNgn = 0;
+        let cryptoReceived = 0;
+
+        if (currency === "ngn") {
+          const amountInUsd = amount / exchangeRate;
+          cryptoReceived = amountInUsd / cryptoPrice;
+          totalCostNgn = amount;
+        } else if (currency === "usdt") {
+          cryptoReceived = amount / cryptoPrice;
+          totalCostNgn = amount * exchangeRate;
+        } else if (currency === "{{ crypto.symbol|lower }}") {
+          cryptoReceived = amount;
+          totalCostNgn = (amount * cryptoPrice) * exchangeRate;
+        }
+
+        totalCostDisplay.innerText = `₦${totalCostNgn.toFixed(2)}`;
+        cryptoReceivedDisplay.innerText = `${cryptoReceived.toFixed(6)} {{ crypto.symbol }}`;
+        document.getElementById("inputCurrency").innerText = currency.toUpperCase();
+      }
+
+      buyCryptoForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        const walletAddress = walletAddressInput.value.trim();
+        const symbol = "{{ crypto.symbol|upper }}";
+
+        if (!validateWalletAddress(walletAddress, symbol)) {
+          walletError.classList.remove("hidden");
+          walletError.innerText = "Invalid wallet address format.";
+          return;
+        }
+        walletError.classList.add("hidden");
+
+        confirmPurchaseBtn.disabled = true;
+        processingText.classList.remove("hidden");
+
+        const formData = new FormData(buyCryptoForm);
+        fetch("{% url 'buy_crypto' crypto.id %}", {
+          method: "POST",
+          body: formData,
+          headers: {
+            "X-CSRFToken": csrfToken,
+            "X-Requested-With": "XMLHttpRequest"
           }
-        }
-
-        function updateCostAndCrypto() {
-            const amount = parseFloat(amountInput.value) || 0;
-            const currency = currencySelect.value;
-
-            let totalCostNgn = 0;
-            let cryptoReceived = 0;
-
-            if (currency === "ngn") {
-                const amountInUsd = amount / exchangeRate;
-                cryptoReceived = amountInUsd / cryptoPrice;
-                totalCostNgn = amount;
-            } else if (currency === "usdt") {
-                cryptoReceived = amount / cryptoPrice;
-                totalCostNgn = amount * exchangeRate;
-            } else {
-                cryptoReceived = amount;
-                totalCostNgn = (amount * cryptoPrice) * exchangeRate;
-            }
-
-            totalCostDisplay.innerText = `₦${totalCostNgn.toFixed(2)}`;
-            cryptoReceivedDisplay.innerText = `${cryptoReceived.toFixed(6)} {{ crypto.symbol }}`;
-        }
-
-        buyCryptoForm.addEventListener("submit", function (event) {
-            event.preventDefault();
-            const walletAddress = walletAddressInput.value.trim();
-            const symbol = "{{ crypto.symbol|upper }}";
-
-            if (!validateWalletAddress(walletAddress, symbol)) {
-                walletError.classList.remove("hidden");
-                walletError.innerText = "Invalid wallet address format.";
-                return;
-            }
-            walletError.classList.add("hidden");
-
-            confirmPurchaseBtn.disabled = true;
-            processingText.classList.remove("hidden");
-
-            const formData = new FormData(buyCryptoForm);
-            fetch("{% url 'buy_crypto' crypto.id %}", {
-                method: "POST",
-                body: formData,
-                headers: {
-                    "X-CSRFToken": csrfToken,
-                    "X-Requested-With": "XMLHttpRequest"
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log("Server response:", data); 
-                confirmPurchaseBtn.disabled = false;
-                processingText.classList.add("hidden");
-                if (data.success) {
-                    successMessage.innerText = data.message;
-                    txHashDisplay.innerText = data.tx_hash;
-                    successModal.classList.remove("hidden");
-                    setTimeout(() => successModal.querySelector("div").classList.remove("scale-95"), 10);
-                } else {
-                    walletError.classList.remove("hidden");
-                    walletError.innerText = data.error || "Transaction failed.";
-                }
-            });
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log("Server response:", data);
+          confirmPurchaseBtn.disabled = false;
+          processingText.classList.add("hidden");
+          if (data.success) {
+            successMessage.innerText = data.message;
+            txHashDisplay.innerText = data.tx_hash;
+            successModal.classList.remove("hidden");
+            setTimeout(() => successModal.querySelector("div").classList.remove("scale-95"), 10);
+          } else {
+            walletError.classList.remove("hidden");
+            walletError.innerText = data.error || "Transaction failed.";
+          }
+        })
+        .catch(error => {
+          console.error("Fetch error:", error);
+          confirmPurchaseBtn.disabled = false;
+          processingText.classList.add("hidden");
+          walletError.classList.remove("hidden");
+          walletError.innerText = "An error occurred. Please try again.";
         });
+      });
 
-        copyTxHashBtn.addEventListener("click", function () {
-            navigator.clipboard.writeText(txHashDisplay.innerText).then(() => {
-                copyTxHashBtn.innerText = "Copied!";
-                copyTxHashBtn.classList.remove("bg-blue-600");
-                copyTxHashBtn.classList.add("bg-green-600");
-                setTimeout(() => {
-                    copyTxHashBtn.innerText = "Copy";
-                    copyTxHashBtn.classList.remove("bg-green-600");
-                    copyTxHashBtn.classList.add("bg-blue-600");
-                }, 2000);
-            });
+      copyTxHashBtn.addEventListener("click", function () {
+        navigator.clipboard.writeText(txHashDisplay.innerText).then(() => {
+          copyTxHashBtn.innerText = "Copied!";
+          copyTxHashBtn.classList.remove("bg-blue-600");
+          copyTxHashBtn.classList.add("bg-green-600");
+          setTimeout(() => {
+            copyTxHashBtn.innerText = "Copy";
+            copyTxHashBtn.classList.remove("bg-green-600");
+            copyTxHashBtn.classList.add("bg-blue-600");
+          }, 2000);
         });
+      });
 
-        closeModalBtn.addEventListener("click", function () {
-            successModal.classList.add("hidden");
-            window.location.href = "{% url 'asset_list' %}";
-        });
+      closeModalBtn.addEventListener("click", function () {
+        successModal.classList.add("hidden");
+        window.location.href = "{% url 'asset_list' %}";
+      });
 
-        amountInput.addEventListener("input", updateCostAndCrypto);
-        currencySelect.addEventListener("change", updateCostAndCrypto);
-        updateCostAndCrypto();
+      amountInput.addEventListener("input", updateCostAndCrypto);
+      currencySelect.addEventListener("change", updateCostAndCrypto);
+      updateCostAndCrypto();
     });
   </script>
 </body>
