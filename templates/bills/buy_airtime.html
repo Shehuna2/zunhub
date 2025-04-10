@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buy Airtime</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="container mx-auto p-6 mt-20">
+        <div class="max-w-md mx-auto bg-gray-800 p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-semibold mb-4">Buy Airtime</h2>
+            <form id="airtimeForm" method="post">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="block text-gray-400 mb-2">Phone Number</label>
+                    <input type="text" name="phone" id="phone" required class="w-full p-2 bg-gray-700 rounded border border-gray-600" placeholder="e.g., 08012345678">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-400 mb-2">Amount (₦)</label>
+                    <input type="number" name="amount" id="amount" step="1" required class="w-full p-2 bg-gray-700 rounded border border-gray-600">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-400 mb-2">Network</label>
+                    <select name="network" id="network" class="w-full p-2 bg-gray-700 rounded border border-gray-600">
+                        <option value="mtn">MTN</option>
+                        <option value="glo">Glo</option>
+                        <option value="airtel">Airtel</option>
+                        <option value="9mobile">9mobile</option>
+                    </select>
+                </div>
+                <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">Buy Airtime</button>
+            </form>
+            <div id="result" class="mt-4 text-center"></div>
+        </div>
+    </div>
+    <script>
+        document.getElementById("airtimeForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            const submitBtn = document.getElementById("submitBtn");
+            const resultDiv = document.getElementById("result");
+
+            submitBtn.disabled = true;
+            resultDiv.innerHTML = "Processing...";
+
+            fetch("{% url 'buy-airtime' %}", {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                submitBtn.disabled = false;
+                if (data.success) {
+                    resultDiv.innerHTML = `<p class="text-green-400">${data.message}</p><p>Transaction ID: ${data.transaction_id}</p>`;
+                } else {
+                    resultDiv.innerHTML = `<p class="text-red-400">${data.message}</p>`;
+                }
+            })
+            .catch(error => {
+                submitBtn.disabled = false;
+                resultDiv.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+                console.error("Fetch error:", error);
+            });
+        });
+    </script>
+</body>
+</html>

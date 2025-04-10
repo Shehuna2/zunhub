@@ -7,4 +7,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('p2p.urls')),
     path('', include('gasfee.urls')),
+    path('', include('bills.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
