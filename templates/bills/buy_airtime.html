@@ -18,7 +18,17 @@
                 </div>
                 <div class="mb-4">
                     <label class="block text-gray-400 mb-2">Amount (₦)</label>
-                    <input type="number" name="amount" id="amount" step="1" required class="w-full p-2 bg-gray-700 rounded border border-gray-600">
+                    <input type="number" name="amount" id="amount" required class="w-full p-2 bg-gray-700 rounded border border-gray-600" placeholder="e.g., 100">
+                </div>
+                <div class="mb-4">
+                    <p class="text-gray-400 mb-2">Quick Pick:</p>
+                    <div class="flex justify-center space-x-2">
+                        <button type="button" class="amount-option bg-gray-600 border-green-600 border hover:bg-green-700 text-white py-1 px-3 rounded" data-amount="100">₦100</button>
+                        <button type="button" class="amount-option bg-gray-600 border-green-600 border hover:bg-green-700 text-white py-1 px-3 rounded" data-amount="200">₦200</button>
+                        <button type="button" class="amount-option bg-gray-600 border-green-600 border hover:bg-green-700 text-white py-1 px-3 rounded" data-amount="500">₦500</button>
+                        <button type="button" class="amount-option bg-gray-600 border-green-600 border hover:bg-green-700 text-white py-1 px-3 rounded" data-amount="1000">₦1000</button>
+                        <button type="button" class="amount-option bg-gray-600 border-green-600 border hover:bg-green-700 text-white py-1 px-3 rounded" data-amount="2000">₦2000</button>
+                    </div>
                 </div>
                 <div class="mb-4">
                     <label class="block text-gray-400 mb-2">Network</label>
@@ -29,12 +39,71 @@
                         <option value="9mobile">9mobile</option>
                     </select>
                 </div>
-                <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">Buy Airtime</button>
+                <div class="relative">
+                    <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">Buy Airtime</button>
+                    <!-- Spinner -->
+                    <div id="spinner" class="hidden absolute inset-0 flex items-center justify-center">
+                        <div class="w-6 h-6 border-4 border-t-transparent border-blue-500 rounded-full animate-spin"></div>
+                    </div>
+                </div>
             </form>
             <div id="result" class="mt-4 text-center"></div>
         </div>
     </div>
     <script>
+        document.querySelectorAll('.amount-option').forEach(button => {
+            button.addEventListener('click', function() {
+                const amount = this.getAttribute('data-amount');
+                document.getElementById('amount').value = amount;
+            });
+        });
+        // Form submission with spinner
+        document.getElementById('airtimeForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            const submitBtn = document.getElementById('submitBtn');
+            const resultDiv = document.getElementById('result');
+            const spinner = document.getElementById('spinner');
+
+            // Show spinner, disable button, clear result
+            submitBtn.disabled = true;
+            spinner.classList.remove('hidden');
+            resultDiv.innerHTML = '';
+
+            fetch("{% url 'buy-airtime' %}", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Hide spinner, enable button
+                submitBtn.disabled = false;
+                spinner.classList.add('hidden');
+                if (data.success) {
+                    resultDiv.innerHTML = `<p class="text-green-400">${data.message}</p><p>Transaction ID: ${data.transaction_id}</p>`;
+                } else {
+                    resultDiv.innerHTML = `<p class="text-red-400">${data.message}</p>`;
+                }
+                })
+                .catch(error => {
+                    // Hide spinner, enable button
+                    submitBtn.disabled = false;
+                    spinner.classList.add('hidden');
+                    resultDiv.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+                    console.error('Fetch error:', error);
+                });
+            });
+
+
         document.getElementById("airtimeForm").addEventListener("submit", function(event) {
             event.preventDefault();
             const formData = new FormData(this);

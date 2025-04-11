@@ -17,10 +17,6 @@
                     <input type="text" name="phone" id="phone" required class="w-full p-2 bg-gray-700 rounded border border-gray-600" placeholder="e.g., 08012345678">
                 </div>
                 <div class="mb-4">
-                    <label class="block text-gray-400 mb-2">Amount (₦)</label>
-                    <input type="number" name="amount" id="amount" step="1" required class="w-full p-2 bg-gray-700 rounded border border-gray-600">
-                </div>
-                <div class="mb-4">
                     <label class="block text-gray-400 mb-2">Network</label>
                     <select name="network" id="network" class="w-full p-2 bg-gray-700 rounded border border-gray-600">
                         <option value="mtn">MTN</option>
@@ -30,8 +26,10 @@
                     </select>
                 </div>
                 <div class="mb-4">
-                    <label class="block text-gray-400 mb-2">Data Plan (Variation Code)</label>
-                    <input type="text" name="variation_code" id="variation_code" required class="w-full p-2 bg-gray-700 rounded border border-gray-600" placeholder="e.g., mtn-500mb">
+                    <label class="block text-gray-400 mb-2">Data Plan</label>
+                    <select name="variation_code" id="dataPlan" class="w-full p-2 bg-gray-700 rounded border border-gray-600" required>
+                        <option value="">Select a plan</option>
+                    </select>
                 </div>
                 <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">Buy Data</button>
             </form>
@@ -39,11 +37,60 @@
         </div>
     </div>
     <script>
+        const networkSelect = document.getElementById("network");
+        const dataPlanSelect = document.getElementById("dataPlan");
+
+        // Function to fetch and populate data plans
+        function updateDataPlans() {
+            const network = networkSelect.value;
+            dataPlanSelect.innerHTML = "<option value=''>Loading plans...</option>";
+            fetch("{% url 'get_data_plans_api' %}?network=" + network, {
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                dataPlanSelect.innerHTML = "<option value=''>Select a plan</option>";
+                if (data.success && data.plans) {
+                    data.plans.forEach(plan => {
+                        const option = document.createElement("option");
+                        option.value = plan.variation_code;
+                        option.textContent = `${plan.description} - ₦${plan.amount}`;
+                        option.dataset.amount = plan.amount; // Store amount for submission
+                        dataPlanSelect.appendChild(option);
+                    });
+                } else {
+                    dataPlanSelect.innerHTML = "<option value=''>No plans available</option>";
+                }
+            })
+            .catch(error => {
+                dataPlanSelect.innerHTML = "<option value=''>Error loading plans</option>";
+                console.error("Fetch error:", error);
+            });
+        }
+
+        // Initial load
+        updateDataPlans();
+
+        // Update on network change
+        networkSelect.addEventListener("change", updateDataPlans);
+
+        // Form submission
         document.getElementById("dataForm").addEventListener("submit", function(event) {
             event.preventDefault();
             const formData = new FormData(this);
             const submitBtn = document.getElementById("submitBtn");
             const resultDiv = document.getElementById("result");
+            const selectedPlan = dataPlanSelect.selectedOptions[0];
+            if (selectedPlan && selectedPlan.dataset.amount) {
+                formData.append("amount", selectedPlan.dataset.amount);
+            }
 
             submitBtn.disabled = true;
             resultDiv.innerHTML = "Processing...";
