@@ -5,13 +5,12 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from decimal import Decimal
 from p2p.models import Wallet
-from .utils import purchase_airtime, purchase_data
+from .utils import purchase_airtime, purchase_data, get_data_plans
 import logging
 import re
 
 logger = logging.getLogger(__name__)
 
-# Phone number validation regex (Nigerian 11-digit format, e.g., 08012345678)
 PHONE_REGEX = re.compile(r'^0[7-9][0-1]\d{8}$')
 
 @login_required
@@ -24,9 +23,7 @@ def buy_airtime(request):
             amount = Decimal(0)
         network = request.POST.get("network", "").lower()
         is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
-        logger.debug(f"Request is AJAX: {is_ajax}, headers: {request.headers}")
 
-        # Basic input validation with phone number check
         if not phone or not PHONE_REGEX.match(phone) or amount <= 0 or network not in ["mtn", "glo", "airtel", "9mobile"]:
             error_message = "Invalid input. Phone must be a valid 11-digit Nigerian number."
             if is_ajax:
@@ -34,7 +31,6 @@ def buy_airtime(request):
             messages.error(request, error_message)
             return redirect("buy-airtime")
 
-        # Process wallet update and API call in a transaction
         try:
             with transaction.atomic():
                 wallet = Wallet.objects.select_for_update().get(user=request.user)
@@ -96,9 +92,7 @@ def buy_data(request):
         network = request.POST.get("network", "").lower()
         variation_code = request.POST.get("variation_code", "")
         is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
-        logger.debug(f"Request is AJAX: {is_ajax}, headers: {request.headers}")
 
-        # Basic input validation with phone number check
         if (
             not phone or not PHONE_REGEX.match(phone) or
             amount <= 0 or
@@ -111,7 +105,6 @@ def buy_data(request):
             messages.error(request, error_message)
             return redirect("buy-data")
 
-        # Process wallet update and API call in a transaction
         try:
             with transaction.atomic():
                 wallet = Wallet.objects.select_for_update().get(user=request.user)
@@ -161,3 +154,19 @@ def buy_data(request):
         return redirect("buy-data")
 
     return render(request, "bills/buy_data.html")
+
+@login_required
+def get_data_plans_api(request):
+    """API endpoint to fetch data plans for a given network."""
+    network = request.GET.get("network", "").lower()
+    if network not in ["mtn", "glo", "airtel", "9mobile"]:
+        return JsonResponse({"success": False, "message": "Invalid network"}, status=400)
+
+    try:
+        plans = get_data_plans(network)
+        return JsonResponse({"success": True, "plans": plans})
+    except ValueError as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=503)
+    except Exception as e:
+        logger.error(f"Error fetching data plans: {e}")
+        return JsonResponse({"success": False, "message": "An unexpected error occurred"}, status=500)
