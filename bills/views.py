@@ -53,7 +53,8 @@ def buy_airtime(request):
                     return JsonResponse({
                         'success': True,
                         'message': success_message,
-                        'transaction_id': result['transaction_id']
+                        'transaction_id': result['transaction_id'],
+                        'transaction_date': result.get('transaction_date'),
                     })
                 messages.success(request, success_message)
 
