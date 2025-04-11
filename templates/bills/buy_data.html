@@ -5,35 +5,118 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buy Data</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Fade-in animation for receipt */
+        #receiptContainer {
+            transition: opacity 0.5s ease-in-out;
+        }
+        #receiptContainer.hidden {
+            opacity: 0;
+        }
+        #dataFormContainer {
+            transition: opacity 0.5s ease-in-out;
+        }
+        #dataFormContainer.hidden {
+            opacity: 0;
+        }
+    </style>
 </head>
 <body class="bg-gray-900 text-white">
     <div class="container mx-auto p-6 mt-20">
         <div class="max-w-md mx-auto bg-gray-800 p-6 rounded-lg shadow-md">
             <h2 class="text-2xl font-semibold mb-4">Buy Data</h2>
-            <form id="dataForm" method="post">
-                {% csrf_token %}
-                <div class="mb-4">
-                    <label class="block text-gray-400 mb-2">Phone Number</label>
-                    <input type="text" name="phone" id="phone" required class="w-full p-2 bg-gray-700 rounded border border-gray-600" placeholder="e.g., 08012345678">
+            <!-- Container for form and receipt -->
+            <div id="dataContainer">
+                <!-- Form (shown initially) -->
+                <div id="dataFormContainer">
+                    <form id="dataForm" method="post">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label class="block text-gray-400 mb-2">Phone Number</label>
+                            <input type="text" name="phone" id="phone" required class="w-full p-2 bg-gray-700 rounded border border-gray-600" placeholder="e.g., 08012345678">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-400 mb-2">Network</label>
+                            <select name="network" id="network" class="w-full p-2 bg-gray-700 rounded border border-gray-600">
+                                <option value="mtn">MTN</option>
+                                <option value="glo">Glo</option>
+                                <option value="airtel">Airtel</option>
+                                <option value="9mobile">9mobile</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-400 mb-2">Data Plan</label>
+                            <select name="variation_code" id="dataPlan" class="w-full p-2 bg-gray-700 rounded border border-gray-600" required>
+                                <option value="">Select a plan</option>
+                            </select>
+                        </div>
+                        <div class="relative">
+                            <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">Buy Data</button>
+                            <div id="spinner" class="hidden absolute inset-0 flex items-center justify-center">
+                                <div class="w-6 h-6 border-4 border-t-transparent border-blue-500 rounded-full animate-spin"></div>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="result" class="mt-4 text-center" aria-live="polite"></div>
                 </div>
-                <div class="mb-4">
-                    <label class="block text-gray-400 mb-2">Network</label>
-                    <select name="network" id="network" class="w-full p-2 bg-gray-700 rounded border border-gray-600">
-                        <option value="mtn">MTN</option>
-                        <option value="glo">Glo</option>
-                        <option value="airtel">Airtel</option>
-                        <option value="9mobile">9mobile</option>
-                    </select>
+                <!-- Receipt (hidden initially) -->
+                <div id="receiptContainer" class="hidden">
+                    <div class="text-center">
+                        <svg class="mx-auto h-12 w-12 text-green-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <h3 class="text-2xl font-bold text-green-400 mb-4">Purchase Receipt</h3>
+                    </div>
+                    <div class="bg-gray-700 p-6 rounded-lg shadow-lg border border-gray-600">
+                        <div class="flex items-center mb-4">
+                            <svg class="h-5 w-5 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                            <p><strong>Status:</strong> <span id="receiptStatus" class="text-green-400">Completed</span></p>
+                        </div>
+                        <div class="flex items-center mb-4">
+                            <svg class="h-5 w-5 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                            </svg>
+                            <p><strong>Phone Number:</strong> <span id="receiptPhone"></span></p>
+                        </div>
+                        <div class="flex items-center mb-4">
+                            <svg class="h-5 w-5 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.636 5.636a9 9 0 1012.728 0M12 3v9"></path>
+                            </svg>
+                            <p><strong>Network:</strong> <span id="receiptNetwork"></span></p>
+                        </div>
+                        <div class="flex items-center mb-4">
+                            <svg class="h-5 w-5 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <p><strong>Amount:</strong> ₦<span id="receiptAmount" class="text-lg font-semibold"></span></p>
+                        </div>
+                        <div class="flex items-center mb-4">
+                            <svg class="h-5 w-5 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            <p><strong>Data Plan:</strong> <span id="receiptPlan"></span></p>
+                        </div>
+                        <div class="flex items-center mb-4">
+                            <svg class="h-5 w-5 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                            </svg>
+                            <p><strong>Transaction ID:</strong> <span id="receiptTransactionId" class="text-sm break-all"></span></p>
+                        </div>
+                        <div class="flex items-center">
+                            <svg class="h-5 w-5 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <p><strong>Date:</strong> <span id="receiptDate"></span></p>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex space-x-4">
+                        <a href="{% url 'dashboard' %}" id="homeBtn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-lg text-center">Back to Home</a>
+                        <button id="newPurchaseBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">Buy Again</button>
+                    </div>
                 </div>
-                <div class="mb-4">
-                    <label class="block text-gray-400 mb-2">Data Plan</label>
-                    <select name="variation_code" id="dataPlan" class="w-full p-2 bg-gray-700 rounded border border-gray-600" required>
-                        <option value="">Select a plan</option>
-                    </select>
-                </div>
-                <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">Buy Data</button>
-            </form>
-            <div id="result" class="mt-4 text-center"></div>
+            </div>
         </div>
     </div>
     <script>
@@ -61,7 +144,10 @@
                     data.plans.forEach(plan => {
                         const option = document.createElement("option");
                         option.value = plan.variation_code;
-                        option.textContent = `${plan.description} - ₦${plan.amount}`;
+                        // Extract size and validity from description, append amount
+                        const descriptionParts = plan.description.match(/N\d+\s(.+)/);
+                        const displayText = descriptionParts && descriptionParts[1] ? descriptionParts[1] : plan.description;
+                        option.textContent = `${displayText} = ₦${plan.amount}`;
                         option.dataset.amount = plan.amount; // Store amount for submission
                         dataPlanSelect.appendChild(option);
                     });
@@ -81,19 +167,24 @@
         // Update on network change
         networkSelect.addEventListener("change", updateDataPlans);
 
-        // Form submission
+        // Form submission with spinner and receipt
         document.getElementById("dataForm").addEventListener("submit", function(event) {
             event.preventDefault();
             const formData = new FormData(this);
             const submitBtn = document.getElementById("submitBtn");
             const resultDiv = document.getElementById("result");
+            const spinner = document.getElementById("spinner");
+            const dataFormContainer = document.getElementById("dataFormContainer");
+            const receiptContainer = document.getElementById("receiptContainer");
             const selectedPlan = dataPlanSelect.selectedOptions[0];
             if (selectedPlan && selectedPlan.dataset.amount) {
                 formData.append("amount", selectedPlan.dataset.amount);
             }
 
+            // Show spinner, disable button, clear result
             submitBtn.disabled = true;
-            resultDiv.innerHTML = "Processing...";
+            spinner.classList.remove('hidden');
+            resultDiv.innerHTML = '';
 
             fetch("{% url 'buy_data' %}", {
                 method: "POST",
@@ -110,18 +201,45 @@
                 return response.json();
             })
             .then(data => {
+                // Hide spinner, enable button
                 submitBtn.disabled = false;
+                spinner.classList.add('hidden');
                 if (data.success) {
-                    resultDiv.innerHTML = `<p class="text-green-400">${data.message}</p><p>Transaction ID: ${data.transaction_id}</p>`;
+                    // Show receipt
+                    dataFormContainer.classList.add('hidden');
+                    receiptContainer.classList.remove('hidden');
+                    // Populate receipt
+                    document.getElementById('receiptPhone').textContent = formData.get('phone');
+                    document.getElementById('receiptNetwork').textContent = formData.get('network').toUpperCase();
+                    document.getElementById('receiptAmount').textContent = parseFloat(selectedPlan.dataset.amount).toLocaleString('en-NG');
+                    document.getElementById('receiptPlan').textContent = selectedPlan.textContent.split(' = ')[0]; // Use only size and validity
+                    document.getElementById('receiptTransactionId').textContent = data.transaction_id;
+                    document.getElementById('receiptDate').textContent = new Date(data.transaction_date || Date.now()).toLocaleString('en-GB', {
+                        dateStyle: 'medium',
+                        timeStyle: 'short'
+                    });
                 } else {
+                    // Show error
                     resultDiv.innerHTML = `<p class="text-red-400">${data.message}</p>`;
                 }
             })
             .catch(error => {
+                // Hide spinner, enable button, show error
                 submitBtn.disabled = false;
+                spinner.classList.add('hidden');
                 resultDiv.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
                 console.error("Fetch error:", error);
             });
+        });
+
+        // Handle "New Purchase" button
+        document.getElementById("newPurchaseBtn").addEventListener("click", function() {
+            // Reset form and show it
+            document.getElementById("dataForm").reset();
+            document.getElementById("dataFormContainer").classList.remove("hidden");
+            document.getElementById("receiptContainer").classList.add("hidden");
+            document.getElementById("result").innerHTML = "";
+            updateDataPlans(); // Reload plans
         });
     </script>
 </body>
