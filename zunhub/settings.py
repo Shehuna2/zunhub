@@ -15,9 +15,15 @@ BSC_RPC_URL = os.getenv("BSC_RPC_URL")
 
 
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
+# VTPASS Configuration
+VTPASS_API_KEY       = os.getenv("VTPASS_API_KEY", "")
+VTPASS_SECRET_KEY    = os.getenv("VTPASS_SECRET_KEY", "")
+VTPASS_SANDBOX_URL   = os.getenv("VTPASS_SANDBOX_URL", "")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -31,6 +37,10 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 AUTH_USER_MODEL = 'p2p.User'
+
+TON_SEQNO_CHECK_INTERVAL = 10  # Seconds between seqno checks
+TON_SEQNO_MAX_ATTEMPTS = 5    # Number of attempts
+
 
 # Celery settings
 CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Using Redis as the broker
@@ -80,6 +90,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'p2p',
+    'bills',
     'gasfee',
 ]
 

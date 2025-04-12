@@ -130,8 +130,15 @@
         } else if (symbol === "NEAR") {
           // NEAR Mainnet validation
           if (!address || address.length < 2 || address.length > 64) return false;
+
+          // Case 1: Implicit address (64-character hexadecimal)
+          if (address.length === 64 && /^[0-9a-fA-F]{64}$/.test(address)) {
+            return true;
+          }
+
+          // Case 2: Human-readable account
           if (!/^[a-z0-9._-]+$/.test(address)) return false;
-          return address.endsWith(".near") || address.endsWith(".tg");  // Keep .testnet for flexibility
+          return address.endsWith(".near") || address.endsWith(".tg"); // Could add .testnet if needed
         } else {
           return Web3.utils.isAddress(address);  // EVM (ETH, BSC)
         }

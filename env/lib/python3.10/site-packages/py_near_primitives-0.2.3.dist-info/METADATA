@@ -1,0 +1,41 @@
+Metadata-Version: 2.1
+Name: py_near_primitives
+Version: 0.2.3
+Classifier: Programming Language :: Rust
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+License-File: LICENSE
+Summary: Python bindings for NEAR Rust primitives.
+Author-email: pvolnov <notanemail@gmail.com>
+License: MIT
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown; charset=UTF-8; variant=GFM
+Project-URL: homepage, https://github.com/pvolnov/near-primitives
+Project-URL: documentation, https://github.com/pvolnov/near-primitives
+Project-URL: repository, https://github.com/pvolnov/near-primitives
+
+
+[![PyPI version](https://badge.fury.io/py/pyonear.svg)](https://badge.fury.io/py/pyonear)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/kevinheavey/pyonear/blob/maim/LICENSE)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+# near primitives
+
+A wrapper over `py-near-primitives` rust lib for python. Using for [py-near](https://github.com/pvolnov/py-near).
+
+Latest supported version: `py-near-primitives = "0.17.0"`
+
+# use with python 
+
+Use the `py-near` for the high-level api over `py-near-primitives`
+
+Documentation: https://py-near.readthedocs.io/en/latest
+
+
+## Installation
+
+```
+pip install py-near-primitives
+```
+
+

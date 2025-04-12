@@ -1,0 +1,173 @@
+Metadata-Version: 2.1
+Name: pysui
+Version: 0.75.0
+Summary: SUI client Python SDK
+License: Apache-2.0
+Project-URL: changelog, https://github.com/FrankC01/pysui/blob/main/CHANGELOG.md
+Project-URL: repository, https://github.com/FrankC01/pysui
+Project-URL: issues, https://github.com/FrankC01/pysui/issues
+Project-URL: documentation, https://pysui.readthedocs.io
+Keywords: software development kit,sui,blockchain
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Programming Language :: Python
+Classifier: Operating System :: OS Independent
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3 :: Only
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: dataclasses_json<0.7.0,>=0.6.6
+Requires-Dist: PyYAML<6.2,>=6.0.1
+Requires-Dist: httpx<0.28,>=0.27.0
+Requires-Dist: h2<5.0,>=4.1
+Requires-Dist: websockets<13.0.0,>=10.0.0
+Requires-Dist: typing_utils<0.2.0,>=0.1.0
+Requires-Dist: canoser==0.8.2
+Requires-Dist: base58<2.2.0,>=2.1.1
+Requires-Dist: Deprecated<1.3.0,>=1.2.14
+Requires-Dist: pysui-fastcrypto>=0.5.0
+Requires-Dist: gql[httpx,websockets]>=3.5.0
+
+<p align="center">
+  <img width="150" height="200" src="https://raw.githubusercontent.com/FrankC01/pysui/main/images//pysui_logo_color.png" alt='PySui'>
+</p>
+
+# pysui
+
+[![Downloads](https://static.pepy.tech/badge/pysui/month)](https://pepy.tech/project/pysui)
+
+Python Client SDK for Sui blockchain
+
+## pysui SDK Dependencies
+
+- Rust (stable) for installation of Sui Binaries (optional) and building `pysui-fastcrypto` Rust wrapper (required)
+- Python version >= 3.10
+
+## pysui SDK current (github)
+
+**Release-0.75.0**
+
+- Supports _SUI 1.40.x JSON RPC API_, _SUI 1.40.x GRAPHQL_
+- JSON RPC API backwards compatable to _Sui 1.33.x_
+
+See [CHANGELOG](https://github.com/FrankC01/pysui/blob/main/CHANGELOG.md)
+
+## PyPi current
+
+**Release-0.75.0 - Released 2025-01-03**
+
+- Supports _SUI 1.40.x JSON RPC API_, _SUI 1.40.x GRAPHQL_
+- JSON RPC API backwards compatable to _Sui 1.33.x_
+
+Adds beta `SerialTransactionExecutor` Here are the initial [docs](https://pysui.readthedocs.io/en/latest/graphql_serial_exc.html)
+
+- [Latest PyPi Version](https://pypi.org/project/pysui/)
+
+## Cup of Coffee
+Wouldn't mind a cup to keep me going!
+Sui Address **0xc45e5ea887e037ddc6a482afa412773b4291c8fdc338f647fb0fcea324975d8e**
+
+## Sui GraphQL RPC beta
+
+MystenLabs announcement can be found [Here](https://github.com/mystenLabs/sui/issues/13700). This change transitions
+from JSON RPC to GraphQL RPC.
+
+Note: MystenLabs/Sui GraphQL RPC is available on devnet, testnet and mainnet. Note that devnet beta is usable but
+we recommend using testnet or mainnet beta for stability. We are tracking a few failures we are monitoring [Isssues](https://github.com/FrankC01/pysui/issues?q=is%3Aissue+is%3Aopen++Sui+GraphQL+RPC).
+
+### Sui GraphQL IDEs
+
+  [Mainnet](https://sui-mainnet.mystenlabs.com/graphql)
+
+  [Testnet](https://sui-testnet.mystenlabs.com/graphql)
+
+  [Devnet](https://sui-devnet.mystenlabs.com/graphql)
+
+### pysui GraphQL support
+
+**Note**: Functionality of pysui GraphQl should be considered beta, use in production at your own risk.
+
+With pysui 0.50.0 we released beta `pysui`'s beta alignment with MystenLabs strategy. The timeline of changes will keep up with the Timeline as noted in the Sui GraphQL annoucement. We are not yet stable however we have Clients and TransactionBuilder running against Sui GraphQL.
+
+We continue to monitor and support changes from MystenLabs as they occur.
+
+#### Examples
+
+  - **_pgql_s_example_** - Synchronous examples for all supported QueryNode queries and mutations
+  - **_pgql_a_example_** - Asynchronous examples for all supported QueryNode queries and mutations
+  - **_pgql_s_ptb_** - Example of new pysui Transaction Builder leveraging Sui GraphQL
+
+You can read pysui documentation on graphql beta [here](https://pysui.readthedocs.io/en/latest/graphql.html)
+
+#### Known Issues
+- No subscription support at this time
+
+
+### FULL Documentation
+
+- [ReadTheDocs](https://pysui.readthedocs.io/en/latest/index.html)
+
+### Changelog
+
+See [CHANGELOG](https://github.com/FrankC01/pysui/blob/main/CHANGELOG.md)
+
+### Issues and enhancement requests
+
+We would appreciate using the [github issue log](https://github.com/FrankC01/pysui/issues) to let us know!
+
+### Release/Publish Strategy
+
+See [Strategies](https://github.com/FrankC01/pysui/blob/main/OP_STRATEGIES.md)
+
+### Discord
+
+Discord server [click here](https://discord.gg/uCGYfY4Ph4):
+
+### Additions
+
+There is a companion package called [pysui-gadgets](https://github.com/FrankC01/pysui_gadgets) with a few utilities and ge-gaws that you may find interesting. It is a separate package also on on PyPi.
+
+### Local node support
+
+We leverage [suibase](https://github.com/ChainMovers/suibase) for our testing and SuiConfig includes an option for interacting directly with local nodes created by `suibase`
+
+## Ready to run
+
+Requires:
+
+- Linux or macos (x86_64 or Mx)
+- Rust (stable) which also includes rustup and cargo
+- python 3.10 or greater
+- pkg-config
+- libtool
+- sui binaries to support `publish` Sui move packages
+
+You will need `suibase` for interacting with local nodes, it is an indispensible addition to Sui developers tools!
+
+### Setup environment
+
+`python3 -m venv env`
+
+If, instead, you want to work with repo latest source code then read [DEVELOP](https://github.com/FrankC01/pysui/blob/main/DEVELOP.md) from repo
+
+### Activate
+
+`source env/bin/activate`
+
+or
+
+`. env/bin/activate`
+
+### Install `pysui`
+
+`pip install pysui`
+
+## Samples
+
+See [samples](https://github.com/FrankC01/pysui/blob/main/samples/README.md)
