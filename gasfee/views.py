@@ -4,7 +4,8 @@ import logging
 import traceback
 import base58
 from decimal import Decimal
-from solders.pubkey import Pubkey
+from django.conf import settings
+
 
 
 from django.core.cache import cache
@@ -16,6 +17,7 @@ from django.utils import timezone
 from django.contrib import messages
 from web3 import Web3
 from dotenv import load_dotenv
+
 
 
 from p2p.models import Wallet
@@ -34,6 +36,69 @@ from .near_utils import (
 # Load environment variables
 load_dotenv()
 logger = logging.getLogger(__name__)
+
+
+
+def asset_list(request):
+    """Returns a list of available crypto assets with live prices and logos."""
+    cryptos = Crypto.objects.all()
+    crypto_list = []
+
+    # Collect all CoinGecko IDs for a single API call
+    coingecko_ids = [crypto.coingecko_id for crypto in cryptos]
+    network_map = {crypto.coingecko_id: getattr(crypto, 'network', 'Ethereum').lower() for crypto in cryptos}
+
+    # Fetch prices in batch
+    prices = {}
+    cache_key = f"crypto_prices_{'_'.join(sorted(coingecko_ids))}"
+    cached_prices = cache.get(cache_key)
+
+    if cached_prices is None:
+        try:
+            # Batch request to CoinGecko
+            ids_param = ','.join(coingecko_ids)
+            response = requests.get(
+                f"https://api.coingecko.com/api/v3/simple/price?ids={ids_param}&vs_currencies=usd"
+            )
+            response.raise_for_status()
+            prices = response.json()
+            cache.set(cache_key, prices, timeout=300)  # Cache for 5 minutes
+        except Exception as e:
+            logger.error(f"Failed to fetch batch prices: {e}")
+            prices = {}
+    else:
+        prices = cached_prices
+
+    for crypto in cryptos:
+        # Get price from batch response
+        price = prices.get(crypto.coingecko_id, {}).get('usd', 0)
+        if price == 0:
+            # Fallback to individual fetch if needed (with rate limit handling)
+            individual_cache_key = f"crypto_price_{crypto.coingecko_id}_{network_map[crypto.coingecko_id]}"
+            price = cache.get(individual_cache_key)
+            if price is None:
+                try:
+                    price = get_crypto_price(crypto.coingecko_id, network_map[crypto.coingecko_id])
+                    cache.set(individual_cache_key, price, timeout=300)
+                except Exception as e:
+                    logger.error(f"Failed to fetch price for {crypto.coingecko_id}: {e}")
+                    price = 0
+
+        # Use logo_url from model, fallback to placeholder
+        logo_url = getattr(crypto, 'logo_url', None)
+        if not logo_url:
+            logo_url = f"{settings.MEDIA_URL}images/default_crypto_logo.png"  # Ensure this file exists
+
+        crypto_list.append({
+            'id': crypto.id,
+            'name': crypto.name,
+            'symbol': crypto.symbol,
+            'coingecko_id': crypto.coingecko_id,
+            'price': price,
+            'logo_url': crypto.logo.url,
+        })
+
+    return render(request, "gasfee/crypto_list.html", {"cryptos": crypto_list})
 
 
 @login_required
@@ -207,10 +272,6 @@ def buy_crypto(request, crypto_id):
     })
 
     
-def asset_list(request):
-    """Returns a list of available crypto assets."""
-    cryptos = Crypto.objects.all()
-    return render(request, "gasfee/crypto_list.html", {"cryptos": cryptos})
 
 def refund_user(request, purchase):
     """Refunds a user if an order fails."""

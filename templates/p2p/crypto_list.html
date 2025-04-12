@@ -1,62 +1,205 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Select Cryptocurrency</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        function filterCryptos() {
-            let input = document.getElementById("crypto-search").value.toLowerCase();
-            let cryptoItems = document.getElementsByClassName("crypto-item");
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Select Cryptocurrency</title>
 
-            for (let i = 0; i < cryptoItems.length; i++) {
-                let name = cryptoItems[i].getAttribute("data-name").toLowerCase();
-                let symbol = cryptoItems[i].getAttribute("data-symbol").toLowerCase();
-                
-                if (name.includes(input) || symbol.includes(input)) {
-                    cryptoItems[i].style.display = "";
-                } else {
-                    cryptoItems[i].style.display = "none";
-                }
-            }
-        }
-    </script>
+  <!-- Tailwind CSS + dark mode config -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    }
+  </script>
+
+  <!-- Alpine.js for interactivity -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.12.0/cdn.min.js" defer></script>
+
+  <!-- Font Awesome -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js" defer></script>
+
+  <style>
+    /* Hide scrollbar but keep functionality */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    /* Fade-in animation for crypto items */
+    .crypto-item {
+      animation: fadeIn 0.3s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen p-6">
 
-    <!-- Header -->
-    <header class="bg-gray-800 p-4 text-center text-xl font-bold">
-        Select Cryptocurrency
-    </header>
+<body
+  x-data="cryptoPage()"
+  x-init="initTheme()"
+  class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen"
+>
+  <!-- Sticky Header -->
+  <header class="bg-white dark:bg-gray-800 shadow sticky top-0 z-50">
+    <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-between p-6 space-y-4 md:space-y-0">
+      <!-- Title and Subtitle -->
+      <div class="flex-1">
+        <h1 class="text-2xl font-bold">Select Cryptocurrency</h1>
+        <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Choose a cryptocurrency to purchase</p>
+      </div>
 
-    <!-- Search Bar -->
-    <div class="my-4 flex justify-center">
-        <input type="text" id="crypto-search" onkeyup="filterCryptos()" placeholder="Search crypto..."
-            class="w-2/3 p-3 rounded-lg text-black">
-    </div>
-
-    <!-- Crypto List -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {% for crypto in cryptos %}
-        <div class="crypto-item bg-gray-800 p-4 rounded-lg flex items-center justify-between shadow-lg"
-             data-name="{{ crypto.name }}" data-symbol="{{ crypto.symbol }}">
-            
-            <div class="flex items-center space-x-4">
-                <img src="{{ crypto.logo_url }}" alt="{{ crypto.name }}" class="w-10 h-10 rounded-full">
-                <div>
-                    <h3 class="text-lg font-bold">{{ crypto.name }}</h3>
-                    <p class="text-gray-400">{{ crypto.symbol }}</p>
-                </div>
-            </div>
-            
-            <a href="#" 
-               class="bg-blue-500 px-4 py-2 rounded-lg text-white hover:bg-blue-600">
-                Buy
-            </a>
+      <!-- Controls -->
+      <div class="flex flex-wrap items-center space-x-3">
+        <!-- Search -->
+        <div class="relative flex-1 min-w-[180px]">
+          <i class="fa-solid fa-magnifying-glass absolute top-1/2 transform -translate-y-1/2 left-3 text-gray-500 dark:text-gray-400"></i>
+          <input
+            id="crypto-search"
+            x-model="search"
+            @input="filterCryptos()"
+            type="text"
+            placeholder="Search cryptocurrencies..."
+            class="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          />
         </div>
-        {% endfor %}
-    </div>
 
+        <!-- Sort -->
+        <div class="flex items-center space-x-2">
+          <label for="sort-key" class="sr-only">Sort by</label>
+          <select
+            id="sort-key"
+            x-model="sortKey"
+            @change="applySort()"
+            class="py-2 px-3 rounded-lg bg-gray-100 dark:bg-gray-700 focus:outline-none"
+          >
+            <option value="name">Name</option>
+            <option value="symbol">Symbol</option>
+          </select>
+          <button
+            @click="toggleSortDir()"
+            class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none"
+            :aria-label="sortDir==='asc' ? 'Sort descending' : 'Sort ascending'"
+          >
+            <i class="fa-solid" :class="sortDir==='asc' ? 'fa-arrow-down-a-z' : 'fa-arrow-up-a-z'"></i>
+          </button>
+        </div>
+
+        <!-- View Toggle -->
+        <div class="flex items-center space-x-2">
+          <button
+            @click="viewMode='grid'"
+            :class="viewMode==='grid' ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400'"
+            class="p-2 hover:text-blue-600 dark:hover:text-blue-400"
+            aria-label="Grid view"
+          >
+            <i class="fa-solid fa-table-cells"></i>
+          </button>
+          <button
+            @click="viewMode='list'"
+            :class="viewMode==='list' ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400'"
+            class="p-2 hover:text-blue-600 dark:hover:text-blue-400"
+            aria-label="List view"
+          >
+            <i class="fa-solid fa-list"></i>
+          </button>
+        </div>
+
+        <!-- Theme Toggle -->
+        <button
+          @click="toggleTheme()"
+          class="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 text-lg"
+          aria-label="Toggle theme"
+        >
+          <i class="fa-solid" :class="isDark ? 'fa-sun' : 'fa-moon'"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-4xl mx-auto p-6">
+    <div
+      id="crypto-list"
+      :class="viewMode==='grid'
+        ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'
+        : 'space-y-6'"
+    >
+      {% for crypto in cryptos %}
+      <div
+        class="crypto-item flex items-center justify-between bg-white dark:bg-gray-800 p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow"
+        data-name="{{ crypto.name }}"
+        data-symbol="{{ crypto.symbol }}"
+      >
+        <div class="flex items-center space-x-4">
+          <img
+            src="{{ crypto.logo_url }}"
+            alt="{{ crypto.name }}"
+            class="w-12 h-12 rounded-full"
+            loading="lazy"
+          />
+          <div>
+            <h3 class="text-lg font-semibold">{{ crypto.name }}</h3>
+            <p class="text-gray-500 dark:text-gray-400 uppercase text-sm">{{ crypto.symbol }}</p>
+          </div>
+        </div>
+        <a
+          href="#"
+          class="ml-4 px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition transform hover:scale-105"
+          aria-label="Buy {{ crypto.name }}"
+        >Buy</a>
+      </div>
+      {% endfor %}
+    </div>
+  </main>
+
+  <!-- Interactivity Scripts -->
+  <script>
+    function cryptoPage() {
+      return {
+        search: '',
+        sortKey: 'name',
+        sortDir: 'asc',
+        viewMode: 'grid',
+        isDark: false,
+
+        initTheme() {
+          this.isDark = localStorage.theme === 'dark';
+          document.documentElement.classList.toggle('dark', this.isDark);
+        },
+        toggleTheme() {
+          this.isDark = !this.isDark;
+          document.documentElement.classList.toggle('dark', this.isDark);
+          localStorage.theme = this.isDark ? 'dark' : 'light';
+        },
+
+        filterCryptos() {
+          const q = this.search.toLowerCase();
+          document.querySelectorAll('.crypto-item').forEach(el => {
+            const name = el.dataset.name.toLowerCase();
+            const sym  = el.dataset.symbol.toLowerCase();
+            el.style.display = (name.includes(q) || sym.includes(q)) ? 'flex' : 'none';
+          });
+        },
+
+        applySort() {
+          const container = document.getElementById('crypto-list');
+          Array.from(container.children)
+            .sort((a, b) => {
+              const aVal = a.dataset[this.sortKey].toLowerCase();
+              const bVal = b.dataset[this.sortKey].toLowerCase();
+              if (aVal < bVal) return this.sortDir === 'asc' ? -1 : 1;
+              if (aVal > bVal) return this.sortDir === 'asc' ? 1 : -1;
+              return 0;
+            })
+            .forEach(el => container.appendChild(el));
+        },
+
+        toggleSortDir() {
+          this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+          this.applySort();
+        }
+      }
+    }
+  </script>
 </body>
 </html>

@@ -1,3 +1,4 @@
+import re
 import logging
 import traceback
 import asyncio
@@ -39,14 +40,26 @@ def check_near_balance(account_id: str) -> float:
         logger.error(f"Failed to fetch balance for {account_id}: {e}")
         raise ValueError(f"Failed to fetch balance: {e}")
 
+
 def validate_near_account_id(account_id: str) -> bool:
-    """Validate a NEAR account ID."""
-    if not account_id or len(account_id) < 2 or len(account_id) > 64:
+    """Validate a NEAR account ID, supporting both human-readable and implicit formats."""
+    if not account_id:
         return False
+
+    # Check length (2 to 64 characters for both formats)
+    if len(account_id) < 2 or len(account_id) > 64:
+        return False
+
+    # Case 1: Implicit address (64-character hexadecimal)
+    if len(account_id) == 64 and re.match(r'^[0-9a-fA-F]{64}$', account_id):
+        return True
+
+    # Case 2: Human-readable account
     if not all(c.isalnum() or c in ['.', '_', '-'] for c in account_id):
         return False
     if not (account_id.endswith(".near") or account_id.endswith(".tg")):
         return False
+
     return True
 
 def send_near(receiver_account_id: str, amount_near: float) -> str:

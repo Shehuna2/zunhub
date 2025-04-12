@@ -1,98 +1,219 @@
 <!DOCTYPE html>
-<html lang="en">
+{% load static %}
+<html lang="en" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Purchase Options</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        function toggleDropdown(id) {
-            document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                if (menu.id !== id) {
-                    menu.classList.add("hidden"); // Close other dropdowns
-                }
-            });
-            document.getElementById(id).classList.toggle("hidden");
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Select Cryptocurrency</title>
+  <link rel="icon" href="{% static 'images/logo/48.png' %}" type="image/x-icon">
 
-        function searchCrypto() {
-            let input = document.getElementById("cryptoSearch").value.toLowerCase();
-            let items = document.querySelectorAll("#cryptoDropdown a");
+  <!-- Tailwind CSS + dark mode config -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    }
+  </script>
 
-            items.forEach(item => {
-                let text = item.textContent.toLowerCase();
-                if (text.includes(input)) {
-                    item.classList.remove("hidden");
-                } else {
-                    item.classList.add("hidden");
-                }
-            });
-        }
-    </script>
+  <!-- Alpine.js for interactivity -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.12.0/cdn.min.js" defer></script>
+
+  <!-- Font Awesome -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js" defer></script>
+
+  <style>
+    /* Hide scrollbar but keep functionality */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    /* Fade-in animation for crypto items */
+    .crypto-item {
+      animation: fadeIn 0.3s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    /* Hover effect for clickable cards */
+    .crypto-item:hover {
+      transform: scale(1.03);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+  </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
 
-    <!-- Header -->
-    {% include 'gasfee/header.html' %}
+<body
+  x-data="cryptoPage()"
+  x-init="initTheme()"
+  class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen"
+>
+  <!-- Sticky Header -->
+  <header class="bg-white dark:bg-gray-800 shadow sticky top-0 z-50">
+    <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-between p-6 space-y-4 md:space-y-0">
+      <!-- Title and Subtitle -->
+      <div class="flex-1">
+        <h1 class="text-2xl font-bold">Select Cryptocurrency</h1>
+        <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Click a card to purchase</p>
+      </div>
 
-    <!-- Main Content -->
-    <div class="container mx-auto p-16 mt-8">
-        <h2 class="text-2xl font-bold text-center mb-6">Select an Option</h2>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 relative">
-
-            <!-- Gas Fee (Crypto) Card -->
-            <div class="bg-gray-800 p-6 rounded-lg shadow-lg hover:bg-gray-700 transition relative">
-                <div class="flex justify-between items-center cursor-pointer" onclick="toggleDropdown('cryptoDropdown')">
-                    <h3 class="text-lg font-semibold">Gas Fee</h3>
-                    <span class="text-gray-400">&#9662;</span>
-                </div>
-                <div id="cryptoDropdown" class="dropdown-menu hidden absolute left-0 mt-2 w-full bg-gray-800 z-10 shadow-lg rounded-lg p-2">
-                    <!-- Search Field -->
-                    <input type="text" id="cryptoSearch" onkeyup="searchCrypto()" placeholder="Search crypto..." 
-                        class="w-full p-2 mb-2 bg-gray-700 text-white rounded-md focus:outline-none">
-                    
-                    <!-- Scrollable Crypto List -->
-                    <div class="max-h-64 overflow-y-auto">
-                        {% for crypto in cryptos %}
-                            <a href="{% url 'buy_crypto' crypto.id %}" class="block px-4 py-2 hover:bg-gray-700">
-                                {{ crypto.name }} ({{ crypto.symbol }})
-                            </a>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Airtime Card -->
-            <div class="bg-gray-800 p-6 rounded-lg shadow-lg hover:bg-gray-700 transition relative">
-                <div class="flex justify-between items-center cursor-pointer" onclick="toggleDropdown('airtimeDropdown')">
-                    <h3 class="text-lg font-semibold">Airtime</h3>
-                    <span class="text-gray-400">&#9662;</span>
-                </div>
-                <div id="airtimeDropdown" class="dropdown-menu hidden absolute left-0 mt-2 w-full bg-gray-800 z-10 shadow-lg rounded-lg">
-                    <a href="#" class="block px-4 py-2 hover:bg-gray-700">MTN</a>
-                    <a href="#" class="block px-4 py-2 hover:bg-gray-700">Airtel</a>
-                    <a href="#" class="block px-4 py-2 hover:bg-gray-700">Glo</a>
-                    <a href="#" class="block px-4 py-2 hover:bg-gray-700">9mobile</a>
-                </div>
-            </div>
-
-            <!-- Data Card -->
-            <div class="bg-gray-800 p-6 rounded-lg shadow-lg hover:bg-gray-700 transition relative">
-                <div class="flex justify-between items-center cursor-pointer" onclick="toggleDropdown('dataDropdown')">
-                    <h3 class="text-lg font-semibold">Data</h3>
-                    <span class="text-gray-400">&#9662;</span>
-                </div>
-                <div id="dataDropdown" class="dropdown-menu hidden absolute left-0 mt-2 w-full bg-gray-800 z-10 shadow-lg rounded-lg">
-                    <a href="#" class="block px-4 py-2 hover:bg-gray-700">MTN</a>
-                    <a href="#" class="block px-4 py-2 hover:bg-gray-700">Airtel</a>
-                    <a href="#" class="block px-4 py-2 hover:bg-gray-700">Glo</a>
-                    <a href="#" class="block px-4 py-2 hover:bg-gray-700">9mobile</a>
-                </div>
-            </div>
-
+      <!-- Controls -->
+      <div class="flex flex-wrap items-center space-x-3">
+        <!-- Search -->
+        <div class="relative flex-1 min-w-[180px]">
+          <i class="fa-solid fa-magnifying-glass absolute top-1/2 transform -translate-y-1/2 left-3 text-gray-500 dark:text-gray-400"></i>
+          <input
+            id="crypto-search"
+            x-model="search"
+            @input="filterCryptos()"
+            type="text"
+            placeholder="Search cryptocurrencies..."
+            class="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          />
         </div>
-    </div>
 
+        <!-- Sort -->
+        <div class="flex items-center space-x-2">
+          <button
+            @click="toggleSortDir()"
+            class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none"
+            :aria-label="sortDir==='asc' ? 'Sort descending' : 'Sort ascending'"
+          >
+            <i class="fa-solid" :class="sortDir==='asc' ? 'fa-arrow-down-a-z' : 'fa-arrow-up-a-z'"></i>
+          </button>
+        </div>
+
+        <!-- View Toggle -->
+        <div class="flex items-center space-x-2">
+          <button
+            @click="viewMode='grid'"
+            :class="viewMode==='grid' ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400'"
+            class="p-2 hover:text-blue-600 dark:hover:text-blue-400"
+            aria-label="Grid view"
+          >
+            <i class="fa-solid fa-table-cells"></i>
+          </button>
+          <button
+            @click="viewMode='list'"
+            :class="viewMode==='list' ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400'"
+            class="p-2 hover:text-blue-600 dark:hover:text-blue-400"
+            aria-label="List view"
+          >
+            <i class="fa-solid fa-list"></i>
+          </button>
+        </div>
+
+        <!-- Theme Toggle -->
+        <button
+          @click="toggleTheme()"
+          class="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 text-lg"
+          aria-label="Toggle theme"
+        >
+          <i class="fa-solid" :class="isDark ? 'fa-sun' : 'fa-moon'"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-4xl mx-auto p-6">
+    <div
+      id="crypto-list"
+      :class="viewMode==='grid'
+        ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'
+        : 'space-y-6'"
+    >
+      {% for crypto in cryptos %}
+      <a
+        href="{% url 'buy_crypto' crypto.id %}"
+        class="crypto-item block bg-white dark:bg-gray-800 p-5 rounded-xl shadow-md hover:shadow-lg"
+        data-name="{{ crypto.name }}"
+        data-symbol="{{ crypto.symbol }}"
+        data-price="{{ crypto.price }}"
+      >
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <img
+              src="{{ crypto.logo_url }}"
+              alt="{{ crypto.name }}"
+              class="w-12 h-12 rounded-full"
+              loading="lazy"
+              onerror="this.src='/media/images/default_crypto_logo.png'"
+            />
+            <div>
+              <h3 class="text-lg font-semibold">{{ crypto.name }}</h3>
+              <p class="text-gray-500 dark:text-gray-400 uppercase text-sm">{{ crypto.symbol }}</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="text-blue-600 dark:text-blue-400 font-bold">
+              {% if crypto.price > 0 %}
+                ${{ crypto.price|floatformat:2 }}
+              {% else %}
+                N/A
+              {% endif %}
+            </p>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </main>
+
+  <!-- Interactivity Scripts -->
+  <script>
+    function cryptoPage() {
+      return {
+        search: '',
+        sortKey: 'name',
+        sortDir: 'asc',
+        viewMode: 'grid',
+        isDark: false,
+
+        initTheme() {
+          this.isDark = localStorage.theme === 'dark';
+          document.documentElement.classList.toggle('dark', this.isDark);
+        },
+        toggleTheme() {
+          this.isDark = !this.isDark;
+          document.documentElement.classList.toggle('dark', this.isDark);
+          localStorage.theme = this.isDark ? 'dark' : 'light';
+        },
+
+        filterCryptos() {
+          const q = this.search.toLowerCase();
+          document.querySelectorAll('.crypto-item').forEach(el => {
+            const name = el.dataset.name.toLowerCase();
+            const sym = el.dataset.symbol.toLowerCase();
+            el.style.display = (name.includes(q) || sym.includes(q)) ? 'block' : 'none';
+          });
+        },
+
+        applySort() {
+          const container = document.getElementById('crypto-list');
+          Array.from(container.children)
+            .sort((a, b) => {
+              let aVal = a.dataset[this.sortKey];
+              let bVal = b.dataset[this.sortKey];
+              if (this.sortKey === 'price') {
+                aVal = parseFloat(aVal) || 0;
+                bVal = parseFloat(bVal) || 0;
+                return this.sortDir === 'asc' ? aVal - bVal : bVal - aVal;
+              } else {
+                aVal = aVal.toLowerCase();
+                bVal = bVal.toLowerCase();
+                if (aVal < bVal) return this.sortDir === 'asc' ? -1 : 1;
+                if (aVal > bVal) return this.sortDir === 'asc' ? 1 : -1;
+                return 0;
+              }
+            })
+            .forEach(el => container.appendChild(el));
+        },
+
+        toggleSortDir() {
+          this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+          this.applySort();
+        }
+      }
+    }
+  </script>
 </body>
 </html>
