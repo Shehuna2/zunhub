@@ -8,23 +8,26 @@
 </head>
 <body class="bg-gray-900 text-gray-200">
     <div class="container mx-auto p-6">
-        <h2 class="text-2xl font-semibold mb-6 text-center">Marketplace</h2>
+        <!-- Header -->
+        <h2 class="text-3xl font-semibold mb-2 text-center">P2P Marketplace</h2>
+        <p class="text-gray-400 text-center mb-6">Browse available sell offers from our trusted merchants.</p>
 
         <!-- Sell Offers Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {% for offer in offers %}
-            <div class="bg-gray-800 p-4 rounded-lg shadow-md flex items-center justify-between">
+            <div class="bg-gray-700 p-4 rounded-lg shadow-md transition duration-200 hover:shadow-lg">
                 <!-- Merchant Name -->
-                <div>
-                    <h3 class="text-lg font-medium">{{ offer.merchant.username }}</h3>
-                    <p class="text-sm text-gray-400">Price: <span class="text-green-400">₦{{ offer.price_per_unit }}</span></p>
+                <h3 class="text-xl font-bold mb-2">{{ offer.merchant.username }}</h3>
+                <!-- Price -->
+                <p class="text-2xl text-green-400 mb-2">₦{{ offer.price_per_unit }} per unit</p>
+                <!-- Details -->
+                <div class="space-y-1 mb-4">
                     <p class="text-sm text-gray-400">Available: <span class="text-green-400">₦{{ offer.merchant.wallet.balance }}</span></p>
                     <p class="text-sm text-gray-400">Min: <span class="text-red-400">₦{{ offer.min_amount }}</span></p>
                     <p class="text-sm text-gray-400">Max: <span class="text-blue-400">₦{{ offer.max_amount }}</span></p>
                 </div>
-
                 <!-- Buy Button -->
-                <a href="{% url 'create_order' offer.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm">
+                <a href="{% url 'create_order' offer.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm block text-center">
                     Buy
                 </a>
             </div>
@@ -35,7 +38,7 @@
 
         <!-- Back to Dashboard -->
         <div class="text-center mt-6">
-            <a href="{% url 'dashboard' %}" class="text-blue-400 hover:underline">
+            <a href="{% url 'dashboard' %}" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm">
                 Back to Dashboard
             </a>
         </div>

@@ -80,30 +80,7 @@ def dashboard(request):
 
     return render(request, "p2p/dashboard.html", context)
 
-@login_required
-def wallet_dashboard(request):
-    wallet = Wallet.objects.get(user=request.user)
-    return render(request, 'p2p/dashboard.html', {'wallet': wallet})
 
-@login_required
-def deposit(request):
-    if request.method == "POST":
-        amount = float(request.POST.get("amount"))
-        wallet = Wallet.objects.get(user=request.user)
-        wallet.deposit(amount)
-        messages.success(request, f"Deposited ₦{amount} successfully!")
-    return render(request, "p2p/deposit.html")
-
-@login_required
-def withdraw(request):
-    if request.method == "POST":
-        amount = float(request.POST.get("amount"))
-        wallet = Wallet.objects.get(user=request.user)
-        if wallet.withdraw(amount):
-            messages.success(request, f"Withdrawn ₦{amount} successfully!")
-        else:
-            messages.error(request, "Insufficient balance!")
-    return render(request, "p2p/withdraw.html")
 
 User = get_user_model()
 
