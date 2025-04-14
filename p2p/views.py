@@ -7,11 +7,30 @@ from django.core.mail import send_mail
 
 from django.http import HttpResponseForbidden, JsonResponse
 from django.contrib import messages
-from .forms import UserRegisterForm, OrderForm, DisputeForm
+from .forms import UserRegisterForm, OrderForm, DisputeForm, SellOfferForm
 from decimal import Decimal
 from .models import Wallet, SellOffer, Order, Dispute
 from gasfee.models import CryptoPurchase
 
+
+
+def merchant_required(function):
+    return user_passes_test(lambda u: hasattr(u, 'is_merchant') and u.is_merchant)(function)
+
+@merchant_required
+@login_required
+def create_sell_offer(request):
+    if request.method == "POST":
+        form = SellOfferForm(request.POST, user=request.user)
+        if form.is_valid():
+            sell_offer = form.save(commit=False)
+            sell_offer.merchant = request.user
+            sell_offer.save()
+            messages.success(request, "Sell offer created successfully.")
+            return redirect("dashboard")  # Adjust to your desired redirect URL
+    else:
+        form = SellOfferForm(user=request.user)
+    return render(request, "p2p/create_sell_offer.html", {"form": form})
 
 
 @user_passes_test(lambda u: u.is_superuser)  # Ensure only admins can access
@@ -79,7 +98,6 @@ def dashboard(request):
     }
 
     return render(request, "p2p/dashboard.html", context)
-
 
 
 User = get_user_model()

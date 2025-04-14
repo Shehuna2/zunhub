@@ -1,21 +1,43 @@
-{% load static %}
-
-
 <head>
+    {% load static %}
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, viewport-fit=cover">
-
-    <!-- font -->
-    <link rel="stylesheet" href="{% static 'fonts/fonts.css' %}">
-    <!-- Icons -->
-    <link rel="stylesheet" href="{% static 'fonts/font-icons.css' %}">
-    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
-    <link rel="stylesheet"type="text/css" href="{% static 'css/styles.css' %}"/>
-
-   
-    <!-- Favicon and Touch Icons  -->
-    <link rel="shortcut icon" href="{% static 'images/logo/48.png' %}" />
-    <link rel="apple-touch-icon-precomposed" href="{% static 'images/logo/48.png' %}" />
-
-    <title>Home</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" href="{% static 'images/logo/48.png' %}" type="image/x-icon">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
+    <style>
+        /* Custom animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .lovely-btn {
+            transition: transform 0.2s ease-in-out;
+        }
+        .lovely-btn:hover {
+            transform: scale(1.05);
+        }
+        .service-btn {
+            border-width: 2px;
+            border-style: solid;
+            border-color: rgba(21, 128, 61, 0.75);
+            color: rgb(21, 128, 61);
+        }
+        /* Ensure navbar visibility on mobile */
+        @media (max-width: 767px) {
+            #sidebar:not(.hidden) {
+                display: flex !important;
+                position: fixed !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                z-index: 40 !important;
+                background-color: #1f2937 !important;
+            }
+        }
+    </style>
 </head>

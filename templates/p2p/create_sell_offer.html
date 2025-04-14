@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto p-4">
+    <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 max-w-md mx-auto">
+        <h1 class="text-2xl font-semibold text-green-400 mb-4">Create Sell Offer</h1>
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            {% for field in form %}
+                <div>
+                    <label class="block text-gray-300 mb-1">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <p class="text-red-400 text-sm mt-1">{{ field.errors }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition w-full">
+                Create Offer
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
