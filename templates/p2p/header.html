@@ -1,0 +1,36 @@
+<header class="bg-gray-900 p-4 fixed top-0 w-full flex items-center justify-between shadow-lg z-50">
+    <div class="flex items-center space-x-3">
+        <button id="sidebar-toggle" class="md:hidden text-white text-2xl p-2">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+        <h1 class="text-xl font-bold">Dashboard</h1>
+    </div>
+    <div class="flex items-center space-x-4">
+        <!-- Search Bar -->
+        <div class="relative">
+            <button id="search-toggle" class="md:hidden text-gray-400 hover:text-white p-2">
+                <i class="fa-solid fa-magnifying-glass text-xl"></i>
+            </button>
+            <div id="search-input" class="hidden md:flex absolute md:static top-12 left-0 w-full md:w-auto bg-gray-700 px-2 py-1 rounded-full border border-gray-600 md:border-0">
+                <input type="text" placeholder="Search..." class="w-full md:w-32 lg:w-48 px-2 py-1 bg-transparent text-white focus:outline-none text-sm">
+                <button class="text-gray-400 hover:text-white p-2">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+            </div>
+        </div>
+        <!-- Profile -->
+        <div class="relative">
+            <button id="profile-btn" class="flex items-center space-x-2 p-2">
+                <img src="#" alt="Profile" class="w-8 h-8 rounded-full border-2 border-blue-500">
+                <span class="hidden md:inline text-sm">{{ user.username }}</span>
+            </button>
+            <div id="profile-menu" class="fixed inset-0 bg-gray-800 text-white shadow-xl hidden fade-in md:absolute md:inset-auto md:right-0 md:mt-2 md:w-48 md:rounded-lg">
+                <div class="p-4 md:p-0">
+                    <a href="#" class="block px-4 py-2 hover:bg-gray-700">My Profile</a>
+                    <a href="{% url 'logout' %}" class="block px-4 py-2 hover:bg-red-600 text-red-400">Logout</a>
+                    <button id="close-menu" class="md:hidden w-full mt-4 text-center text-gray-400 hover:text-white">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>

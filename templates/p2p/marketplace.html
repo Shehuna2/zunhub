@@ -1,47 +1,50 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marketplace</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-900 text-gray-200">
-    <div class="container mx-auto p-6">
-        <!-- Header -->
-        <h2 class="text-3xl font-semibold mb-2 text-center">P2P Marketplace</h2>
-        <p class="text-gray-400 text-center mb-6">Browse available sell offers from our trusted merchants.</p>
+{% extends "base.html" %}
 
-        <!-- Sell Offers Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {% for offer in offers %}
-            <div class="bg-gray-700 p-4 rounded-lg shadow-md transition duration-200 hover:shadow-lg">
-                <!-- Merchant Name -->
-                <h3 class="text-xl font-bold mb-2">{{ offer.merchant.username }}</h3>
-                <!-- Price -->
-                <p class="text-2xl text-green-400 mb-2">₦{{ offer.price_per_unit }} per unit</p>
-                <!-- Details -->
-                <div class="space-y-1 mb-4">
-                    <p class="text-sm text-gray-400">Available: <span class="text-green-400">₦{{ offer.merchant.wallet.balance }}</span></p>
-                    <p class="text-sm text-gray-400">Min: <span class="text-red-400">₦{{ offer.min_amount }}</span></p>
-                    <p class="text-sm text-gray-400">Max: <span class="text-blue-400">₦{{ offer.max_amount }}</span></p>
+{% block content %}
+        <div class="container mx-auto">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-t-lg shadow-lg">
+                <h2 class="text-4xl font-bold text-center">P2P Marketplace</h2>
+                <p class="text-center text-gray-200 mt-2">Browse available sell offers from our trusted merchants.</p>
+            </div>
+
+            <!-- Optional Search Bar -->
+            <div class="mb-6">
+                <input type="text" placeholder="Search by merchant or price..." class="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-blue-500">
+            </div>
+
+            <!-- Sell Offers Grid -->
+            <div class="grid grid-cols-1 gap-6 mt-6 sm:grid-cols-2 lg:grid-cols-3">
+                {% for offer in offers %}
+                <div class="bg-gray-800 p-6 rounded-lg shadow-md transition duration-300 hover:shadow-xl hover:-translate-y-1">
+                    <!-- Merchant Name with Icon -->
+                    <div class="flex items-center mb-3">
+                        <i class="fas fa-user-circle text-2xl text-gray-400 mr-2"></i>
+                        <h3 class="text-2xl font-semibold text-white">{{ offer.merchant.username }}</h3>
+                    </div>
+                    <!-- Price -->
+                    <p class="text-3xl text-green-400 mb-4">₦{{ offer.price_per_unit }} <span class="text-sm text-gray-400">per unit</span></p>
+                    <!-- Details -->
+                    <div class="space-y-2 mb-6">
+                        <p class="text-sm text-gray-300">Available: <span class="text-green-400">₦{{ offer.merchant.wallet.balance }}</span></p>
+                        <p class="text-sm text-gray-300">Min: <span class="text-red-400">₦{{ offer.min_amount }}</span></p>
+                        <p class="text-sm text-gray-300">Max: <span class="text-blue-400">₦{{ offer.max_amount }}</span></p>
+                    </div>
+                    <!-- Buy Button -->
+                    <a href="{% url 'create_order' offer.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md text-base block text-center transition duration-200">
+                        Buy Now
+                    </a>
                 </div>
-                <!-- Buy Button -->
-                <a href="{% url 'create_order' offer.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm block text-center">
-                    Buy
+                {% empty %}
+                <p class="text-center col-span-full text-gray-400 text-lg">No sell offers available at the moment.</p>
+                {% endfor %}
+            </div>
+
+            <!-- Back to Dashboard -->
+            <div class="text-center mt-8">
+                <a href="{% url 'dashboard' %}" class="bg-gray-700 hover:bg-gray-800 text-white px-6 py-3 rounded-md text-base transition duration-200">
+                    Back to Dashboard
                 </a>
             </div>
-            {% empty %}
-            <p class="text-center col-span-full text-gray-400">No sell offers available at the moment.</p>
-            {% endfor %}
         </div>
-
-        <!-- Back to Dashboard -->
-        <div class="text-center mt-6">
-            <a href="{% url 'dashboard' %}" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm">
-                Back to Dashboard
-            </a>
-        </div>
-    </div>
-</body>
-</html>
+{% endblock content %}

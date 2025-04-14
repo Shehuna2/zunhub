@@ -1,18 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
-{% load static %}
+{% include "p2p/head.html" %}
+<body class="bg-gradient-to-br from-gray-900 to-gray-800 text-white min-h-screen font-sans">
+    <!-- Header -->
+    {% include 'p2p/header.html' %}
 
-{% include 'p2p/head.html' %}
+    <!-- Main Layout -->
+    <div class="flex pt-16">
+        <!-- Sidebar -->
+        {% include "p2p/navbar.html" %}
+        
+        <!-- Main Content -->
+        <main class="flex-1 p-4 md:p-6 md:ml-20 lg:ml-64 pb-16 md:pb-0">
+            {% block content %}
+            {% endblock content %}
+        </main>
+    </div>
 
+    <!-- Scripts -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            console.log("DOM loaded");
+            var toggleButton = document.getElementById("sidebar-toggle");
+            var sidebar = document.getElementById("sidebar");
+            if (toggleButton && sidebar) {
+                console.log("Sidebar toggle button and sidebar found");
+                toggleButton.addEventListener("click", function() {
+                    console.log("Sidebar toggle clicked");
+                    sidebar.classList.toggle("hidden");
+                    console.log("Sidebar classes after toggle:", sidebar.classList.toString());
+                });
+            } else {
+                console.log("Sidebar toggle button or sidebar not found");
+            }
 
-<body class="app-wallet">
-    <!-- <a href="{% url 'merchant_orders' %}">Merchant Orders</a> -->
+            // Balance Toggle
+            var toggleBalance = document.getElementById("toggle-balance");
+            if (toggleBalance) {
+                toggleBalance.addEventListener("click", function() {
+                    let balance = document.getElementById("wallet-balance");
+                    let eyeIcon = document.getElementById("eye-icon");
+                    if (balance && eyeIcon) {
+                        if (balance.innerText === "") {
+                            balance.innerText = "₦{{ user.wallet.balance|default:0 }}";
+                            eyeIcon.classList.remove("fa-eye-slash");
+                            eyeIcon.classList.add("fa-eye");
+                        } else {
+                            balance.innerText = "";
+                            eyeIcon.classList.remove("fa-eye");
+                            eyeIcon.classList.add("fa-eye-slash");
+                        }
+                    }
+                });
+            }
 
-    
-    
-    {% block content %}
-    {% endblock content %}
+            // Profile Dropdown
+            var profileBtn = document.getElementById("profile-btn");
+            var profileMenu = document.getElementById("profile-menu");
+            if (profileBtn && profileMenu) {
+                profileBtn.addEventListener("click", function(e) {
+                    e.stopPropagation();
+                    profileMenu.classList.toggle("hidden");
+                });
+                document.addEventListener("click", function(event) {
+                    if (!profileBtn.contains(event.target)) {
+                        profileMenu.classList.add("hidden");
+                    }
+                });
+            }
 
-
-    {% include 'p2p/scripts.html' %}
+            // Search Toggle for Mobile
+            var searchToggle = document.getElementById("search-toggle");
+            var searchInput = document.getElementById("search-input");
+            if (searchToggle && searchInput) {
+                searchToggle.addEventListener("click", function() {
+                    searchInput.classList.toggle("hidden");
+                });
+            }
+        });
+    </script>
 </body>
+</html>
