@@ -115,32 +115,46 @@
     <div class="flex pt-16">
         <!-- Sidebar -->
         <nav id="sidebar" class="bg-gray-800 text-white p-4 fixed bottom-0 left-0 w-full flex justify-around items-center md:flex-col md:w-20 lg:w-64 md:h-screen md:justify-start md:space-y-6 md:pt-6 shadow-lg z-40 hidden md:block bg-opacity-90">
-          <a href="{% url 'buyer_orders' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
-            <i class="fa-solid fa-box text-2xl md:text-lg"></i>
-            <span class="text-xs md:text-sm lg:inline hidden">Orders</span>
-          </a>
-          <a href="{% url 'buyer_orders' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
-            <i class="fa-solid fa-box text-2xl md:text-lg"></i>
-            <span class="text-xs md:text-sm lg:inline hidden">Orders</span>
-          </a>
             {% if request.user.is_merchant %}
-            <a href="{% url 'buyer_orders' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
+              <!-- Placeholder for Create Sell Offer (not implemented yet) -->
+              <!-- Uncomment and update URL when implemented -->
+              <!-- <a href="#" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
+                <i class="fa-solid fa-plus text-2xl md:text-lg"></i>
+                <span class="text-xs md:text-sm lg:inline hidden">Create Sell Offer</span>
+              </a> -->
+              <a href="{% url 'merchant_orders' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
                 <i class="fa-solid fa-box text-2xl md:text-lg"></i>
-                <span class="text-xs md:text-sm lg:inline hidden">Orders</span>
-            </a>
-            {% else %}
-            <a href="{% url 'merchant_orders' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
-                <i class="fa-solid fa-money-bill-wave text-2xl md:text-lg"></i>
-                <span class="text-xs md:text-sm lg:inline hidden">Sales</span>
-            </a>
-            {% endif %}
-            <a href="{% url 'dispute_list' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
+                <span class="text-xs md:text-sm lg:inline hidden">My Orders</span>
+              </a>
+              <a href="{% url 'dispute_list' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
                 <i class="fa-solid fa-scale-balanced text-2xl md:text-lg"></i>
                 <span class="text-xs md:text-sm lg:inline hidden">Disputes</span>
-            </a>
+              </a>
+              <a href="{% url 'update_bank_details' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
+                <i class="fa-solid fa-university text-2xl md:text-lg"></i>
+                <span class="text-xs md:text-sm lg:inline hidden">Bank Details</span>
+              </a>
+            {% else %}
+              <a href="{% url 'marketplace' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
+                <i class="fa-solid fa-store text-2xl md:text-lg"></i>
+                <span class="text-xs md:text-sm lg:inline hidden">Marketplace</span>
+              </a>
+              <a href="{% url 'buyer_orders' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
+                <i class="fa-solid fa-shopping-cart text-2xl md:text-lg"></i>
+                <span class="text-xs md:text-sm lg:inline hidden">My Orders</span>
+              </a>
+              <a href="{% url 'dispute_list' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
+                <i class="fa-solid fa-scale-balanced text-2xl md:text-lg"></i>
+                <span class="text-xs md:text-sm lg:inline hidden">Disputes</span>
+              </a>
+              <a href="{% url 'update_bank_details' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
+                <i class="fa-solid fa-university text-2xl md:text-lg"></i>
+                <span class="text-xs md:text-sm lg:inline hidden">Bank Details</span>
+              </a>
+            {% endif %}
             <a href="{% url 'logout' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-red-400 hover:bg-gray-700 p-3 rounded-lg transition-colors">
-                <i class="fa-solid fa-right-from-bracket text-2xl md:text-lg"></i>
-                <span class="text-xs md:text-sm lg:inline hidden">Logout</span>
+              <i class="fa-solid fa-right-from-bracket text-2xl md:text-lg"></i>
+              <span class="text-xs md:text-sm lg:inline hidden">Logout</span>
             </a>
         </nav>
 
@@ -164,7 +178,7 @@
                           <i class="fa-solid fa-arrow-down mr-1"></i>Deposit
                         </a>
                         <a
-                          href="{% url 'withdraw' %}"
+                          href="#"
                           class="flex-1 text-center py-2 rounded-lg font-semibold bg-red-600 text-white hover:bg-red-700 transition"
                         >
                           <i class="fa-solid fa-arrow-up mr-1"></i>Withdraw

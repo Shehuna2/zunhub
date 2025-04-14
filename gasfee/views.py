@@ -101,6 +101,14 @@ def asset_list(request):
     return render(request, "gasfee/crypto_list.html", {"cryptos": crypto_list})
 
 
+# def refund_user(request, order):
+#     with transaction.atomic():
+#         wallet = Wallet.objects.select_for_update().get(user=request.user)
+#         wallet.balance += order.total_price
+#         wallet.save(update_fields=["balance"])
+#         order.status = "refunded"
+#         order.save(update_fields=["status"])
+
 @login_required
 def buy_crypto(request, crypto_id):
     crypto = get_object_or_404(Crypto, id=crypto_id)
@@ -156,12 +164,11 @@ def buy_crypto(request, crypto_id):
                     rent_ngn = (rent_sol * crypto_price * exchange_rate).quantize(Decimal('0.01'))
                     total_ngn_deducted += rent_ngn
                 elif crypto.symbol.upper() == "TON":
-                    # Assume max deployment cost upfront
-                    deployment_ton = Decimal('0.05')  # Match utils.py
+                    deployment_ton = Decimal('0.05')
                     deployment_ngn = (deployment_ton * crypto_price * exchange_rate).quantize(Decimal('0.01'))
                     total_ngn_deducted += deployment_ngn
                 else:
-                    rent_sol = Decimal('0')  # No rent/deployment for others
+                    rent_sol = Decimal('0')
                 
                 if wallet.balance < total_ngn_deducted:
                     return JsonResponse({
@@ -178,13 +185,13 @@ def buy_crypto(request, crypto_id):
                     input_amount=amount,
                     input_currency=currency,
                     crypto_amount=crypto_received,
-                    total_price=total_ngn_deducted,  # Includes potential deployment/rent
+                    total_price=total_ngn_deducted,
                     wallet_address=wallet_address,
                     status="pending"
                 )
 
             # Validate wallet address
-            if crypto.symbol.upper() == "BNB" or "ETH" in crypto.symbol.upper():
+            if crypto.symbol.upper() in ["BNB", "ETH", "BASE-ETH"]:
                 try:
                     wallet_address = Web3.to_checksum_address(wallet_address)
                 except ValueError:
@@ -218,8 +225,7 @@ def buy_crypto(request, crypto_id):
                         logger.warning(f"Rent mismatch: expected {rent_sol}, sent {actual_rent_sol}")
                 elif crypto.symbol.upper() == "TON":
                     tx_hash, actual_deployment_ton = send_ton(wallet_address, float(crypto_received), order.id)
-                    logger.info(f"Transaction hash from send_ton: {tx_hash}")  
-                    # Adjust if deployment wasn’t needed
+                    logger.info(f"Transaction hash from send_ton: {tx_hash}")
                     if actual_deployment_ton == 0:
                         refund_amount = deployment_ngn
                         wallet.balance += refund_amount
@@ -235,8 +241,8 @@ def buy_crypto(request, crypto_id):
                         logger.info(f"NEAR transaction hash: {tx_hash}")
                     except ValueError as e:
                         return JsonResponse({"success": False, "error": str(e)})
-                elif "ETH" in crypto.symbol.upper():
-                    evm_network = crypto.symbol.split("-")[-1]
+                elif crypto.symbol.upper() in ["ETH", "BASE-ETH"]:
+                    evm_network = crypto.symbol.split("-")[-1].lower()
                     tx_hash = send_evm(evm_network, wallet_address, Web3.to_wei(crypto_received, "ether"))
                 else:
                     return JsonResponse({"success": False, "error": "Unsupported token."})
@@ -255,7 +261,19 @@ def buy_crypto(request, crypto_id):
                     "success": True,
                     "message": message,
                     "tx_hash": tx_hash,
-                    "total_ngn_charged": str(total_ngn_deducted)
+                    "order_id": order.id,
+                    "logo_url": crypto.logo.url,
+                    "crypto_name": crypto.name,
+                    "crypto_symbol": crypto.symbol,
+                    "crypto_amount": str(crypto_received),
+                    "input_amount": str(amount),
+                    "input_currency": currency,
+                    "total_ngn_charged": str(total_ngn_deducted),
+                    "wallet_address": wallet_address,
+                    "created_at": order.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                    "username": request.user.username,
+                    "exchange_rate": str(exchange_rate),
+                    "crypto_price": str(crypto_price),
                 })
             except Exception as tx_error:
                 logger.error(f"Crypto transfer failed: {tx_error}\n{traceback.format_exc()}")
@@ -270,7 +288,6 @@ def buy_crypto(request, crypto_id):
         "exchange_rate": exchange_rate,
         "crypto_price": crypto_price,
     })
-
     
 
 def refund_user(request, purchase):
@@ -291,6 +308,7 @@ def refund_user(request, purchase):
     except Wallet.DoesNotExist:
         messages.error(request, "Wallet not found. Refund could not be processed.")
         return False
+    
 
 def update_order_status(request, order_id, new_status):
     """Updates order status and refunds if necessary."""
