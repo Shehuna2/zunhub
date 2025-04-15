@@ -514,55 +514,126 @@ def send_bsc(to_address, amount):
         logger.error(f"Failed to send BSC transaction: {str(e)}\n{traceback.format_exc()}")
         raise
 
-# Price and exchange rate functions (unchanged)
 def get_crypto_price(coingecko_id, network="Ethereum"):
-    crypto_price_key = f"crypto_price_{coingecko_id}_{network.lower()}"
-    crypto_price = cache.get(crypto_price_key)
-    if crypto_price is None:
-        crypto_price_url = f"https://api.coingecko.com/api/v3/simple/price?ids={coingecko_id}&vs_currencies=usd"
-        logger.info(f"Fetching crypto price for {network} from: {crypto_price_url}")
-        try:
-            response = requests.get(crypto_price_url, timeout=5)
-            response.raise_for_status()
-            crypto_price_data = response.json()
-            if coingecko_id not in crypto_price_data or "usd" not in crypto_price_data[coingecko_id]:
-                raise ValueError(f"No valid price data for {coingecko_id} on {network}")
-            crypto_price = Decimal(str(crypto_price_data[coingecko_id]["usd"]))
-            cache.set(crypto_price_key, crypto_price, timeout=300)
-            logger.info(f"Cached crypto price for {coingecko_id} on {network}: {crypto_price}")
-        except requests.RequestException as e:
-            logger.error(f"API request failed for {coingecko_id} on {network}: {str(e)}\n{traceback.format_exc()}")
-            crypto_price = Decimal("500")
-        except (KeyError, ValueError, TypeError) as e:
-            logger.error(f"Data parsing error for {coingecko_id} on {network}: {str(e)}\n{traceback.format_exc()}")
-            crypto_price = Decimal("500")
-    else:
-        logger.info(f"Using cached crypto price for {coingecko_id} on {network}: {crypto_price}")
-    return crypto_price
+    # key for fresh price (expires in 5 minutes)
+    fresh_key = f"crypto_price_{coingecko_id}_{network.lower()}"
+    # key for last known price (never expires)
+    last_known_key = f"crypto_price_last_known_{coingecko_id}_{network.lower()}"
+
+    # 1) Try the fresh cache
+    crypto_price = cache.get(fresh_key)
+    if crypto_price is not None:
+        logger.info(f"Using fresh cached price for {coingecko_id} on {network}: {crypto_price}")
+        return crypto_price
+
+    # 2) Fresh cache miss → attempt API fetch
+    url = (
+        f"https://api.coingecko.com/api/v3/simple/price"
+        f"?ids={coingecko_id}&vs_currencies=usd"
+    )
+    logger.info(f"Fetching crypto price for {network} from: {url}")
+    try:
+        resp = requests.get(url, timeout=5)
+        resp.raise_for_status()
+        data = resp.json()
+        usd_price = data[coingecko_id]["usd"]
+        crypto_price = Decimal(str(usd_price))
+
+        # update both caches
+        cache.set(fresh_key, crypto_price, timeout=300)       # 5 min
+        cache.set(last_known_key, crypto_price, timeout=None) # never expire
+
+        logger.info(f"Cached fresh price for {coingecko_id}: {crypto_price}")
+        return crypto_price
+
+    except requests.RequestException as e:
+        logger.error(
+            f"API request failed for {coingecko_id} on {network}: {e}\n"
+            + traceback.format_exc()
+        )
+    except (KeyError, ValueError, TypeError) as e:
+        logger.error(
+            f"Data parsing error for {coingecko_id} on {network}: {e}\n"
+            + traceback.format_exc()
+        )
+
+    # 3) On *any* failure, try the fresh cache one more time (maybe race)…
+    crypto_price = cache.get(fresh_key)
+    if crypto_price is not None:
+        logger.info(f"Using just‐set fresh cache after error for {coingecko_id}: {crypto_price}")
+        return crypto_price
+
+    # 4) …then try the “last known” cache
+    crypto_price = cache.get(last_known_key)
+    if crypto_price is not None:
+        logger.info(f"Using last‐known cached price for {coingecko_id}: {crypto_price}")
+        return crypto_price
+
+    # 5) Finally, give up and use hard‑coded default
+    logger.warning(
+        f"No cached price available for {coingecko_id}; falling back to 500"
+    )
+    return Decimal("500")
 
 def get_exchange_rate():
-    exchange_rate_key = "exchange_rate_usd_ngn"
-    base_exchange_rate = cache.get(exchange_rate_key)
-    if base_exchange_rate is None:
-        exchange_rate_url = "https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=ngn"
-        logger.info(f"Fetching exchange rate from: {exchange_rate_url}")
-        try:
-            response = requests.get(exchange_rate_url, timeout=5)
-            response.raise_for_status()
-            exchange_rate_data = response.json()
-            if "tether" not in exchange_rate_data or "ngn" not in exchange_rate_data["tether"]:
-                raise ValueError("NGN price missing for tether")
-            base_exchange_rate = Decimal(str(exchange_rate_data["tether"]["ngn"]))
-            cache.set(exchange_rate_key, base_exchange_rate, timeout=300)
-            logger.info(f"Cached exchange rate: {base_exchange_rate}")
-        except (requests.RequestException, KeyError, ValueError) as e:
-            logger.error(f"Failed to fetch exchange rate: {str(e)}\n{traceback.format_exc()}")
-            base_exchange_rate = Decimal("1500")
+    # 1) Keys: fresh (5 min) and last‑known (never expire)
+    fresh_key     = "exchange_rate_usd_ngn"
+    last_known_key = "exchange_rate_last_known_usd_ngn"
+
+    # 2) Try fresh cache
+    rate = cache.get(fresh_key)
+    if rate is not None:
+        logger.info(f"Using fresh cached USD→NGN rate: {rate}")
     else:
-        logger.info(f"Using cached exchange rate: {base_exchange_rate}")
+        # 3) Fetch from Coingecko
+        url = (
+            "https://api.coingecko.com/api/v3/simple/price"
+            "?ids=tether&vs_currencies=ngn"
+        )
+        logger.info(f"Fetching USD→NGN rate from: {url}")
+        try:
+            resp = requests.get(url, timeout=5)
+            resp.raise_for_status()
+            data = resp.json()
+            ngn_price = data["tether"]["ngn"]
+            rate = Decimal(str(ngn_price))
+
+            # update both caches
+            cache.set(fresh_key, rate, timeout=300)       # 5 min
+            cache.set(last_known_key, rate, timeout=None) # never expire
+
+            logger.info(f"Cached fresh USD→NGN rate: {rate}")
+
+        except (requests.RequestException, KeyError, ValueError) as e:
+            logger.error(
+                f"Failed to fetch USD→NGN rate: {e}\n"
+                + traceback.format_exc()
+            )
+
+            # 4) On error, re‑check fresh cache (race)…
+            rate = cache.get(fresh_key)
+            if rate is not None:
+                logger.info(
+                    f"Using just‑set fresh cache after error: {rate}"
+                )
+            else:
+                # 5) …then fall back to last‑known
+                rate = cache.get(last_known_key)
+                if rate is not None:
+                    logger.info(f"Using last‑known USD→NGN rate: {rate}")
+                else:
+                    # 6) Ultimate default
+                    rate = Decimal("1500")
+                    logger.warning(
+                        "No cached USD→NGN rate available; falling back to 1500"
+                    )
+
+    # 7) Apply your margin
     try:
         from .models import ExchangeRateMargin
-        margin = ExchangeRateMargin.objects.get(currency_pair="USDT/NGN").profit_margin
+        margin = ExchangeRateMargin.objects.get(
+            currency_pair="USDT/NGN"
+        ).profit_margin
     except ExchangeRateMargin.DoesNotExist:
         margin = Decimal("0")
-    return base_exchange_rate + margin
+    return rate + margin

@@ -38,128 +38,161 @@
       transform: scale(1.03);
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
+    /* Ensure navbar visibility on mobile */
+    @media (max-width: 767px) {
+      #sidebar:not(.hidden) {
+        display: flex !important;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        z-index: 40 !important;
+        background-color: #1f2937 !important;
+      }
+    }
   </style>
 </head>
 
 <body
   x-data="cryptoPage()"
   x-init="initTheme()"
-  class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen"
+  class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen flex pt-16"
 >
-  <!-- Sticky Header -->
-  <header class="bg-white dark:bg-gray-800 shadow sticky top-0 z-50">
-    <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-between p-6 space-y-4 md:space-y-0">
-      <!-- Title and Subtitle -->
-      <div class="flex-1">
-        <h1 class="text-2xl font-bold">Select Cryptocurrency</h1>
-        <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Click a card to purchase</p>
-      </div>
+  <!-- Hamburger Menu for Mobile -->
+  <button id="sidebar-toggle" class="md:hidden text-white text-2xl p-2 fixed top-4 left-4 z-50">
+    <i class="fa-solid fa-bars"></i>
+  </button>
 
-      <!-- Controls -->
-      <div class="flex flex-wrap items-center space-x-3">
-        <!-- Search -->
-        <div class="relative flex-1 min-w-[180px]">
-          <i class="fa-solid fa-magnifying-glass absolute top-1/2 transform -translate-y-1/2 left-3 text-gray-500 dark:text-gray-400"></i>
-          <input
-            id="crypto-search"
-            x-model="search"
-            @input="filterCryptos()"
-            type="text"
-            placeholder="Search cryptocurrencies..."
-            class="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-          />
+  <!-- Sidebar -->
+  {% include "p2p/navbar.html" %}
+
+  <!-- Main Content Wrapper -->
+  <main class="flex-1 p-4 md:p-6 md:ml-20 lg:ml-64 pb-16 md:pb-0">
+        <!-- Sticky Header -->
+    <header class="bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow sticky top-0 z-40 rounded-t-lg shadow-lg">
+      <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-between p-6 space-y-4 md:space-y-0">
+        <!-- Title and Subtitle -->
+        <div class="flex-1">
+          <h1 class="text-2xl font-bold">Select Cryptocurrency</h1>
+          <p class="text-gray-200 text-sm mt-1">Click a card to purchase</p>
         </div>
 
-        <!-- Sort -->
-        <div class="flex items-center space-x-2">
-          <button
-            @click="toggleSortDir()"
-            class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none"
-            :aria-label="sortDir==='asc' ? 'Sort descending' : 'Sort ascending'"
-          >
-            <i class="fa-solid" :class="sortDir==='asc' ? 'fa-arrow-down-a-z' : 'fa-arrow-up-a-z'"></i>
-          </button>
-        </div>
-
-        <!-- View Toggle -->
-        <div class="flex items-center space-x-2">
-          <button
-            @click="viewMode='grid'"
-            :class="viewMode==='grid' ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400'"
-            class="p-2 hover:text-blue-600 dark:hover:text-blue-400"
-            aria-label="Grid view"
-          >
-            <i class="fa-solid fa-table-cells"></i>
-          </button>
-          <button
-            @click="viewMode='list'"
-            :class="viewMode==='list' ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400'"
-            class="p-2 hover:text-blue-600 dark:hover:text-blue-400"
-            aria-label="List view"
-          >
-            <i class="fa-solid fa-list"></i>
-          </button>
-        </div>
-
-        <!-- Theme Toggle -->
-        <button
-          @click="toggleTheme()"
-          class="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 text-lg"
-          aria-label="Toggle theme"
-        >
-          <i class="fa-solid" :class="isDark ? 'fa-sun' : 'fa-moon'"></i>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main Content -->
-  <main class="max-w-4xl mx-auto p-6">
-    <div
-      id="crypto-list"
-      :class="viewMode==='grid'
-        ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'
-        : 'space-y-6'"
-    >
-      {% for crypto in cryptos %}
-      <a
-        href="{% url 'buy_crypto' crypto.id %}"
-        class="crypto-item block bg-white dark:bg-gray-800 p-5 rounded-xl shadow-md hover:shadow-lg"
-        data-name="{{ crypto.name }}"
-        data-symbol="{{ crypto.symbol }}"
-        data-price="{{ crypto.price }}"
-      >
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-4">
-            <img
-              src="{{ crypto.logo_url }}"
-              alt="{{ crypto.name }}"
-              class="w-12 h-12 rounded-full"
-              loading="lazy"
-              onerror="this.src='/media/images/default_crypto_logo.png'"
+        <!-- Controls -->
+        <div class="flex flex-wrap items-center space-x-3">
+          <!-- Search -->
+          <div class="relative flex-1 min-w-[180px]">
+            <i class="fa-solid fa-magnifying-glass absolute top-1/2 transform -translate-y-1/2 left-3 text-gray-200"></i>
+            <input
+              id="crypto-search"
+              x-model="search"
+              @input="filterCryptos()"
+              type="text"
+              placeholder="Search cryptocurrencies..."
+              class="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
             />
-            <div>
-              <h3 class="text-lg font-semibold">{{ crypto.name }}</h3>
-              <p class="text-gray-500 dark:text-gray-400 uppercase text-sm">{{ crypto.symbol }}</p>
+          </div>
+
+          <!-- Sort -->
+          <div class="flex items-center space-x-2">
+            <button
+              @click="toggleSortDir()"
+              class="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 focus:outline-none"
+              :aria-label="sortDir==='asc' ? 'Sort descending' : 'Sort ascending'"
+            >
+              <i class="fa-solid" :class="sortDir==='asc' ? 'fa-arrow-down-a-z' : 'fa-arrow-up-a-z'"></i>
+            </button>
+          </div>
+
+          <!-- View Toggle -->
+          <div class="flex items-center space-x-2">
+            <button
+              @click="viewMode='grid'"
+              :class="viewMode==='grid' ? 'text-blue-300' : 'text-gray-200'"
+              class="p-2 hover:text-blue-200"
+              aria-label="Grid view"
+            >
+              <i class="fa-solid fa-table-cells"></i>
+            </button>
+            <button
+              @click="viewMode='list'"
+              :class="viewMode==='list' ? 'text-blue-300' : 'text-gray-200'"
+              class="p-2 hover:text-blue-200"
+              aria-label="List view"
+            >
+              <i class="fa-solid fa-list"></i>
+            </button>
+          </div>
+
+          <!-- Theme Toggle -->
+          <button
+            @click="toggleTheme()"
+            class="p-2 text-gray-200 hover:text-blue-200 text-lg"
+            aria-label="Toggle theme"
+          >
+            <i class="fa-solid" :class="isDark ? 'fa-sun' : 'fa-moon'"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+    <!-- Crypto Listing -->
+    <div class="max-w-4xl mx-auto p-6">
+      <div
+        id="crypto-list"
+        :class="viewMode==='grid'
+          ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'
+          : 'space-y-6'"
+      >
+        {% for crypto in cryptos %}
+        <a
+          href="{% url 'buy_crypto' crypto.id %}"
+          class="crypto-item block bg-white bg-gradient-to-br from-gray-800 to-gray-800 p-5 rounded-xl shadow-md hover:shadow-lg"
+          data-name="{{ crypto.name }}"
+          data-symbol="{{ crypto.symbol }}"
+          data-price="{{ crypto.price }}"
+        >
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <img
+                src="{{ crypto.logo_url }}"
+                alt="{{ crypto.name }}"
+                class="w-12 h-12 rounded-full"
+                loading="lazy"
+                onerror="this.src='/media/images/default_crypto_logo.png'"
+              />
+              <div>
+                <h3 class="text-lg font-semibold">{{ crypto.name }}</h3>
+                <p class="text-gray-500 dark:text-gray-400 uppercase text-sm">{{ crypto.symbol }}</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="text-blue-600 dark:text-blue-400 font-bold">
+                {% if crypto.price > 0 %}
+                  ${{ crypto.price|floatformat:2 }}
+                {% else %}
+                  N/A
+                {% endif %}
+              </p>
             </div>
           </div>
-          <div class="text-right">
-            <p class="text-blue-600 dark:text-blue-400 font-bold">
-              {% if crypto.price > 0 %}
-                ${{ crypto.price|floatformat:2 }}
-              {% else %}
-                N/A
-              {% endif %}
-            </p>
-          </div>
-        </div>
-      </a>
-      {% endfor %}
+        </a>
+        {% endfor %}
+      </div>
     </div>
   </main>
 
   <!-- Interactivity Scripts -->
   <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // Sidebar Toggle for Mobile
+      var toggleButton = document.getElementById("sidebar-toggle");
+      var sidebar = document.getElementById("sidebar");
+      if (toggleButton && sidebar) {
+        toggleButton.addEventListener("click", function() {
+          sidebar.classList.toggle("hidden");
+        });
+      }
+    });
+
     function cryptoPage() {
       return {
         search: '',

@@ -4,6 +4,7 @@
 <body class="bg-gradient-to-br from-gray-900 to-gray-800 text-white min-h-screen font-sans">
     <!-- Header -->
     {% include 'p2p/header.html' %}
+    {% block title %}{% endblock title %}
 
     <!-- Main Layout -->
     <div class="flex pt-16">
@@ -79,5 +80,8 @@
             }
         });
     </script>
+    <footer class="bg-gray-900 text-white p-4 mt-6">
+      <p class="text-center">©Zunhub 2025. All rights reserved.</p>
+    </footer>
 </body>
 </html>
