@@ -35,57 +35,58 @@
                     </h3>
                     <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
                         <a
-                            href="{% url 'buy-airtime' %}"
-                            class="lovely-btn service-btn block text-center py-2 px-4 rounded-lg font-semibold bg-gray-600 text-white hover:bg-gray-700 transition"
-                            aria-label="Buy Airtime"
-                        >
-                            <i class="fa-solid fa-phone mr-1icon-color "></i>Buy Airtime
-                        </a>
-                        <a
-                            href="{% url 'buy_data' %}"
-                            class="lovely-btn service-btn block text-center py-2 px-4 rounded-lg font-semibold bg-gray-600 text-white hover:bg-gray-700 transition"
-                            aria-label="Buy Data"
-                        >
-                            <i class="fa-solid fa-wifi mr-1 icon-color "></i>Buy Data
-                        </a>
-                        <a
                             href="{% url 'asset_list' %}"
-                            class="lovely-btn service-btn block text-center py-2 px-4 rounded-lg font-semibold bg-gray-600 text-white hover:bg-gray-700 transition"
+                            class="lovely-btn service-btn block text-center py-2 bg-gradient-to-br from-blue-900 to-purple-800 px-4 rounded-lg font-semibold text-white hover:bg-gray-700 transition"
                             aria-label="Pay Gas Fee"
                         >
                             <i class="fa-solid fa-bolt mr-1 icon-color "></i>Buy Gas Fee
                         </a>
                         <a
                             href="#"
-                            class="lovely-btn service-btn block text-center py-2 px-4 rounded-lg font-semibold bg-gray-600 text-white hover:bg-gray-700 transition"
+                            class="lovely-btn service-btn block text-center py-2 bg-gradient-to-br from-blue-900 to-purple-800 px-4 rounded-lg font-semibold text-white hover:bg-gray-700 transition"
                             aria-label="Sell Asset"
                         >
                             <i class="fa-solid fa-coins mr-1 icon-color "></i>Sell Asset
                         </a>
                         <a
+                            href="{% url 'buy-airtime' %}"
+                            class="lovely-btn service-btn block text-center py-2 bg-gradient-to-br from-blue-900 to-purple-800 px-4 rounded-lg font-semibold bg-gray-600 text-white hover:bg-gray-700 transition"
+                            aria-label="Buy Airtime"
+                        >
+                            <i class="fa-solid fa-phone mr-1 icon-color "></i>Buy Airtime
+                        </a>
+                        <a
+                            href="{% url 'buy_data' %}"
+                            class="lovely-btn service-btn block text-center py-2 bg-gradient-to-br from-blue-900 to-purple-800 px-4 rounded-lg font-semibold bg-gray-600 text-white hover:bg-gray-700 transition"
+                            aria-label="Buy Data"
+                        >
+                            <i class="fa-solid fa-wifi mr-1 icon-color "></i>Buy Data
+                        </a>
+
+                        <a
                             href="#"
-                            class="lovely-btn service-btn block text-center py-2 px-4 rounded-lg font-semibold bg-gray-600 text-white hover:bg-gray-700 transition"
+                            class="lovely-btn service-btn block text-center py-2 bg-gradient-to-br from-blue-900 to-purple-800 px-4 rounded-lg font-semibold bg-gray-600 text-white hover:bg-gray-700 transition"
                             aria-label="Pay Electricity"
                         >
                             <i class="fa-solid fa-lightbulb mr-1 icon-color "></i>Pay Electricity
                         </a>
                         <a
                             href="#"
-                            class="lovely-btn service-btn block text-center py-2 px-4 rounded-lg font-semibold bg-gray-600 text-white hover:bg-gray-700 transition"
+                            class="lovely-btn service-btn block text-center py-2 bg-gradient-to-br from-blue-900 to-purple-800 px-4 rounded-lg font-semibold bg-gray-600 text-white hover:bg-gray-700 transition"
                             aria-label="Subscribe TV"
                         >
                             <i class="fa-solid fa-tv mr-1 icon-color "></i>Subscribe TV
                         </a>
                         <a
                             href="#"
-                            class="lovely-btn service-btn block text-center py-2 px-4 rounded-lg font-semibold bg-gray-600 text-white hover:bg-gray-700 transition"
+                            class="lovely-btn service-btn block text-center py-2 bg-gradient-to-br from-blue-900 to-purple-800 px-4 rounded-lg font-semibold bg-gray-600 text-white hover:bg-gray-700 transition"
                             aria-label="Buy WAEC Pin"
                         >
                             <i class="fa-solid fa-graduation-cap mr-1 icon-color "></i>Buy WAEC Pin
                         </a>
                         <a
                             href="#"
-                            class="lovely-btn service-btn block text-center py-2 px-4 rounded-lg font-semibold bg-gray-600 text-white hover:bg-gray-700 transition"
+                            class="lovely-btn service-btn block text-center py-2 bg-gradient-to-br from-blue-900 to-purple-800 px-4 rounded-lg font-semibold bg-gray-600 text-white hover:bg-gray-700 transition"
                             aria-label="Refer a Friend"
                         >
                             <i class="fa-solid fa-user-friends mr-1 icon-color "></i>Refer a Friend
@@ -112,7 +113,7 @@
                                 </thead>
                                 <tbody>
                                     {% for order in purchase_history %}
-                                    <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors">
+                                    <tr class="border-b border-gray-700 hover:bg-gradient-to-br from-blue-900 to-purple-900 transition-colors">
                                         <td class="p-3">#{{ order.id }}</td>
                                         <td class="p-3">{{ order.crypto_amount }} {{ order.crypto.symbol }}</td>
                                         <td class="p-3">₦{{ order.total_price }}</td>

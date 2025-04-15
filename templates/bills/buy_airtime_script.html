@@ -1,0 +1,78 @@
+<script>
+    // Handle amount selection
+    document.querySelectorAll('.amount-option').forEach(button => {
+        button.addEventListener('click', function() {
+            const amount = this.getAttribute('data-amount');
+            document.getElementById('amount').value = amount;
+        });
+    });
+
+    // Form submission with spinner and receipt
+    document.getElementById('airtimeForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+        const submitBtn = document.getElementById('submitBtn');
+        const resultDiv = document.getElementById('result');
+        const spinner = document.getElementById('spinner');
+        const airtimeFormContainer = document.getElementById('airtimeFormContainer');
+        const receiptContainer = document.getElementById('receiptContainer');
+
+        // Show spinner, disable button, clear result
+        submitBtn.disabled = true;
+        spinner.classList.remove('hidden');
+        resultDiv.innerHTML = '';
+
+        fetch("{% url 'buy-airtime' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Hide spinner, enable button
+            submitBtn.disabled = false;
+            spinner.classList.add('hidden');
+            if (data.success) {
+                // Show receipt
+                airtimeFormContainer.classList.add('hidden');
+                receiptContainer.classList.remove('hidden');
+                // Populate receipt
+                document.getElementById('receiptPhone').textContent = formData.get('phone');
+                document.getElementById('receiptNetwork').textContent = formData.get('network').toUpperCase();
+                document.getElementById('receiptAmount').textContent = parseFloat(formData.get('amount')).toLocaleString('en-NG');
+                document.getElementById('receiptTransactionId').textContent = data.transaction_id;
+                document.getElementById('receiptDate').textContent = new Date(data.transaction_date || Date.now()).toLocaleString('en-GB', {
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                });
+            } else {
+                // Show error
+                resultDiv.innerHTML = `<p class="text-red-400">${data.message}</p>`;
+            }
+        })
+        .catch(error => {
+            // Hide spinner, enable button, show error
+            submitBtn.disabled = false;
+            spinner.classList.add('hidden');
+            resultDiv.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+            console.error('Fetch error:', error);
+        });
+    });
+
+    // Handle "New Purchase" button
+    document.getElementById('newPurchaseBtn').addEventListener('click', function() {
+        // Reset form and show it
+        document.getElementById('airtimeForm').reset();
+        document.getElementById('airtimeFormContainer').classList.remove('hidden');
+        document.getElementById('receiptContainer').classList.add('hidden');
+        document.getElementById('result').innerHTML = '';
+    });
+</script>

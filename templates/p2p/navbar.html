@@ -1,5 +1,9 @@
 <nav id="sidebar" class="bg-gray-800 text-white p-4 fixed bottom-0 left-0 w-full flex justify-around items-center md:flex-col md:w-20 lg:w-64 md:h-screen md:justify-between md:space-y-0 md:pt-24 shadow-lg z-40 hidden md:block">
   <div class="flex justify-around w-full md:flex-col md:space-y-6 md:px-4">
+    <a href="{% url 'dashboard' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
+        <i class="fa-solid fa-home text-2xl md:text-lg"></i>
+        <span class="text-xs md:text-sm lg:inline hidden">Home</span>
+    </a>
       {% if request.user.is_merchant %}
           <a href="{% url 'marketplace' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
               <i class="fa-solid fa-store text-2xl md:text-lg"></i>

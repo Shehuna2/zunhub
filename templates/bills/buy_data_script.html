@@ -1,0 +1,123 @@
+<script>
+    const networkSelect = document.getElementById("network");
+    const dataPlanSelect = document.getElementById("dataPlan");
+
+    // Function to fetch and populate data plans
+    function updateDataPlans() {
+        const network = networkSelect.value;
+        dataPlanSelect.innerHTML = "<option value=''>Loading plans...</option>";
+        fetch("{% url 'get_data_plans_api' %}?network=" + network, {
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            dataPlanSelect.innerHTML = "<option value=''>Select a plan</option>";
+            if (data.success && data.plans) {
+                data.plans.forEach(plan => {
+                    const option = document.createElement("option");
+                    option.value = plan.variation_code;
+                    // Extract size and validity from description, append amount
+                    const descriptionParts = plan.description.match(/N\d+\s(.+)/);
+                    const displayText = descriptionParts && descriptionParts[1] ? descriptionParts[1] : plan.description;
+                    option.textContent = `${displayText} = ₦${plan.amount}`;
+                    option.dataset.amount = plan.amount; // Store amount for submission
+                    dataPlanSelect.appendChild(option);
+                });
+            } else {
+                dataPlanSelect.innerHTML = "<option value=''>No plans available</option>";
+            }
+        })
+        .catch(error => {
+            dataPlanSelect.innerHTML = "<option value=''>Error loading plans</option>";
+            console.error("Fetch error:", error);
+        });
+    }
+
+    // Initial load
+    updateDataPlans();
+
+    // Update on network change
+    networkSelect.addEventListener("change", updateDataPlans);
+
+    // Form submission with spinner and receipt
+    document.getElementById("dataForm").addEventListener("submit", function(event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+        const submitBtn = document.getElementById("submitBtn");
+        const resultDiv = document.getElementById("result");
+        const spinner = document.getElementById("spinner");
+        const dataFormContainer = document.getElementById("dataFormContainer");
+        const receiptContainer = document.getElementById("receiptContainer");
+        const selectedPlan = dataPlanSelect.selectedOptions[0];
+        if (selectedPlan && selectedPlan.dataset.amount) {
+            formData.append("amount", selectedPlan.dataset.amount);
+        }
+
+        // Show spinner, disable button, clear result
+        submitBtn.disabled = true;
+        spinner.classList.remove('hidden');
+        resultDiv.innerHTML = '';
+
+        fetch("{% url 'buy_data' %}", {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}",
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Hide spinner, enable button
+            submitBtn.disabled = false;
+            spinner.classList.add('hidden');
+            if (data.success) {
+                // Show receipt
+                dataFormContainer.classList.add('hidden');
+                receiptContainer.classList.remove('hidden');
+                // Populate receipt
+                document.getElementById('receiptPhone').textContent = formData.get('phone');
+                document.getElementById('receiptNetwork').textContent = formData.get('network').toUpperCase();
+                document.getElementById('receiptAmount').textContent = parseFloat(selectedPlan.dataset.amount).toLocaleString('en-NG');
+                document.getElementById('receiptPlan').textContent = selectedPlan.textContent.split(' = ')[0]; // Use only size and validity
+                document.getElementById('receiptTransactionId').textContent = data.transaction_id;
+                document.getElementById('receiptDate').textContent = new Date(data.transaction_date || Date.now()).toLocaleString('en-GB', {
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                });
+            } else {
+                // Show error
+                resultDiv.innerHTML = `<p class="text-red-400">${data.message}</p>`;
+            }
+        })
+        .catch(error => {
+            // Hide spinner, enable button, show error
+            submitBtn.disabled = false;
+            spinner.classList.add('hidden');
+            resultDiv.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
+            console.error("Fetch error:", error);
+        });
+    });
+
+    // Handle "New Purchase" button
+    document.getElementById("newPurchaseBtn").addEventListener("click", function() {
+        // Reset form and show it
+        document.getElementById("dataForm").reset();
+        document.getElementById("dataFormContainer").classList.remove("hidden");
+        document.getElementById("receiptContainer").classList.add("hidden");
+        document.getElementById("result").innerHTML = "";
+        updateDataPlans(); // Reload plans
+    });
+</script>
