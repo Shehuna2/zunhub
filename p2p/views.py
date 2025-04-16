@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
+from django.db.models import Count, Q
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 
@@ -107,9 +108,15 @@ def merchant_list(request):
     return render(request, "p2p/merchants.html", {"merchants": merchants})
 
 
+
 def marketplace(request):
-    """Display all active sell offers from merchants."""
-    offers = SellOffer.objects.filter(is_available=True).order_by('-created_at')
+    """Display all active sell offers from merchants with total completed orders."""
+    offers = SellOffer.objects.filter(is_available=True).select_related('merchant').annotate(
+        merchant_total_orders=Count(
+            'order',  # Related name for orders linked to SellOffer
+            filter=Q(order__status='completed')  # Only count completed orders
+        )
+    ).order_by('-created_at')
     return render(request, "p2p/marketplace.html", {"offers": offers})
 
 

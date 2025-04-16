@@ -1,16 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Order</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-900 text-gray-200">
-    <div class="container mx-auto p-6">
-        <h2 class="text-2xl font-semibold mb-6 text-center">Create Order</h2>
+{% extends "base.html" %}
 
-        <div class="max-w-lg mx-auto bg-gray-800 p-6 rounded-lg shadow-md border border-gray-700">
+{% block content %}
+    <div class="container mx-auto p-6">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-t-lg shadow-lg">
+            <h2 class="text-4xl font-bold text-center">create order</h2>
+        </div>
+
+
+        <div class="mx-auto bg-gray-800 p-6 rounded-lg shadow-md border border-gray-700">
             <form method="POST">
                 {% csrf_token %}
 
@@ -57,7 +55,7 @@
 
                 <!-- Buy Button -->
                 <div class="mt-4">
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-400 text-white px-6 py-2 rounded-md">
                         Confirm Order
                     </button>
                 </div>
@@ -81,5 +79,4 @@
             document.getElementById("totalPrice").innerText = `₦${totalPrice}`;
         });
     </script>
-</body>
-</html>
+{% endblock content %}
