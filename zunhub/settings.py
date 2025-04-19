@@ -36,7 +36,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-AUTH_USER_MODEL = 'p2p.User'
+AUTH_USER_MODEL = 'accounts.User'
 
 TON_SEQNO_CHECK_INTERVAL = 10  # Seconds between seqno checks
 TON_SEQNO_MAX_ATTEMPTS = 5    # Number of attempts
