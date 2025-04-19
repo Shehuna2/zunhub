@@ -108,8 +108,8 @@ class SellOffer(models.Model):
 
 class Order(models.Model):
     STATUS_CHOICES = [
-        ('pending', 'Pending Payment'),
-        ('paid', 'Paid - Awaiting Release'),
+        ('pending', 'Awaiting Payment'),
+        ('paid', 'Paid - Releasing'),
         ('completed', 'Completed'),
         ('cancelled', 'Cancelled'),
     ]

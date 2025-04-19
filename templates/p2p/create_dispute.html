@@ -1,69 +1,111 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Raise a Dispute</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-900 text-white">
+{% extends "base.html" %}
 
-    <div class="max-w-lg mx-auto mt-10 p-6 bg-gray-800 rounded-lg shadow-md">
-        <h2 class="text-2xl font-semibold text-center mb-4">Raise a Dispute</h2>
+{% block content %}
+{% if messages %}
+    <div class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+        {% for message in messages %}
+            <div class="mb-2 px-4 py-2 rounded shadow text-white text-sm font-medium transition duration-300 transform animate-fade-in-down
+                        {% if message.tags == 'success' %}bg-green-600{% elif message.tags == 'error' %}bg-red-600{% else %}bg-blue-600{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
 
-        <form method="POST" enctype="multipart/form-data" class="space-y-4">
+<div class="container mx-auto max-w-2xl p-6">
+    <div class="bg-gradient-to-r from-purple-800 to-fuchsia-700 text-white p-6 rounded-t-xl shadow-xl">
+        <h2 class="text-4xl font-bold text-center">Raise Dispute</h2>
+    </div>
+
+    <div id="toast-container" class="fixed top-5 right-5 z-50 space-y-2 hidden"></div>
+
+    <div class="bg-gray-900 p-6 rounded-b-xl shadow-xl relative">
+        <div id="upload-spinner" class="absolute inset-0 bg-black bg-opacity-50 hidden justify-center items-center rounded-b-xl">
+            <svg class="animate-spin h-10 w-10 text-fuchsia-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+        </div>
+
+        <form id="disputeForm" method="POST" enctype="multipart/form-data" class="space-y-6">
             {% csrf_token %}
 
-            <!-- Order ID (Read-only) -->
+            <!-- Order ID -->
             <div>
-                <label class="block text-gray-400 mb-1">Order ID:</label>
-                <input type="text" value="{{ order.id }}" readonly 
-                    class="w-full px-4 py-2 rounded bg-gray-700 text-gray-300 border-none">
+                <label class="block text-gray-400 text-sm font-medium mb-1">Order ID</label>
+                <input type="text" value="{{ order.id }}" readonly
+                       class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-gray-300">
             </div>
 
             <!-- Reason -->
             <div>
-                <label class="block text-gray-400 mb-1">Reason for Dispute:</label>
-                <textarea name="reason" required 
-                    class="w-full px-4 py-2 rounded bg-gray-700 text-gray-300 border-none focus:ring-2 focus:ring-blue-500"
-                    rows="3" placeholder="Explain the issue..."></textarea>
+                <label class="block text-gray-400 text-sm font-medium mb-1">Reason for Dispute</label>
+                <textarea name="reason" required rows="4"
+                          class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-gray-300 focus:ring-2 focus:ring-fuchsia-600"
+                          placeholder="Explain the issue in detail..."></textarea>
             </div>
 
-            <!-- Upload Evidence -->
+            <!-- Evidence Upload -->
             <div>
-                <label class="block text-gray-400 mb-1">Upload Evidence (optional):</label>
+                <label class="block text-gray-400 text-sm font-medium mb-1">Upload Evidence (optional)</label>
                 <input type="file" name="evidence" id="evidenceInput" accept="image/*"
-                    class="w-full px-3 py-2 rounded bg-gray-700 text-gray-300 border-none cursor-pointer">
-                <img id="evidencePreview" class="hidden mt-3 rounded-lg max-h-40">
+                       class="w-full bg-gray-800 text-gray-300 border border-gray-700 rounded-lg px-3 py-2 cursor-pointer">
+                <img id="evidencePreview" class="hidden mt-4 rounded-lg max-h-48 border border-gray-700">
             </div>
 
             <!-- Buttons -->
-            <div class="flex justify-between">
-                <a href="{% url 'order_details' order.id %}" 
-                   class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg text-white shadow">Cancel</a>
-                <button type="submit" 
-                    class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-white shadow">Submit Dispute</button>
+            <div class="flex justify-between items-center pt-4">
+                <a href="{% url 'order_details' order.id %}" class="bg-gray-600 hover:bg-gray-700 text-white px-5 py-2 rounded-lg shadow transition">
+                    Cancel
+                </a>
+                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg shadow transition">
+                    Submit Dispute
+                </button>
             </div>
         </form>
     </div>
+</div>
 
-    <script>
-        // Show uploaded image preview
-        document.getElementById('evidenceInput').addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = document.getElementById('evidencePreview');
-                    img.src = e.target.result;
-                    img.classList.remove('hidden');
-                };
-                reader.readAsDataURL(file);
+<script>
+    const toastContainer = document.getElementById('toast-container');
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `transition transform animate-fade-in-up px-4 py-2 rounded shadow text-white text-sm font-medium ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
+        toast.textContent = message;
+        toastContainer.appendChild(toast);
+        toastContainer.classList.remove('hidden');
+        setTimeout(() => {
+            toast.remove();
+            if (!toastContainer.hasChildNodes()) toastContainer.classList.add('hidden');
+        }, 4000);
+    }
+
+    const evidenceInput = document.getElementById('evidenceInput');
+    const evidencePreview = document.getElementById('evidencePreview');
+    const uploadSpinner = document.getElementById('upload-spinner');
+
+    evidenceInput.addEventListener('change', function (event) {
+        const file = event.target.files[0];
+        if (file) {
+            uploadSpinner.classList.remove('hidden');
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                evidencePreview.src = e.target.result;
+                evidencePreview.classList.remove('hidden');
+                uploadSpinner.classList.add('hidden');
+            };
+            reader.onerror = function () {
+                uploadSpinner.classList.add('hidden');
+                showToast('Failed to preview image.', 'error');
             }
-        });
-    </script>
+            reader.readAsDataURL(file);
+        }
+    });
 
-</body>
-</html>
-
-
+    document.getElementById('disputeForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        showToast('Dispute submitted successfully.');
+        setTimeout(() => e.target.submit(), 1000);
+    });
+</script>
+{% endblock content %}

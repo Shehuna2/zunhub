@@ -51,13 +51,32 @@ class OrderForm(forms.ModelForm):
         fields = ['amount_requested']
 
     def __init__(self, *args, **kwargs):
+        # pop off the SellOffer, then fetch the merchant’s wallet
         self.sell_offer = kwargs.pop('sell_offer', None)
         super().__init__(*args, **kwargs)
+        if self.sell_offer:
+            from .models import Wallet
+            self.merchant_wallet = Wallet.objects.get(user=self.sell_offer.merchant)
+        else:
+            self.merchant_wallet = None
 
     def clean_amount_requested(self):
-        amount = self.cleaned_data['amount_requested']
+        amount = self.cleaned_data.get('amount_requested')
+
+        # 1. Check against offer’s min/max
         if amount < self.sell_offer.min_amount or amount > self.sell_offer.max_amount:
-            raise forms.ValidationError(f"Amount must be between {self.sell_offer.min_amount} and {self.sell_offer.max_amount}.")
+            raise forms.ValidationError(
+                f"Amount must be between {self.sell_offer.min_amount} and {self.sell_offer.max_amount}."
+            )
+
+        # 2. Check merchant’s available balance
+        if self.merchant_wallet:
+            available = self.merchant_wallet.balance - self.merchant_wallet.locked_balance
+            if amount > available:
+                raise forms.ValidationError(
+                    f"Merchant only has ₦{available} available to lock."
+                )
+
         return amount
     
 

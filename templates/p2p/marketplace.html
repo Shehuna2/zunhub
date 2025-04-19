@@ -48,7 +48,7 @@
                     <!-- Max -->
                     <div class="flex items-baseline space-x-2">
                         <p class="text-xs text-gray-300 lg:text-sm">Max:</p>
-                        <p class="text-xs text-blue-400 lg:text-sm">₦{{ offer.max_amount }}</p>
+                        <p class="text-xs text-blue-400 lg:text-sm">₦{{ offer.merchant.wallet.balance }}</p>
                     </div>
                 </div>
             </div>
@@ -58,7 +58,7 @@
             </a>
         </div>
         {% empty %}
-        <p class="text-center text-gray-400 text-lg lg:col-span-3">No sell offers available at the moment.</p>
+        <p class="text-center text-gray-400 text-lg lg:col-span-3">No Agent available at the moment. Please check back later.</p>
         {% endfor %}
     </div>
 

@@ -1,103 +1,114 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Track Dispute</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-900 text-white">
+{% extends "base.html" %}
 
-    <div class="container mx-auto p-6">
-        <div class="max-w-3xl mx-auto bg-gray-800 p-6 rounded-lg shadow-lg">
-            <h2 class="text-2xl font-semibold text-center mb-4">Dispute Details</h2>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <p class="text-gray-400">Order ID:</p>
-                    <p class="font-medium">{{ dispute.order.id }}</p>
-                </div>
-                <div>
-                    <p class="text-gray-400">Status:</p>
-                    <span class="px-3 py-1 rounded-full text-sm font-medium 
-                        {% if dispute.status == 'pending' %}
-                            bg-yellow-500
-                        {% elif dispute.status == 'resolved_buyer' %}
-                            bg-green-500
-                        {% elif dispute.status == 'resolved_merchant' %}
-                            bg-blue-500
-                        {% elif dispute.status == 'rejected' %}
-                            bg-red-500
-                        {% endif %}">
-                        {{ dispute.get_status_display }}
-                    </span>
-                </div>
-                <div>
-                    <p class="text-gray-400">Buyer:</p>
-                    <p class="font-medium">{{ dispute.buyer.username }}</p>
-                </div>
-                <div>
-                    <p class="text-gray-400">Merchant:</p>
-                    <p class="font-medium">{{ dispute.order.sell_offer.merchant.username }}</p>
-                </div>
-            </div>
-
-            <div class="mt-6">
-                <p class="text-gray-400">Reason for Dispute:</p>
-                <p class="bg-gray-700 p-3 rounded">{{ dispute.reason }}</p>
-            </div>
-
-            {% if dispute.evidence %}
-            <div class="mt-6">
-                <p class="text-gray-400">Uploaded Evidence:</p>
-                <img src="{{ dispute.evidence.url }}" alt="Dispute Evidence" class="rounded shadow-md max-w-full h-auto">
-            </div>
-            {% endif %}
-
-            <div class="mt-6">
-                <p class="text-gray-400">Admin Comment:</p>
-                {% if dispute.admin_comment %}
-                    <p class="bg-gray-700 p-3 rounded">{{ dispute.admin_comment }}</p>
-                {% else %}
-                    <p class="bg-gray-700 p-3 rounded">No decision yet.</p>
-                {% endif %}
-            </div>
-
-            <div class="mt-6 p-4 rounded-lg 
-                {% if dispute.status == 'pending' %} bg-yellow-600
-                {% elif dispute.status == 'resolved_buyer' %} bg-green-600
-                {% elif dispute.status == 'resolved_merchant' %} bg-blue-600
-                {% elif dispute.status == 'rejected' %} bg-red-600
-                {% endif %}">
-                {% if dispute.status == "pending" %}
-                    <p class="font-semibold">The dispute is under review by the admin.</p>
-                {% elif dispute.status == "resolved_buyer" %}
-                    <p class="font-semibold">Dispute resolved in buyer's favor. Funds have been released.</p>
-                {% elif dispute.status == "resolved_merchant" %}
-                    <p class="font-semibold">Dispute resolved in merchant's favor. No funds released to buyer.</p>
-                {% elif dispute.status == "rejected" %}
-                    <p class="font-semibold">Dispute rejected. Funds remain in escrow.</p>
-                {% endif %}
-            </div>
-
-            <div class="flex justify-between mt-6">
-                <a href="{% url 'order_details' dispute.order.id %}" 
-                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow">
-                    Back to Order
-                </a>
-
-                {% if request.user == dispute.buyer %}
-                    <form action="{% url 'cancel_dispute' dispute.id %}" method="POST">
-                        {% csrf_token %}
-                        <button type="submit" 
-                                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow">
-                            Cancel Dispute
-                        </button>
-                    </form>
-                {% endif %}
-            </div>
-        </div>
+{% block content %}
+<div class="container mx-auto max-w-3xl p-6">
+    <div class="bg-gradient-to-r from-purple-800 to-fuchsia-700 text-white p-6 rounded-t-xl shadow-xl">
+        <h2 class="text-4xl font-bold text-center">Dispute Details</h2>
     </div>
 
-</body>
-</html>
+    <div class="bg-gray-900 p-6 rounded-b-xl shadow-xl">
+        <h3 class="text-white text-lg font-semibold mb-2">Summary</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+            <div>
+                <p class="text-gray-400 text-sm">Order ID</p>
+                <p class="font-medium text-white">{{ dispute.order.id }}</p>
+            </div>
+            <div>
+                <p class="text-gray-400 text-sm">Status</p>
+                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium text-white
+                    {% if dispute.status == 'pending' %}bg-yellow-500
+                    {% elif dispute.status == 'resolved_buyer' %}bg-green-500
+                    {% elif dispute.status == 'resolved_merchant' %}bg-blue-500
+                    {% elif dispute.status == 'rejected' %}bg-red-500
+                    {% endif %}">
+                    {% if dispute.status == 'pending' %}⏳{% elif dispute.status == 'resolved_buyer' %}✅{% elif dispute.status == 'resolved_merchant' %}📦{% elif dispute.status == 'rejected' %}❌{% endif %}
+                    {{ dispute.get_status_display }}
+                </span>
+            </div>
+            <div>
+                <p class="text-gray-400 text-sm">Buyer</p>
+                <p class="font-medium text-white">{{ dispute.buyer.username }}</p>
+            </div>
+            <div>
+                <p class="text-gray-400 text-sm">Merchant</p>
+                <p class="font-medium text-white">{{ dispute.order.sell_offer.merchant.username }}</p>
+            </div>
+        </div>
+
+        <hr class="border-gray-700 my-6">
+
+        <h3 class="text-white text-lg font-semibold mb-2">Dispute Info</h3>
+        <div class="gap-6 mb-6">
+            <div>
+                <p class="text-gray-400 text-sm">Reason for Dispute</p>
+                <p class="bg-gray-800 p-4 rounded-lg text-white leading-relaxed">{{ dispute.reason }}</p>
+            </div>
+            {% if dispute.evidence %}
+            <div>
+                <p class="text-gray-400 text-sm">Uploaded Evidence</p>
+                <img src="{{ dispute.evidence.url }}" alt="Dispute Evidence" class="rounded-lg border border-gray-700 shadow-lg max-w-full h-auto">
+            </div>
+            {% endif %}
+        </div>
+
+        <hr class="border-gray-700 my-6">
+
+        <h3 class="text-white text-lg font-semibold mb-2">Admin Comment & Timeline</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+            <div>
+                <p class="text-gray-400 text-sm">Admin Comment</p>
+                <p class="bg-gray-800 p-4 rounded-lg text-white leading-relaxed">
+                    {% if dispute.admin_comment %}
+                        {{ dispute.admin_comment }}
+                    {% else %}
+                        No decision yet.
+                    {% endif %}
+                </p>
+            </div>
+            <div>
+                <p class="text-gray-400 text-sm">Dispute Timeline</p>
+                <ul class="mt-2 space-y-2 text-sm text-gray-300">
+                    <li>📌 Created: {{ dispute.created_at }}</li>
+                    {% if dispute.updated_at != dispute.created_at %}<li>✏️ Updated: {{ dispute.updated_at }}</li>{% endif %}
+                    {% if dispute.resolved_at %}<li>✔️ Resolved: {{ dispute.resolved_at }} {% if dispute.resolved_by %}by {{ dispute.resolved_by.username }}{% endif %}</li>{% endif %}
+                    {% if dispute.status == "rejected" %}<li>❌ Rejected</li>{% endif %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="mt-8 p-5 rounded-lg text-white font-semibold
+            {% if dispute.status == 'pending' %}bg-yellow-600
+            {% elif dispute.status == 'resolved_buyer' %}bg-green-600
+            {% elif dispute.status == 'resolved_merchant' %}bg-blue-600
+            {% elif dispute.status == 'rejected' %}bg-red-600
+            {% endif %}">
+            {% if dispute.status == "pending" %}
+                The dispute is under review by the admin.
+            {% elif dispute.status == "resolved_buyer" %}
+                Dispute resolved in buyer's favor. Funds have been released.
+            {% elif dispute.status == "resolved_merchant" %}
+                Dispute resolved in merchant's favor. No funds released to buyer.
+            {% elif dispute.status == "rejected" %}
+                Dispute rejected. Funds remain in escrow.
+            {% endif %}
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-between gap-4 mt-8">
+            <a href="{% url 'order_details' dispute.order.id %}" 
+               class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow transition text-center">
+                Back to Order
+            </a>
+
+            {% if request.user == dispute.buyer %}
+                <form action="{% url 'cancel_dispute' dispute.id %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg shadow transition w-full sm:w-auto">
+                        Cancel Dispute
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock content %}
