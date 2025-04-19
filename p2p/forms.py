@@ -1,13 +1,12 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
-from .models import User, SellOffer, Order, Dispute, Wallet
+from .models import SellOffer, Order, Dispute, Wallet
 
-class UserRegisterForm(UserCreationForm):
-    email = forms.EmailField(required=True)
+# class UserRegisterForm(UserCreationForm):
+#     email = forms.EmailField(required=True)
 
-    class Meta:
-        model = User
-        fields = ['username', 'email', 'password1', 'password2']
+#     class Meta:
+#         model = User
+#         fields = ['username', 'email', 'password1', 'password2']
 
 
 class SellOfferForm(forms.ModelForm):

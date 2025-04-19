@@ -2,9 +2,9 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('accounts/register/', views.register, name='register'),
-    path('accounts/login/', views.user_login, name='login'),
-    path('logout/', views.user_logout, name='logout'),
+    # path('accounts/register/', views.register, name='register'),
+    # path('accounts/login/', views.user_login, name='login'),
+    # path('logout/', views.user_logout, name='logout'),
     path('', views.dashboard, name='dashboard'),
     path("admin-dashboard/", views.admin_dashboard, name="admin_dashboard"),
 
@@ -20,7 +20,7 @@ urlpatterns = [
     path('order/<int:order_id>/', views.order_details, name='order_details'),
     path('orders/buyer/', views.buyer_orders, name='buyer_orders'),
     path('orders/merchant/', views.merchant_orders, name='merchant_orders'),
-    path("update-bank-details/", views.update_bank_details, name="update_bank_details"),
+    # path("update-bank-details/", views.update_bank_details, name="update_bank_details"),
     
     path('p2p/sell-offer/create/', views.create_sell_offer, name='create_sell_offer'), # Merchant create p2p offer
     path('p2p/order/create/<int:offer_id>/', views.create_order, name='create_order'), # Buyer create order   
