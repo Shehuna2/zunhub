@@ -1,97 +1,106 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Details</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-900 text-gray-200">
-    <div class="container mx-auto p-6">
-        <div class="max-w-3xl mx-auto bg-gray-800 p-6 rounded-lg shadow-lg">
-            <h2 class="text-2xl font-semibold border-b pb-3 mb-4">Order Details</h2>
+{% extends "base.html" %}
 
-            <div class="space-y-3">
-                <p><strong>Order ID:</strong> {{ order.id }}</p>
-                <p><strong>Merchant:</strong> {{ order.sell_offer.merchant.username }}</p>
-                <p><strong>Buyer:</strong> {{ order.buyer.username }}</p>
-                <p><strong>Rate:</strong> ₦{{ order.sell_offer.price_per_unit }}</p>
-                <p><strong>Amount:</strong> ₦{{ order.amount_requested }}</p>
-                <p><strong>Total Price:</strong> ₦{{ order.total_price }}</p>
-                <p><strong>Status:</strong> 
-                    <span class="px-2 py-1 rounded text-white 
-                        {% if order.status == 'pending' %} bg-yellow-500 
-                        {% elif order.status == 'paid' %} bg-blue-500 
-                        {% elif order.status == 'completed' %} bg-green-500 
-                        {% elif order.status == 'disputed' %} bg-red-500 
-                        {% endif %}">
-                        {{ order.get_status_display }}
-                    </span>
-                </p>
-                <p><strong>Created At:</strong> {{ order.created_at }}</p>
+{% block content %}
+<div class="container mx-auto p-6">
+    <!-- Header -->
+    <div class="max-w-3xl mx-auto bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-t-lg shadow-lg">
+        <h2 class="text-4xl font-bold text-center">Order Details</h2>
+    </div>
+
+    <!-- Card Details -->
+    <div class="max-w-3xl mx-auto bg-gray-800 p-6 rounded-b-lg shadow-lg">
+        <div class="grid grid-cols-2 gap-4">
+            <div><strong>Agent:</strong> {{ order.sell_offer.merchant.username }}</div>
+            <div><strong>Buyer:</strong> {{ order.buyer.username }}</div>
+            <div><strong>Order ID:</strong> {{ order.id }}</div>
+            <div><strong>Rate:</strong> <span class="text-green-400">₦{{ order.sell_offer.price_per_unit }}</span></div>
+            <div><strong>Amount:</strong> ₦{{ order.amount_requested }}</div>
+            <div><strong>Total Price:</strong> ₦{{ order.total_price }}</div>
+            <div>
+                <strong>Created At:</strong> {{ order.created_at }}
+            </div>
+            <div>
+                <strong>Status:</strong>
+                <span class="inline-flex items-center gap-2 px-2 py-1 rounded text-white text-sm
+                    {% if order.status == 'pending' %} bg-gray-600 
+                    {% elif order.status == 'paid' %} bg-green-800 
+                    {% elif order.status == 'completed' %} bg-green-500 
+                    {% elif order.status == 'disputed' %} bg-red-500 
+                    {% endif %}">
+                    {% if order.status == 'pending' %}<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3" /></path></svg>
+                    {% elif order.status == 'paid' %}<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a4 4 0 00-8 0v2m12 0v10a2 2 0 01-2 2H7a2 2 0 01-2-2V9h14z" /></path></svg>
+                    {% elif order.status == 'completed' %}<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></path></svg>
+                    {% elif order.status == 'disputed' %}<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-1.414-1.414-4.95 4.95-4.95-4.95L5.636 5.636l4.95 4.95-4.95 4.95 1.414 1.414 4.95-4.95 4.95 4.95 1.414-1.414-4.95-4.95z" /></path></svg>
+                    {% endif %}
+                    {{ order.get_status_display }}
+                </span>
+            </div>
+        </div>
+
+        {% if request.user == order.buyer %}
+        <!-- Payment Instructions -->
+        <div class="mt-6 bg-gray-700 p-4 rounded-lg">
+            <h3 class="text-lg font-semibold mb-4">Payment Instructions</h3>
+            <div class="space-y-2">
+                <div class="bg-gray-800 p-3 rounded flex justify-between">
+                    <span class="text-gray-300 font-medium">Full Name:</span>
+                    <span class="text-white">{{ order.sell_offer.merchant.profile.full_name }}</span>
+                </div>
+                <div class="bg-gray-800 p-3 rounded flex justify-between">
+                    <span class="text-gray-300 font-medium">Bank Name:</span>
+                    <span class="text-white">{{ order.sell_offer.merchant.profile.bank_name }}</span>
+                </div>
+                <div class="bg-gray-800 p-3 rounded flex justify-between">
+                    <span class="text-gray-300 font-medium">Account No:</span>
+                    <span class="text-white">{{ order.sell_offer.merchant.profile.account_no }}</span>
+                </div>
             </div>
 
-            {% if request.user == order.buyer %}
-                <div class="mt-6 bg-gray-700 p-4 rounded-lg">
-                    <h3 class="text-lg font-semibold mb-2">Payment Instructions</h3>
-                    <p><strong>Send Payment to:</strong></p>
-                    <p><strong>Full Name:</strong> {{ order.sell_offer.merchant.profile.full_name }}</p>
-                    <p><strong>Bank Name:</strong> {{ order.sell_offer.merchant.profile.bank_name }}</p>
-                    <p><strong>Account No:</strong> {{ order.sell_offer.merchant.profile.account_no }}</p>
-
-                    {% if order.status == 'pending' %}
-                        <form action="{% url 'mark_as_paid' order.id %}" method="POST" class="mt-3">
-                            {% csrf_token %}
-                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">
-                                Mark as Paid
-                            </button>
-                        </form>
-                    {% elif order.status == 'paid' %}
-                    <div class="mt-4 flex space-x-3">
-                        {% if order.dispute %}
-                            <p class="text-red-500 font-semibold">A dispute has been raised for this order.</p>
-                
-                            <!-- Cancel Dispute Button -->
-                            <form action="{% url 'cancel_dispute' order.dispute.id %}" method="POST">
-                                {% csrf_token %}
-                                <button type="submit" 
-                                        class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
-                                    Cancel Dispute
-                                </button>
-                            </form>
-                
-                            <!-- Dispute Tracking Button -->
-                            <a href="{% url 'track_dispute' order.dispute.id %}" 
-                               class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-                                Track Dispute
-                            </a>
-                        {% else %}
-                            <!-- Raise Dispute Button -->
-                            <a href="{% url 'create_dispute' order.id %}" 
-                               class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
-                                Raise Dispute
-                            </a>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-                </div>
-            {% endif %}
-
-            {% if request.user == order.sell_offer.merchant and order.status == 'paid' %}
-                <a href="{% url 'confirm_payment' order.id %}" class="block text-center bg-green-600 hover:bg-green-700 text-white py-2 rounded mt-4">
-                    Release Funds
+            {% if order.status == 'pending' %}
+            <form action="{% url 'mark_as_paid' order.id %}" method="POST" class="mt-4">
+                {% csrf_token %}
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">
+                    Mark as Paid
+                </button>
+            </form>
+            {% elif order.status == 'paid' %}
+            <div class="mt-4 flex flex-wrap gap-3">
+                {% if order.dispute %}
+                <p class="text-red-500 font-semibold w-full">A dispute has been raised for this order.</p>
+                <form action="{% url 'cancel_dispute' order.dispute.id %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
+                        Cancel Dispute
+                    </button>
+                </form>
+                <a href="{% url 'track_dispute' order.dispute.id %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                    Track Dispute
                 </a>
-            {% endif %}
-            {% if request.user == order.sell_offer.merchant %}
-            <a href="{% url 'merchant_orders' %}" class="block text-center mt-6 text-blue-400 hover:underline">
-                Back to My Orders
-            </a>
-            {% else %}
-            <a href="{% url 'buyer_orders' %}" class="block text-center mt-6 text-blue-400 hover:underline">
-                Back to My Orders
-            </a>
+                {% else %}
+                <a href="{% url 'create_dispute' order.id %}" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
+                    Raise Dispute
+                </a>
+                {% endif %}
+            </div>
             {% endif %}
         </div>
+        {% endif %}
+
+        {% if request.user == order.sell_offer.merchant and order.status == 'paid' %}
+        <a href="{% url 'confirm_payment' order.id %}" class="block text-center bg-green-600 hover:bg-green-700 text-white py-2 rounded mt-4">
+            Release Funds
+        </a>
+        {% endif %}
+
+        {% if request.user == order.sell_offer.merchant %}
+        <a href="{% url 'merchant_orders' %}" class="block text-center mt-6 text-blue-400 hover:underline">
+            Back to My Orders
+        </a>
+        {% else %}
+        <a href="{% url 'buyer_orders' %}" class="block text-center mt-6 text-blue-400 hover:underline">
+            Back to My Orders
+        </a>
+        {% endif %}
     </div>
-</body>
-</html>
+</div>
+{% endblock content %}

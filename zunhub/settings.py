@@ -92,6 +92,7 @@ INSTALLED_APPS = [
     'p2p',
     'bills',
     'gasfee',
+    'accounts',
 ]
 
 MIDDLEWARE = [

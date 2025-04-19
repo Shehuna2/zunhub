@@ -108,7 +108,6 @@ def merchant_list(request):
     return render(request, "p2p/merchants.html", {"merchants": merchants})
 
 
-
 def marketplace(request):
     """Display all active sell offers from merchants with total completed orders."""
     offers = SellOffer.objects.filter(is_available=True).select_related('merchant').annotate(
@@ -143,17 +142,27 @@ def create_order(request, offer_id):
         if form.is_valid():
             order = form.save(commit=False)
             order.buyer = request.user
-            order.sell_offer = sell_offer  # ✅ Ensure sell_offer is set
-            order.save()
-            messages.success(request, "Order created! Please make payment to the merchant.")
-            return redirect("order_details", order.id)
+            order.sell_offer = sell_offer
+
+            if merchant_wallet.lock_funds(order.amount_requested):
+                order.save()
+                messages.success(request, "Order created! Merchant’s funds are now escrowed.")
+                return redirect("order_details", order.id)
+            else:
+                available = merchant_wallet.balance - merchant_wallet.locked_balance
+                messages.error(
+                    request,
+                    f"Cannot create order: merchant only has ₦{available} available."
+                )
         else:
             messages.error(request, "Invalid order details. Please check and try again.")
-
     else:
         form = OrderForm(sell_offer=sell_offer)
 
-    return render(request, "p2p/create_order.html", {"form": form, "sell_offer": sell_offer})
+    return render(request, "p2p/create_order.html", {
+        "form": form,
+        "sell_offer": sell_offer
+    })
 
 
 @login_required
@@ -175,28 +184,24 @@ def mark_as_paid(request, order_id):
 
 
 @login_required
-def confirm_payment(request, order_id): 
+def confirm_payment(request, order_id):
     """Merchant confirms payment and releases internal currency."""
     order = get_object_or_404(Order, id=order_id, sell_offer__merchant=request.user)
 
     if order.status == "paid":
-        # Access balances through the UserProfile model
         merchant_wallet = Wallet.objects.get(user=request.user)
-        buyer_wallet = Wallet.objects.get(user=order.buyer)
+        buyer_wallet    = Wallet.objects.get(user=order.buyer)
 
-        if merchant_wallet.balance >= order.amount_requested:  # Use the correct field name
-            merchant_wallet.balance -= order.amount_requested
-            buyer_wallet.balance += order.amount_requested
-            merchant_wallet.save()
-            buyer_wallet.save()
-
-            # Mark order as completed
+        if merchant_wallet.release_funds(order.amount_requested):
+            buyer_wallet.deposit(order.amount_requested)
             order.status = "completed"
-            order.save()
-
-            return JsonResponse({"message": "Payment confirmed. Internal currency released to buyer."})
+            order.save(update_fields=["status"])
+            return JsonResponse({"message": "Payment confirmed. Escrow released to buyer."})
         else:
-            return JsonResponse({"error": "Insufficient balance"}, status=400)
+            return JsonResponse(
+                {"error": "Cannot release funds: insufficient locked balance."},
+                status=400
+            )
 
     return JsonResponse({"error": "Invalid action"}, status=400)
 
@@ -244,8 +249,11 @@ def cancel_dispute(request, dispute_id):
     dispute = get_object_or_404(Dispute, id=dispute_id, buyer=request.user)
 
     if dispute.status == "pending":
+        # Refund locked funds back to merchant
+        merchant_wallet = Wallet.objects.get(user=dispute.order.sell_offer.merchant)
+        merchant_wallet.refund_funds(dispute.order.amount_requested)
         dispute.delete()
-        messages.success(request, "Dispute has been canceled successfully.")
+        messages.success(request, "Dispute has been canceled and funds refunded to merchant.")
     else:
         messages.error(request, "You cannot cancel this dispute.")
 
@@ -266,13 +274,14 @@ def track_dispute(request, dispute_id):
 @login_required
 def dispute_list(request):
     """Show disputes related to the logged-in user (as buyer or merchant)."""
-    disputes = Dispute.objects.filter(
-        order__buyer=request.user
-    ) | Dispute.objects.filter(
-        order__merchant=request.user
+    disputes = (
+        Dispute.objects.filter(order__buyer=request.user) |
+        Dispute.objects.filter(order__sell_offer__merchant=request.user)
     ).order_by("-created_at")
 
     return render(request, "p2p/dispute_list.html", {"disputes": disputes})
+
+
 
 @login_required
 def buyer_orders(request):

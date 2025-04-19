@@ -14,15 +14,6 @@
 
                 <!-- Merchant Info -->
                 <div class="mb-4">
-                    {% if messages %}
-                    <ul class="messages">
-                        {% for message in messages %}
-                            <li class="{% if message.tags %}{{ message.tags }}{% endif %} text-red-300">
-                                {{ message }}
-                            </li>
-                        {% endfor %}
-                    {% endif %}
-                    </ul>
                     <label class="block text-sm font-medium text-gray-400">Merchant Username</label>
                     <p class="text-lg font-semibold text-gray-300">{{ sell_offer.merchant.username }}</p>
                 </div>
@@ -44,7 +35,7 @@
                     <label class="block text-sm font-medium text-gray-400">Enter Quantity</label>
                     <input type="number" name="amount_requested" min="{{ sell_offer.min_amount }}" max="{{ sell_offer.max_amount }}" required
                         class="w-full mt-1 p-2 bg-gray-700 text-gray-200 rounded border border-gray-600 focus:outline-none focus:border-blue-500">
-                    <p class="text-xs text-gray-400">Min: ₦{{ sell_offer.min_amount }} | Max: ₦{{ sell_offer.max_amount }}</p>
+                    <p class="text-xs text-gray-400">Min: ₦{{ sell_offer.min_amount }} | Max: ₦{{ sell_offer.merchant.wallet.balance }}</p>
                 </div>
 
                 <!-- Total Price -->
@@ -79,4 +70,5 @@
             document.getElementById("totalPrice").innerText = `₦${totalPrice}`;
         });
     </script>
+    
 {% endblock content %}
