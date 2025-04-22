@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 
 PHONE_REGEX = re.compile(r'^0[7-9][0-1]\d{8}$')
 
+def calculator(request):
+    return render(request, "bills/calculator.html")
+
 @login_required
 def buy_airtime(request):
     if request.method == "POST":

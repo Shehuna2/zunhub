@@ -26,7 +26,7 @@
             </button>
             <div id="profile-menu" class="fixed inset-0 bg-gray-800 text-white shadow-xl hidden fade-in md:absolute md:inset-auto md:right-0 md:mt-2 md:w-48 md:rounded-lg">
                 <div class="p-4 md:p-0">
-                    <a href="#" class="block px-4 py-2 hover:bg-gray-700">My Profile</a>
+                    <a href="{% url 'profile' %}" class="block px-4 py-2 hover:bg-gray-700">My Profile</a>
                     <a href="{% url 'logout' %}" class="block px-4 py-2 hover:bg-red-600 text-red-400">Logout</a>
                     <button id="close-menu" class="md:hidden w-full mt-4 text-center text-gray-400 hover:text-white">Close</button>
                 </div>

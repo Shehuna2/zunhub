@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="container mx-auto max-w-3xl mt-10 p-8 bg-gradient-to-br from-primary-50 to-primary-100 border border-primary-200 rounded-2xl shadow-2xl relative">
+    <!-- Profile Picture Preview -->
+    <div class="flex justify-center mb-8">
+      <div class="relative w-24 h-24 profile-container rounded-full shadow-md">
+        <!-- Clicking the image or area triggers the file input -->
+        <label for="profile-picture-input" class="block w-full h-full cursor-pointer overflow-hidden rounded-full">
+          <img id="profile-preview"
+               src="{% if user.profile.profile_image %}{{ user.profile.profile_image.url }}{% else %}{% static 'images/bnb-bnb-logo.png' %}{% endif %}"
+               alt="Profile Picture"
+               class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
+        </label>
+        <!-- Transparent file input overlay -->
+        <input type="file"
+               id="profile-picture-input"
+               name="profile_image"
+               accept="image/*"
+               class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+               aria-label="Upload profile picture">
+        <!-- Overlay text on hover -->
+        <div class="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+          <span class="text-white text-sm font-medium">Change Photo</span>
+        </div>
+      </div>
+    </div>
+  
+    <h2 class="text-4xl font-bold text-primary-800 mb-10 text-center">Edit Your Profile</h2>
+  
+    <form method="post" enctype="multipart/form-data" class="space-y-8" id="profile-form">
+      {% csrf_token %}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {% for field in form %}
+          {% if field.name != 'profile_image' %}
+            <div class="relative">
+              {{ field }}
+              <label for="{{ field.id_for_label }}"
+                     class="absolute top-1 left-3 text-base font-medium text-gray-800 transition-all duration-300 pointer-events-none">
+                {{ field.label }}
+              </label>
+              {% if field.help_text %}
+                <p class="mt-1 text-sm text-gray-500">{{ field.help_text }}</p>
+              {% endif %}
+              {% for error in field.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+  
+      {% if form.non_field_errors %}
+        <div class="text-red-600 mt-4">
+          {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+  
+      <div class="text-center mt-10">
+        <button type="submit"
+                class="bg-primary-600 hover:bg-primary-700 text-white font-bold py-4 px-10 rounded-xl shadow-md hover:shadow-lg transition transform hover:scale-105">
+          Save Changes
+        </button>
+      </div>
+    </form>
+  
+    <!-- Inline Field Styling -->
+    <style>
+      input, textarea, select, input[type="file"] {
+          width: 100%;
+          padding: 1rem;
+          background-color: #0a0909;
+          border: 1px solid #34d399;
+          border-radius: 0.5rem;
+          outline: none;
+          transition: border-color 0.3s, box-shadow 0.3s;
+      }
+  
+      input:focus, textarea:focus, select:focus, input[type="file"]:focus {
+          border-color: #10b981;
+          box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+      }
+  
+      label {
+          position: absolute;
+          top: 1rem;
+          left: 1rem;
+          color: #333;
+          pointer-events: none;
+          transition: all 0.3s;
+      }
+  
+      input:focus + label,
+      input:not(:placeholder-shown) + label,
+      textarea:focus + label,
+      textarea:not(:placeholder-shown) + label,
+      select:focus + label,
+      select:not(:placeholder-shown) + label {
+          top: -0.5rem;
+          left: 0.75rem;
+          font-size: 0.75rem;
+          color: #10b981;
+      }
+      .profile-container {
+        border-width: 4px;
+        border-style: solid;
+        border-image: linear-gradient(to right, #9333ea, #c084fc, #9333ea) 1;
+      }
+    </style>
+  
+    <!-- JavaScript for Picker and Preview -->
+    <script>
+      const profileInput = document.getElementById('profile-picture-input');
+      const profilePreview = document.getElementById('profile-preview');
+      const form = document.getElementById('profile-form');
+
+      // Trigger file input when image is clicked
+      profilePreview.addEventListener('click', function() {
+          profileInput.click();
+      });
+
+      // Preview the selected image
+      profileInput.addEventListener('change', function() {
+          const file = this.files[0];
+          if (file) {
+              const reader = new FileReader();
+              reader.onload = function(e) {
+                  profilePreview.src = e.target.result;
+              };
+              reader.readAsDataURL(file);
+          }
+      });
+
+      // Show loading state on form submit
+      form.addEventListener('submit', function() {
+          profilePreview.classList.add('opacity-50');
+          const loader = document.createElement('div');
+          loader.className = 'absolute inset-0 flex justify-center items-center';
+          loader.innerHTML = '<div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-600" aria-label="Uploading profile picture"></div>';
+          profilePreview.parentElement.appendChild(loader);
+      });
+    </script>
+</section>
+{% endblock %}
