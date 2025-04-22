@@ -293,44 +293,6 @@ def merchant_orders(request):
     orders = Order.objects.filter(sell_offer__merchant=request.user).order_by('-created_at')
     return render(request, "p2p/merchant_orders.html", {"orders": orders})
 
-# def register(request):
-#     if request.method == 'POST':
-#         form = UserRegisterForm(request.POST)
-#         if form.is_valid():
-#             user = form.save()
-#             login(request, user)
-#             return redirect('dashboard')
-#     else:
-#         form = UserRegisterForm()
-#     return render(request, 'p2p/register.html', {'form': form})
 
-# def user_login(request):
-#     if request.method == 'POST':
-#         username = request.POST['username']
-#         password = request.POST['password']
-#         user = authenticate(request, username=username, password=password)
-#         if user:
-#             login(request, user)
-#             return redirect('dashboard')
-#     return render(request, 'p2p/login.html')
-
-# def user_logout(request):
-#     logout(request)
-#     return redirect('login')
-
-# @login_required
-# def update_bank_details(request):
-#     """Allows users to update their bank account details."""
-#     profile = request.user.profile  # Access UserProfile
-
-#     if request.method == "POST":
-#         profile.account_no = request.POST.get("account_no")
-#         profile.bank_name = request.POST.get("bank_name")
-#         profile.save()
-
-#         messages.success(request, "Bank details updated successfully.")
-#         return redirect("update_bank_details")
-
-#     return render(request, "p2p/update_bank_details.html", {"profile": profile})
 
 

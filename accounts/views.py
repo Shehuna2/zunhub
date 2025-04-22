@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
-from .forms import UserRegisterForm
+from .forms import UserRegisterForm, ProfileForm
 
 def register(request):
     if request.method == 'POST':
@@ -10,7 +10,7 @@ def register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect('dashboard')
+            return redirect('edit_profile')  
     else:
         form = UserRegisterForm()
     return render(request, 'accounts/register.html', {'form': form})
@@ -28,6 +28,27 @@ def user_login(request):
 def user_logout(request):
     logout(request)
     return redirect('login')
+
+
+@login_required
+def profile_view(request):
+    user = request.user
+    profile = user.profile
+    return render(request, 'accounts/profile.html', {'user': user, 'profile': profile})
+
+@login_required
+def edit_profile(request):
+    profile = request.user.profile
+    if request.method == 'POST':
+        form = ProfileForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your profile has been updated.')
+            return redirect('dashboard')  # or any named URL
+    else:
+        form = ProfileForm(instance=profile)
+    return render(request, 'accounts/edit_profile.html', {'form': form})
+
 
 @login_required
 def update_bank_details(request):

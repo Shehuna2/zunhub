@@ -16,6 +16,13 @@
         <button type="submit">Update</button>
     </form>
 
+    {% if error_message %}
+        <p style="color: red;">{{ error_message }}</p>
+    {% endif %}
+
+    {% if success_message %}
+        <p style="color: green;">{{ success_message }}</p>
+    {% endif %}
     <br>
     <a href="{% url 'buyer_orders' %}">Back to Orders</a>
 </body>

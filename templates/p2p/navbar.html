@@ -28,7 +28,11 @@
       {% else %}
           <a href="{% url 'marketplace' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
               <i class="fa-solid fa-store text-2xl md:text-lg"></i>
-              <span class="text-xs md:text-sm lg:inline hidden">Marketplace</span>
+              <span class="text-xs md:text-sm lg:inline hidden">P2P</span>
+          </a>
+          <a href="{% url 'calculator' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
+              <i class="fa-solid fa-calculator text-2xl md:text-lg"></i>
+              <span class="text-xs md:text-sm lg:inline hidden">Calculator</span>
           </a>
           <a href="{% url 'buyer_orders' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
               <i class="fa-solid fa-shopping-cart text-2xl md:text-lg"></i>
