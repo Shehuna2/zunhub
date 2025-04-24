@@ -13,6 +13,9 @@ TON_API_URL = os.getenv("TON_API_URL")
 BSC_SENDER_PRIVATE_KEY = os.getenv("BSC_SENDER_PRIVATE_KEY")
 BSC_RPC_URL = os.getenv("BSC_RPC_URL")
 
+FLUTTERWAVE_PUBLIC_KEY = os.getenv("FLUTTERWAVE_PUBLIC_KEY")
+FLUTTERWAVE_SECRET_KEY = os.getenv("FLUTTERWAVE_SECRET_KEY")
+FLUTTERWAVE_HASH_KEY = os.getenv("FLUTTERWAVE_HASH_KEY")
 
 
 
@@ -34,7 +37,7 @@ SECRET_KEY = 'django-insecure-lr99y20wxx3m2u(36j7zu(s88618g6j!sd!_!(h9a4^+sz04u7
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 AUTH_USER_MODEL = 'accounts.User'
 
@@ -93,6 +96,7 @@ INSTALLED_APPS = [
     'bills',
     'gasfee',
     'accounts',
+    'payments',
 ]
 
 MIDDLEWARE = [

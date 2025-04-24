@@ -9,6 +9,8 @@ urlpatterns = [
     path('', include('gasfee.urls')),
     path('', include('bills.urls')),
     path('', include('accounts.urls')),
+    path('payments/', include('payments.urls')),
+    
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
