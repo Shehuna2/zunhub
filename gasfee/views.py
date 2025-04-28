@@ -26,9 +26,9 @@ from .utils import (
     get_crypto_price, get_exchange_rate, send_bsc, check_solana_balance, 
     send_evm, send_solana, validate_solana_address, send_ton, validate_ton_address
 )
-from .near_utils import (
-    validate_near_account_id, send_near
-)
+# from .near_utils import (
+#     validate_near_account_id, send_near
+# )
 
 
 
@@ -201,11 +201,11 @@ def buy_crypto(request, crypto_id):
                     logger.warning(f"Invalid Solana address: {wallet_address}")
                     return JsonResponse({"success": False, "error": "Invalid Solana address format."})
                 logger.info(f"Valid Solana address: {wallet_address}")
-            elif crypto.symbol.upper() == "NEAR":
-                if not validate_near_account_id(wallet_address):
-                    logger.warning(f"Invalid NEAR address: {wallet_address}")
-                    return JsonResponse({"success": False, "error": "Invalid NEAR address format."})
-                logger.info(f"Valid NEAR address: {wallet_address}")
+            # elif crypto.symbol.upper() == "NEAR":
+            #     if not validate_near_account_id(wallet_address):
+            #         logger.warning(f"Invalid NEAR address: {wallet_address}")
+            #         return JsonResponse({"success": False, "error": "Invalid NEAR address format."})
+            #     logger.info(f"Valid NEAR address: {wallet_address}")
             elif crypto.symbol.upper() == "TON":
                 if not validate_ton_address(wallet_address):
                     logger.warning(f"Invalid TON address: {wallet_address}")
@@ -233,14 +233,14 @@ def buy_crypto(request, crypto_id):
                         total_ngn_deducted -= refund_amount
                         order.total_price = total_ngn_deducted
                         order.save(update_fields=["total_price"])
-                elif crypto.symbol.upper() == "NEAR":
-                    if not validate_near_account_id(wallet_address):
-                        return JsonResponse({"success": False, "error": "Invalid NEAR account ID format."})
-                    try:
-                        tx_hash = send_near(wallet_address, crypto_received)
-                        logger.info(f"NEAR transaction hash: {tx_hash}")
-                    except ValueError as e:
-                        return JsonResponse({"success": False, "error": str(e)})
+                # elif crypto.symbol.upper() == "NEAR":
+                #     if not validate_near_account_id(wallet_address):
+                #         return JsonResponse({"success": False, "error": "Invalid NEAR account ID format."})
+                #     try:
+                #         tx_hash = send_near(wallet_address, crypto_received)
+                #         logger.info(f"NEAR transaction hash: {tx_hash}")
+                #     except ValueError as e:
+                #         return JsonResponse({"success": False, "error": str(e)})
                 elif crypto.symbol.upper() in ["ETH", "BASE-ETH"]:
                     evm_network = crypto.symbol.split("-")[-1].lower()
                     tx_hash = send_evm(evm_network, wallet_address, Web3.to_wei(crypto_received, "ether"))
