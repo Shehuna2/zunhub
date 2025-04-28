@@ -1,206 +1,3 @@
-<!-- <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>USDT Arbitrage Profit Calculator</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body { font-family: 'Inter', sans-serif; background: #121212; color: #e0e0e0; padding: 2rem; }
-    .calculator-container { max-width: 1200px; margin: auto; background: #1e1e1e; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.6); }
-    .form-control, .form-select { background: #2a2a2a; color: #e0e0e0; border: 1px solid #444; }
-    .form-control:focus, .form-select:focus { border-color: #666; box-shadow: none; }
-    .btn-primary { width: 100%; padding: .75rem; font-weight: 600; }
-    .result-box, .transaction-flow { background: #232323; padding: 1.5rem; border-radius: .5rem; }
-    .platform-note { font-style: italic; color: #a0a0a0; }
-    .error-message { color: #f87171; font-weight: 500; display: none; }
-    @media (min-width: 992px) {
-      .calculator-container { display: flex; gap: 2rem; }
-      .calc-form-wrapper, .calc-result-wrapper { flex: 1; }
-      .calc-form-wrapper { max-width: 50%; }
-      .calc-result-wrapper { max-width: 50%; display: flex; flex-direction: column; gap: 2rem; }
-    }
-    @media (max-width: 991px) {
-      .calculator-container > div { margin-bottom: 2rem; }
-    }
-  </style>
-</head>
-<body>
-  <div class="calculator-container">
-    <div class="calc-form-wrapper">
-      <h2 class="text-center text-light mb-4">USDT Arbitrage Profit Calculator</h2>
-      <form id="calcForm">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label for="usdtAmount" class="form-label">USDT Amount</label>
-            <input type="number" id="usdtAmount" class="form-control" value="1000" min="1" required>
-          </div>
-          <div class="col-md-6">
-            <label for="platform" class="form-label">Platform</label>
-            <select id="platform" class="form-select">
-              <option value="Nairagram" data-fee="0" data-note="Zero fees, quick transfer.">Nairagram</option>
-              <option value="Western Union" data-fee="1" data-note="Instant, first free.">Western Union</option>
-              <option value="Afriex" data-fee="0" data-note="No fees over $10.">Afriex</option>
-              <option value="LemFi" data-fee="0" data-note="Trusted by 1M+.">LemFi</option>
-              <option value="Ecobank" data-fee="1" data-note="0.5%-2% fee.">Ecobank</option>
-              <option value="UBA" data-fee="1" data-note="1%-2% fee.">UBA</option>
-              <option value="WorldRemit" data-fee="1" data-note="Fast transfers, fees ~1%.">WorldRemit</option>
-              <option value="Remitly" data-fee="0.75" data-note="Express transfers in minutes, ~0.75% fee.">Remitly</option>
-              <option value="Wise" data-fee="0.5" data-note="Mid-market rates, low transparent fees ~0.5%.">Wise</option>
-              <option value="MoneyGram" data-fee="1.2" data-note="Global network, fees ~1.2%.">MoneyGram</option>
-            </select>
-          </div>
-        </div>
-        <div class="row g-3 mt-2">
-          <div class="col-md-4">
-            <label for="transferFee" class="form-label">Transfer Fee (%)</label>
-            <input type="number" id="transferFee" class="form-control" value="0" step="0.1" min="0" max="10">
-          </div>
-          <div class="col-md-4">
-            <label for="ngnUsdtRate" class="form-label">NGN/USDT Rate</label>
-            <input type="number" id="ngnUsdtRate" class="form-control" value="1591" step="0.01">
-          </div>
-          <div class="col-md-4">
-            <label for="xofUsdtRate" class="form-label">XOF/USDT Rate</label>
-            <input type="number" id="xofUsdtRate" class="form-control" value="602" step="0.01">
-          </div>
-        </div>
-        <div class="row g-3 mt-2">
-          <div class="col-md-6">
-            <label for="xofNgnRate" class="form-label">XOF/NGN Rate</label>
-            <input type="number" id="xofNgnRate" class="form-control" value="2.8" step="0.01">
-          </div>
-          <div class="col-md-6">
-            <label for="profitSplit" class="form-label">Profit Split (%)</label>
-            <select id="profitSplit" class="form-select">
-              <option value="70">70/30 (You 70%)</option>
-              <option value="60">60/40 (You 60%)</option>
-              <option value="50">50/50</option>
-            </select>
-          </div>
-        </div>
-        <div id="errorMessage" class="error-message mt-3 text-center">Please fill in all fields with valid numbers.</div>
-        <button type="submit" class="btn btn-primary mt-4">Calculate</button>
-      </form>
-    </div>
-    <div class="calc-result-wrapper">
-      <div id="results" class="result-box d-none">
-        <h4 class="text-light">Transaction Summary</h4>
-        <p><strong>Platform:</strong> <span id="selectedPlatform"></span></p>
-        <p class="platform-note"><span id="platformNote"></span></p>
-        <ul>
-          <li>You Pay (XOF): <span id="buyerTotalXOF"></span></li>
-          <li>Your Profit (XOF): <span id="buyerProfitXOF"></span> (NGN: <span id="buyerProfitNGN"></span>)</li>
-          <li>Seller Profit (NGN): <span id="sellerProfitNGN"></span></li>
-        </ul>
-      </div>
-      <div id="flowContainer" class="transaction-flow d-none">
-        <h4 class="text-light">How It Works</h4>
-        <div class="flow-step">1. You pay <span id="flowBuyerPays"></span> XOF via <span id="flowPlatform"></span> (fee <span id="flowBuyerFee"></span> XOF).</div>
-        <div class="flow-step">2. Platform converts <span id="flowBuyerPaysBase"></span> XOF to <span id="flowSellerReceives"></span> NGN for seller.</div>
-        <div class="flow-step">3. Seller sends you <span id="flowUsdt2"></span> USDT.</div>
-        <div class="flow-step">4. You sell USDT for <span id="flowBuyerReceives"></span> XOF, earning <span id="flowBuyerProfit"></span> XOF profit.</div>
-        <div class="flow-step">5. Seller profit is <span id="flowSellerProfit"></span> NGN.</div>
-        <p class="platform-note">Repeat while rates remain favorable.</p>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    const calcForm = document.getElementById('calcForm');
-    const resultsEl = document.getElementById('results');
-    const flowEl = document.getElementById('flowContainer');
-    const errorMessage = document.getElementById('errorMessage');
-
-    // Update transfer fee when platform changes
-    document.getElementById('platform').addEventListener('change', e => {
-      document.getElementById('transferFee').value = e.target.selectedOptions[0].dataset.fee || 0;
-    });
-
-    // Handle form submission
-    calcForm.addEventListener('submit', e => {
-      e.preventDefault();
-
-      // Get input values
-      const usdt = parseFloat(document.getElementById('usdtAmount').value);
-      const feePerc = parseFloat(document.getElementById('transferFee').value) / 100;
-      const ngnRate = parseFloat(document.getElementById('ngnUsdtRate').value);
-      const xofRate = parseFloat(document.getElementById('xofUsdtRate').value);
-      const xofNgn = parseFloat(document.getElementById('xofNgnRate').value);
-      const split = parseFloat(document.getElementById('profitSplit').value) / 100;
-      const platform = document.getElementById('platform');
-      const platformNote = platform.selectedOptions[0].dataset.note;
-
-      // Validate inputs
-      if (
-        isNaN(usdt) || usdt <= 0 ||
-        isNaN(feePerc) || feePerc < 0 ||
-        isNaN(ngnRate) || ngnRate <= 0 ||
-        isNaN(xofRate) || xofRate <= 0 ||
-        isNaN(xofNgn) || xofNgn <= 0 ||
-        isNaN(split)
-      ) {
-        errorMessage.style.display = 'block';
-        resultsEl.classList.add('d-none');
-        flowEl.classList.add('d-none');
-        console.error('Invalid input values:', { usdt, feePerc, ngnRate, xofRate, xofNgn, split });
-        return;
-      }
-
-      // Hide error message
-      errorMessage.style.display = 'none';
-
-      try {
-        // Perform calculations
-        const totalProfitNGNPerUsdt = (xofRate * xofNgn) - ngnRate;
-        const totalProfitNGN = totalProfitNGNPerUsdt * usdt;
-        const buyerProfitNGN = totalProfitNGN * split;
-        const sellerProfitNGN = totalProfitNGN * (1 - split);
-
-        const sellerTargetNGNPerUsdt = ngnRate + (totalProfitNGNPerUsdt * (1 - split));
-        const buyerXOFBeforeFeePerUsdt = sellerTargetNGNPerUsdt / xofNgn;
-        const buyerXOFBeforeFee = buyerXOFBeforeFeePerUsdt * usdt;
-        const buyerFeeXOF = buyerXOFBeforeFee * feePerc;
-        const buyerTotalXOF = buyerXOFBeforeFee + buyerFeeXOF;
-
-        const buyerProfitXOF = buyerProfitNGN / xofNgn;
-
-        // Update Transaction Summary
-        document.getElementById('selectedPlatform').textContent = platform.value;
-        document.getElementById('platformNote').textContent = platformNote;
-        document.getElementById('buyerTotalXOF').textContent = buyerTotalXOF.toFixed(2);
-        document.getElementById('buyerProfitXOF').textContent = buyerProfitXOF.toFixed(2);
-        document.getElementById('buyerProfitNGN').textContent = buyerProfitNGN.toFixed(2);
-        document.getElementById('sellerProfitNGN').textContent = sellerProfitNGN.toFixed(2);
-
-        // Update Transaction Flow
-        document.getElementById('flowBuyerPays').textContent = buyerTotalXOF.toFixed(2);
-        document.getElementById('flowBuyerFee').textContent = buyerFeeXOF.toFixed(2);
-        document.getElementById('flowBuyerPaysBase').textContent = buyerXOFBeforeFee.toFixed(2);
-        document.getElementById('flowPlatform').textContent = platform.value;
-        document.getElementById('flowSellerReceives').textContent = (buyerXOFBeforeFee * xofNgn).toFixed(2);
-        document.getElementById('flowUsdt2').textContent = usdt.toFixed(2);
-        document.getElementById('flowBuyerReceives').textContent = (usdt * xofRate).toFixed(2);
-        document.getElementById('flowBuyerProfit').textContent = buyerProfitXOF.toFixed(2);
-        document.getElementById('flowSellerProfit').textContent = sellerProfitNGN.toFixed(2);
-
-        // Show results and flow
-        resultsEl.classList.remove('d-none');
-        flowEl.classList.remove('d-none');
-      } catch (error) {
-        console.error('Calculation error:', error);
-        errorMessage.textContent = 'An error occurred during calculation. Please try again.';
-        errorMessage.style.display = 'block';
-        resultsEl.classList.add('d-none');
-        flowEl.classList.add('d-none');
-      }
-    });
-  </script>
-</body>
-</html> -->
-
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
 <head>
@@ -261,14 +58,6 @@
               <option value="Wise" data-fee="0.5" data-note="Mid-market rates, low fees for all currencies.">Wise</option>
               <option value="WorldRemit" data-fee="0" data-note="Fee-free NGN transfers, fast and secure.">WorldRemit</option>
               <option value="Sendwave" data-fee="1" data-note="Simple app, Ghana/Kenya to Nigeria, diaspora-focused.">Sendwave</option>
-              <option value="Afriex" data-fee="1" data-note="Low fees, supports African currencies.">Afriex</option>
-              <option value="Remitly" data-fee="0.75" data-note="Fast, no hidden fees, Kenya/West Africa to Nigeria.">Remitly</option>
-              <option value="Western Union" data-fee="1" data-note="Global network, West Africa to Nigeria, cash pickup.">Western Union</option>
-              <option value="MoneyGram" data-fee="1.2" data-note="Competitive rates, West Africa to Nigeria, fast.">MoneyGram</option>
-              <option value="LemFi" data-fee="0" data-note="Trusted for Nigeria and diaspora transfers.">LemFi</option>
-              <option value="Geegpay" data-fee="1" data-note="Virtual accounts, Nigeria settlements.">Geegpay</option>
-              <option value="Opay" data-fee="0.5" data-note="Instant domestic Nigeria transfers, low fees.">Opay</option>
-              <option value="Paga" data-fee="0.5" data-note="Mobile money, domestic Nigeria, user-friendly.">Paga</option>
             </select>
             <div class="form-text">Platform for currency transfer.</div>
           </div>
@@ -302,9 +91,9 @@
             <div class="form-text">Exchange rate of target currency to USDT.</div>
           </div>
           <div class="col-md-6">
-            <label for="baseTargetRate" class="form-label"><span id="baseTargetLabel">NGN/XOF</span> Rate</label>
+            <label for="baseTargetRate" class="form-label">Platform Conversion Rate (<span id="baseTargetLabel">NGN per XOF</span>)</label>
             <input type="number" id="baseTargetRate" class="form-control" value="2.68" step="0.01" placeholder="e.g., 2.68" required>
-            <div class="form-text">NGN amount seller receives per base currency unit (e.g., NGN per XOF).</div>
+            <div class="form-text">Amount of target currency received per unit of base currency.</div>
           </div>
         </div>
         <div class="row g-3 mt-2">
@@ -316,7 +105,7 @@
               <option value="60">60/40 (You 60%)</option>
               <option value="50">50/50</option>
             </select>
-            <div class="form-text">Your share of the arbitrage profit. Auto adjusts for transfer fee.</div>
+            <div class="form-text">Your share of the arbitrage profit.</div>
             <div id="autoSplitNote" class="mt-1">Auto split calculated: <span id="autoSplitValue"></span></div>
           </div>
         </div>
@@ -369,8 +158,7 @@
       const targetCurrency = targetCurrencySelect.value;
       baseCurrencyLabel.textContent = baseCurrency;
       targetCurrencyLabel.textContent = targetCurrency;
-      // Show NGN/XOF for XOF-to-NGN, otherwise Base/Target
-      baseTargetLabel.textContent = baseCurrency === 'XOF' && targetCurrency === 'NGN' ? 'NGN/XOF' : `${baseCurrency}/${targetCurrency}`;
+      baseTargetLabel.textContent = `${targetCurrency} per ${baseCurrency}`;
       document.getElementById('baseCurrencySummary').textContent = baseCurrency;
       document.getElementById('baseCurrencyProfit').textContent = baseCurrency;
       document.getElementById('targetCurrencySummary').textContent = targetCurrency;
@@ -389,10 +177,6 @@
     // Update auto split note when transfer fee or profit split changes
     document.getElementById('transferFee').addEventListener('input', updateAutoSplitNote);
     profitSplitSelect.addEventListener('change', updateAutoSplitNote);
-
-    // Update currency labels
-    baseCurrencySelect.addEventListener('change', updateLabels);
-    targetCurrencySelect.addEventListener('change', updateLabels);
 
     // Calculate fair profit split based on transfer fee
     function calculateFairSplit(feePerc) {
@@ -426,7 +210,7 @@
       const feePerc = parseFloat(document.getElementById('transferFee').value) / 100;
       const baseUsdtRate = parseFloat(document.getElementById('baseUsdtRate').value);
       const targetUsdtRate = parseFloat(document.getElementById('targetUsdtRate').value);
-      const baseTargetRate = parseFloat(document.getElementById('baseTargetRate').value);
+      const baseTargetRate = parseFloat(document.getElementById('baseTargetRate').value); // target per base
       const profitSplitOption = profitSplitSelect.value;
       const isAutoSplit = profitSplitOption === 'auto';
       const split = isAutoSplit ? calculateFairSplit(feePerc) : parseFloat(profitSplitOption) / 100;
@@ -447,47 +231,34 @@
       ) {
         errorMessage.textContent = baseCurrency === targetCurrency
           ? 'Base and target currencies must be different.'
-          : 'Please fill in all fields with valid positive numbers (e.g., USDT: 1000, rates > 0).';
+          : 'Please fill in all fields with valid positive numbers.';
         errorMessage.style.display = 'block';
         resultsEl.classList.add('d-none');
         flowEl.classList.add('d-none');
-        console.error('Invalid input values:', { usdt, feePerc, baseUsdtRate, targetUsdtRate, baseTargetRate, split });
         return;
       }
 
       // Calculate arbitrage profit
       try {
-        // For XOF-to-NGN, baseTargetRate is NGN/XOF, so invert for calculations
-        const effectiveBaseTargetRate = baseCurrency === 'XOF' && targetCurrency === 'NGN' ? 1 / baseTargetRate : baseTargetRate;
-
-        // Profit per USDT in target currency
-        const costPerUsdtInTarget = baseUsdtRate / effectiveBaseTargetRate; // Cost to buy USDT in target currency
-        const totalProfitTargetPerUsdt = targetUsdtRate - costPerUsdtInTarget; // Profit in target currency
+        const costPerUsdtInTarget = baseUsdtRate * baseTargetRate; // base per USDT * target per base = target per USDT
+        const totalProfitTargetPerUsdt = targetUsdtRate - costPerUsdtInTarget;
         if (totalProfitTargetPerUsdt <= 0) {
-          errorMessage.textContent = 'No arbitrage profit possible with these rates. Ensure target rate exceeds base rate adjusted by base/target rate.';
+          errorMessage.textContent = 'No arbitrage profit possible with these rates.';
           errorMessage.style.display = 'block';
           resultsEl.classList.add('d-none');
           flowEl.classList.add('d-none');
-          console.error('Non-profitable rates:', { totalProfitTargetPerUsdt, baseUsdtRate, targetUsdtRate, baseTargetRate });
           return;
         }
 
-        // Total profit
         const totalProfitTarget = totalProfitTargetPerUsdt * usdt;
-
-        // Split profit
         const buyerProfitTarget = totalProfitTarget * split;
         const sellerProfitTarget = totalProfitTarget * (1 - split);
-
-        // Buyer’s payment
-        const sellerTargetTargetPerUsdt = targetUsdtRate - (totalProfitTargetPerUsdt * split); // Seller’s net after buyer’s profit
-        const buyerBaseBeforeFeePerUsdt = sellerTargetTargetPerUsdt / effectiveBaseTargetRate; // Convert to base currency
+        const sellerTargetTargetPerUsdt = costPerUsdtInTarget + sellerProfitTarget / usdt;
+        const buyerBaseBeforeFeePerUsdt = sellerTargetTargetPerUsdt / baseTargetRate;
         const buyerBaseBeforeFee = buyerBaseBeforeFeePerUsdt * usdt;
         const buyerFeeBase = buyerBaseBeforeFee * feePerc;
         const buyerTotalBase = buyerBaseBeforeFee + buyerFeeBase;
-
-        // Buyer’s profit in base currency
-        const buyerProfitBase = buyerProfitTarget / effectiveBaseTargetRate;
+        const buyerProfitBase = buyerProfitTarget / baseTargetRate; // Convert profit to base currency
 
         // Update Transaction Summary
         document.getElementById('selectedPlatform').textContent = platform.value;
@@ -505,7 +276,7 @@
         document.getElementById('flowBuyerFee').textContent = buyerFeeBase.toFixed(2);
         document.getElementById('flowBuyerPaysBase').textContent = buyerBaseBeforeFee.toFixed(2);
         document.getElementById('flowPlatform').textContent = platform.value;
-        document.getElementById('flowSellerReceives').textContent = (buyerBaseBeforeFee * (baseCurrency === 'XOF' && targetCurrency === 'NGN' ? baseTargetRate : 1 / effectiveBaseTargetRate)).toFixed(2);
+        document.getElementById('flowSellerReceives').textContent = (buyerBaseBeforeFee * baseTargetRate).toFixed(2);
         document.getElementById('flowUsdt2').textContent = usdt.toFixed(2);
         document.getElementById('flowBuyerReceives').textContent = (usdt * baseUsdtRate).toFixed(2);
         document.getElementById('flowBuyerProfit').textContent = buyerProfitBase.toFixed(2);
@@ -516,8 +287,7 @@
         resultsEl.classList.remove('d-none');
         flowEl.classList.remove('d-none');
       } catch (error) {
-        console.error('Calculation error:', error);
-        errorMessage.textContent = 'An error occurred during calculation. Please check your inputs and try again.';
+        errorMessage.textContent = 'Calculation error. Check your inputs.';
         errorMessage.style.display = 'block';
         resultsEl.classList.add('d-none');
         flowEl.classList.add('d-none');

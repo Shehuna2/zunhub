@@ -1,6 +1,7 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, reverse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
 from django.http import JsonResponse
 from django.db import transaction
 from django.utils.crypto import get_random_string
@@ -38,7 +39,7 @@ def deposit(request):
                 tx_ref=tx_ref
             )
 
-            redirect_url = request.build_absolute_uri('/payments/deposit/callback/')
+            redirect_url = settings.BASE_URL + reverse('deposit_callback')
             payment_link = initiate_flutterwave_payment(
                 tx_ref=tx_ref,
                 amount=amount,
@@ -61,38 +62,64 @@ def deposit_callback(request):
         return render(request, 'payments/deposit_callback.html', {'message': 'Payment processing, please wait.'})
     return render(request, 'payments/deposit_callback.html', {'message': 'Invalid callback.'})
 
+
+
 @csrf_exempt
 def flutterwave_webhook(request):
-    if request.method == 'POST':
-        from django.conf import settings
-        secret_key = settings.FLUTTERWAVE_HASH_KEY
-        
-        verif_hash = request.headers.get('HTTP_X_FLWR_SIGNATURE') or request.headers.get('X-FLWR-SIGNATURE')
+    if request.method != "POST":
+        return JsonResponse({"status": "invalid method"}, status=405)
 
-        if not verif_hash:
-            logger.warning('Missing Flutterwave signature header')
-            return JsonResponse({'status': 'no verif-hash'}, status=400)
+    # Use HASH KEY, not SECRET KEY
+    expected_hash = getattr(settings, "FLUTTERWAVE_HASH_KEY", "").strip()
+    logger.info("🔑 Using expected hash: %r", expected_hash)
 
-        if verif_hash:
-            computed_hash = hmac.new(secret_key.encode(), request.body, hashlib.sha256).hexdigest()
-            if computed_hash == verif_hash:
-                data = json.loads(request.body)
-                event = data.get('event')
-                if event == 'charge.completed':
-                    tx_ref = data.get('txRef')
-                    try:
-                        with transaction.atomic():
-                            deposit_request = DepositRequest.objects.select_for_update().get(
-                                tx_ref=tx_ref, status='pending'
-                            )
-                            deposit_request.status = 'successful'
-                            deposit_request.save()
-                            wallet, _ = Wallet.objects.select_for_update().get_or_create(user=deposit_request.user)
-                            wallet.balance += deposit_request.ngn_amount
-                            wallet.save()
-                    except DepositRequest.DoesNotExist:
-                        pass  # Log this in production
-                return JsonResponse({'status': 'success'})
-            return JsonResponse({'status': 'invalid hash'}, status=400)
-        return JsonResponse({'status': 'no verif-hash'}, status=400)
-    return JsonResponse({'status': 'invalid method'}, status=405)
+    received_hash = (
+        request.META.get("HTTP_VERIF_HASH")
+        or request.headers.get("verif-hash")
+        or ""
+    ).strip().strip("\"'")
+
+    logger.info("📥 Received header hash: %r", received_hash)
+
+    if not received_hash or received_hash != expected_hash:
+        logger.warning(
+            "Invalid webhook signature: expected=%s, received=%s",
+            expected_hash,
+            received_hash
+        )
+        return JsonResponse({"status": "invalid hash"}, status=400)
+
+    logger.info("✅ Webhook signature matched")
+
+    try:
+        payload = json.loads(request.body)
+        event = payload.get("event")
+        data = payload.get("data", {})
+
+        if event == "charge.completed" and data.get("status") == "successful":
+            tx_ref = data.get("tx_ref") or data.get("txRef")
+            with transaction.atomic():
+                dr = DepositRequest.objects.select_for_update().get(
+                    tx_ref=tx_ref,
+                    status="pending"
+                )
+                dr.status = "successful"
+                dr.save()
+
+                wallet, _ = Wallet.objects.select_for_update().get_or_create(user=dr.user)
+                wallet.balance += dr.ngn_amount
+                wallet.save()
+
+                logger.info("💰 Deposit processed for tx_ref: %s", tx_ref)
+
+    except json.JSONDecodeError:
+        logger.error("Invalid JSON payload")
+        return JsonResponse({"status": "invalid payload"}, status=400)
+    except DepositRequest.DoesNotExist:
+        logger.warning("No pending DepositRequest for tx_ref: %s", tx_ref)
+        return JsonResponse({"status": "no deposit request"}, status=400)
+    except Exception as e:
+        logger.exception("Error processing webhook: %s", e)
+        return JsonResponse({"status": "processing error"}, status=500)
+
+    return JsonResponse({"status": "success"})

@@ -9,7 +9,7 @@ urlpatterns = [
     path('', include('gasfee.urls')),
     path('', include('bills.urls')),
     path('', include('accounts.urls')),
-    path('payments/', include('payments.urls')),
+    path('', include('payments.urls')),
     
 ]
 if settings.DEBUG:
