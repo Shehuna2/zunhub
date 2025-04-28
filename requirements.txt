@@ -68,8 +68,7 @@ pycryptodome==3.22.0
 pydantic==2.11.1
 pydantic_core==2.33.0
 PyNaCl==1.5.0
-pysui==0.75.0
-pysui-fastcrypto==0.6.0
+
 python-dateutil==2.9.0.post0
 python-dotenv==1.1.0
 pyunormalize==16.0.0
