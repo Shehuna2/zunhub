@@ -15,7 +15,8 @@ import json
 import logging
 logger = logging.getLogger(__name__)
 
-
+def healthcheck_ping(request):
+    return JsonResponse({"status": "ok"})
 
 @login_required
 def deposit(request):
