@@ -13,6 +13,8 @@ TON_API_URL = os.getenv("TON_API_URL")
 BSC_SENDER_PRIVATE_KEY = os.getenv("BSC_SENDER_PRIVATE_KEY")
 BSC_RPC_URL = os.getenv("BSC_RPC_URL")
 
+
+BASE_URL = os.getenv("BASE_URL")
 FLUTTERWAVE_PUBLIC_KEY = os.getenv("FLUTTERWAVE_PUBLIC_KEY")
 FLUTTERWAVE_SECRET_KEY = os.getenv("FLUTTERWAVE_SECRET_KEY")
 FLUTTERWAVE_HASH_KEY = os.getenv("FLUTTERWAVE_HASH_KEY")
@@ -35,7 +37,7 @@ VTPASS_SANDBOX_URL   = os.getenv("VTPASS_SANDBOX_URL", "")
 SECRET_KEY = 'django-insecure-lr99y20wxx3m2u(36j7zu(s88618g6j!sd!_!(h9a4^+sz04u7'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
