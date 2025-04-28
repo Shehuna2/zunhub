@@ -61,8 +61,7 @@ parsimonious==0.10.0
 pillow==11.1.0
 prompt_toolkit==3.0.50
 propcache==0.3.1
-# py-near==1.1.50
-# py_near_primitives==0.2.3
+
 pycparser==2.22
 pycryptodome==3.22.0
 pydantic==2.11.1
