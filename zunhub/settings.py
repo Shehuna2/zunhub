@@ -191,3 +191,15 @@ MEDIA_URL = '/media/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Auto-create superuser (Render deploy workaround)
+if os.environ.get("AUTO_SUPERUSER", "").lower() == "true":
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    if not User.objects.filter(username=os.environ.get("DJANGO_SUPERUSER_USERNAME")).exists():
+        User.objects.create_superuser(
+            username=os.environ["DJANGO_SUPERUSER_USERNAME"],
+            email=os.environ["DJANGO_SUPERUSER_EMAIL"],
+            password=os.environ["DJANGO_SUPERUSER_PASSWORD"]
+        )
