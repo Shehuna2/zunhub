@@ -1,0 +1,12 @@
+# render.yaml
+services:
+  - type: web
+    name: zunhub
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn zunhub.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: DJANGO_SECRET_KEY
+        value: "replace-me"
