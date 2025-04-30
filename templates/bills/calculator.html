@@ -3,6 +3,413 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium USDT Arbitrage Profit Calculator</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background: #121212; color: #e0e0e0; padding: 1rem; }
+    .container { max-width: 1200px; margin: auto; background: #1e1e1e; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.6); }
+    .form-control, .form-select { background: #2a2a2a; color: #e0e0e0; border: 1px solid #444; }
+    .form-control:focus, .form-select:focus { border-color: #666; box-shadow: none; }
+    .btn-primary, .btn-secondary, .btn-outline-info { padding: .5rem 1rem; font-weight: 600; }
+    .result-box { background: #232323; padding: 1.5rem; border-radius: .5rem; }
+    .error-message { color: #f87171; font-weight: 500; display: none; }
+    .form-text { color: #a0a0a0; font-size: 0.75rem; }
+    .platform-row { margin-bottom: 1rem; }
+    .table-dark th, .table-dark td { border-color: #444; font-size: 0.9rem; }
+    .table-dark th { font-weight: 600; }
+    .add-platform { margin-top: 0.5rem; }
+    .rate-group { display: flex; gap: 0.5rem; align-items: center; }
+    .rate-input { flex-grow: 1; }
+    .live-rate-btn { flex-shrink: 0; font-size: 0.85rem; }
+    .live-indicator { color: #34c759; font-size: 0.75rem; display: none; }
+    h2, h4, h5 { color: #ffffff; }
+    .calc-form-wrapper, .calc-result-wrapper { min-height: 400px; }
+    @media (min-width: 768px) {
+      .container { display: flex; gap: 1.5rem; }
+      .calc-form-wrapper, .calc-result-wrapper { flex: 1; }
+      .calc-form-wrapper { max-width: 50%; }
+      .calc-result-wrapper { max-width: 50%; }
+    }
+    @media (max-width: 767px) {
+      .container { flex-direction: column; }
+      .calc-form-wrapper, .calc-result-wrapper { width: 100%; margin-bottom: 1.5rem; }
+      .form-control, .form-select, .btn { font-size: 0.85rem; }
+      .table-dark th, .table-dark td { font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="calc-form-wrapper">
+      <h2 class="text-center mb-4">USDT Arbitrage Calculator</h2>
+      <form id="calcForm">
+        <div class="row g-2">
+          <div class="col-md-6">
+            <label for="usdtAmount" class="form-label">USDT Amount</label>
+            <input type="number" id="usdtAmount" class="form-control" value="1000" min="1" step="1" placeholder="e.g., 1000" required>
+            <div class="form-text">Amount of USDT to trade.</div>
+          </div>
+          <div class="col-md-6">
+            <label for="baseCurrency" class="form-label">Base Currency</label>
+            <select id="baseCurrency" class="form-select" required>
+              <option value="XOF">XOF (West African CFA)</option>
+              <option value="NGN">NGN (Nigerian Naira)</option>
+              <option value="GHS">GHS (Ghanaian Cedi)</option>
+              <option value="KES">KES (Kenyan Shilling)</option>
+            </select>
+            <div class="form-text">Your currency (buyer's).</div>
+          </div>
+        </div>
+        <div class="row g-2 mt-2">
+          <div class="col-md-6">
+            <label for="targetCurrency" class="form-label">Target Currency</label>
+            <select id="targetCurrency" class="form-select" required>
+              <option value="NGN">NGN (Nigerian Naira)</option>
+              <option value="GHS">GHS (Ghanaian Cedi)</option>
+              <option value="KES">KES (Kenyan Shilling)</option>
+              <option value="XOF">XOF (West African CFA)</option>
+            </select>
+            <div class="form-text">Seller's currency.</div>
+          </div>
+          <div class="col-md-6">
+            <label for="profitSplit" class="form-label">Profit Split (% for Buyer)</label>
+            <input type="number" id="profitSplit" class="form-control" value="50" min="0" max="100" step="1" placeholder="e.g., 50" required>
+            <div class="form-text">Your share of the profit (0-100%).</div>
+          </div>
+        </div>
+        <div class="row g-2 mt-2">
+          <div class="col-md-6">
+            <label for="baseUsdtRate" class="form-label"><span id="baseCurrencyLabel">XOF</span>/USDT Rate</label>
+            <div class="rate-group">
+              <input type="number" id="baseUsdtRate" class="form-control rate-input" step="0.01" placeholder="e.g., 602" required>
+              <button type="button" id="fetchBaseRate" class="btn btn-outline-info live-rate-btn">Fetch Live Rate</button>
+            </div>
+            <div class="form-text">Rate to sell USDT (e.g., from P2P). <span id="baseLiveIndicator" class="live-indicator">Live</span></div>
+          </div>
+          <div class="col-md-6">
+            <label for="targetUsdtRate" class="form-label"><span id="targetCurrencyLabel">NGN</span>/USDT Rate</label>
+            <div class="rate-group">
+              <input type="number" id="targetUsdtRate" class="form-control rate-input" step="0.01" placeholder="e.g., 1620" required>
+              <button type="button" id="fetchTargetRate" class="btn btn-outline-info live-rate-btn">Fetch Live Rate</button>
+            </div>
+            <div class="form-text">Rate seller values USDT. <span id="targetLiveIndicator" class="live-indicator">Live</span></div>
+          </div>
+        </div>
+        <div id="platformContainer" class="mt-3">
+          <h5>Transfer Platforms</h5>
+          <div class="platform-row row g-2">
+            <div class="col-md-4">
+              <input type="text" class="form-control platform-name" placeholder="Platform Name" value="Nairagram" required>
+              <div class="form-text">e.g., Nairagram, Wise</div>
+            </div>
+            <div class="col-md-4">
+              <input type="number" class="form-control conversion-rate" placeholder="Conversion Rate" step="0.01" value="2.68" required>
+              <div class="form-text">Target per base (e.g., NGN/XOF)</div>
+            </div>
+            <div class="col-md-4">
+              <input type="number" class="form-control fee-perc" placeholder="Fee (%)" step="0.1" value="0" min="0" required>
+              <div class="form-text">Platform fee (e.g., 0.5)</div>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn btn-secondary add-platform" id="addPlatform">Add Another Platform</button>
+        <div id="errorMessage" class="error-message mt-2 text-center"></div>
+        <button type="submit" class="btn btn-primary mt-3">Calculate Profits</button>
+      </form>
+    </div>
+    <div class="calc-result-wrapper">
+      <div id="results" class="result-box d-none">
+        <h4 class="text-light">Arbitrage Comparison</h4>
+        <table class="table table-dark">
+          <thead>
+            <tr>
+              <th>Platform</th>
+              <th>Conversion Rate</th>
+              <th>Fee (%)</th>
+              <th>Buyer Profit (<span id="baseCurrencySummary">XOF</span>)</th>
+              <th>Seller Profit (<span id="targetCurrencySummary">NGN</span>)</th>
+            </tr>
+          </thead>
+          <tbody id="comparisonTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const calcForm = document.getElementById('calcForm');
+    const platformContainer = document.getElementById('platformContainer');
+    const addPlatformBtn = document.getElementById('addPlatform');
+    const errorMessage = document.getElementById('errorMessage');
+    const resultsEl = document.getElementById('results');
+    const comparisonTable = document.getElementById('comparisonTable');
+    const baseCurrencySelect = document.getElementById('baseCurrency');
+    const targetCurrencySelect = document.getElementById('targetCurrency');
+    const baseCurrencyLabel = document.getElementById('baseCurrencyLabel');
+    const targetCurrencyLabel = document.getElementById('targetCurrencyLabel');
+    const baseCurrencySummary = document.getElementById('baseCurrencySummary');
+    const targetCurrencySummary = document.getElementById('targetCurrencySummary');
+    const baseUsdtRateInput = document.getElementById('baseUsdtRate');
+    const targetUsdtRateInput = document.getElementById('targetUsdtRate');
+    const fetchBaseRateBtn = document.getElementById('fetchBaseRate');
+    const fetchTargetRateBtn = document.getElementById('fetchTargetRate');
+    const baseLiveIndicator = document.getElementById('baseLiveIndicator');
+    const targetLiveIndicator = document.getElementById('targetLiveIndicator');
+
+    // Add new platform input row
+    addPlatformBtn.addEventListener('click', () => {
+      const platformRow = document.createElement('div');
+      platformRow.className = 'platform-row row g-2';
+      platformRow.innerHTML = `
+        <div class="col-md-4">
+          <input type="text" class="form-control platform-name" placeholder="Platform Name" required>
+          <div class="form-text">e.g., Nairagram, Wise</div>
+        </div>
+        <div class="col-md-4">
+          <input type="number" class="form-control conversion-rate" placeholder="Conversion Rate" step="0.01" required>
+          <div class="form-text">Target per base (e.g., NGN/XOF)</div>
+        </div>
+        <div class="col-md-4">
+          <input type="number" class="form-control fee-perc" placeholder="Fee (%)" step="0.1" min="0" required>
+          <div class="form-text">Platform fee (e.g., 0.5)</div>
+        </div>
+      `;
+      platformContainer.appendChild(platformRow);
+    });
+
+    // Update currency labels and fetch rates
+    async function updateLabelsAndRates() {
+      const baseCurrency = baseCurrencySelect.value;
+      const targetCurrency = targetCurrencySelect.value;
+      baseCurrencyLabel.textContent = baseCurrency;
+      targetCurrencyLabel.textContent = targetCurrency;
+      baseCurrencySummary.textContent = baseCurrency;
+      targetCurrencySummary.textContent = targetCurrency;
+
+      // Reset indicators
+      baseLiveIndicator.style.display = 'none';
+      targetLiveIndicator.style.display = 'none';
+      fetchBaseRateBtn.disabled = false;
+      fetchTargetRateBtn.disabled = false;
+
+      // Fetch base currency rate from Binance
+      if (baseCurrency === 'NGN') {
+        try {
+          const response = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTNGN');
+          const data = await response.json();
+          if (data.price) {
+            baseUsdtRateInput.value = parseFloat(data.price).toFixed(2);
+            baseLiveIndicator.style.display = 'inline';
+          } else {
+            throw new Error('No price data');
+          }
+        } catch (error) {
+          errorMessage.textContent = `Failed to fetch live ${baseCurrency}/USDT rate from Binance. Please enter manually.`;
+          errorMessage.style.display = 'block';
+          baseUsdtRateInput.value = '';
+        }
+      } else {
+        fetchBaseRateBtn.disabled = true;
+        baseUsdtRateInput.value = '';
+        errorMessage.textContent = `${baseCurrency}/USDT not supported on Binance. Please enter rate manually (e.g., from P2P).`;
+        errorMessage.style.display = 'block';
+      }
+
+      // Fetch target currency rate (CoinGecko for NGN)
+      if (targetCurrency === 'NGN') {
+        try {
+          const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=ngn');
+          const data = await response.json();
+          if (data.tether && data.tether.ngn) {
+            targetUsdtRateInput.value = data.tether.ngn.toFixed(2);
+            targetLiveIndicator.style.display = 'inline';
+          } else {
+            throw new Error('No price data');
+          }
+        } catch (error) {
+          errorMessage.textContent = `Failed to fetch live USDT/NGN rate from CoinGecko. Please enter manually.`;
+          errorMessage.style.display = 'block';
+          targetUsdtRateInput.value = '';
+        }
+      } else {
+        fetchTargetRateBtn.disabled = true;
+        targetUsdtRateInput.value = '';
+        errorMessage.textContent = `Live USDT/${targetCurrency} not supported. Please enter rate manually (e.g., from P2P).`;
+        errorMessage.style.display = 'block';
+      }
+    }
+
+    // Fetch live rates on button click
+    fetchBaseRateBtn.addEventListener('click', async () => {
+      const baseCurrency = baseCurrencySelect.value;
+      baseLiveIndicator.style.display = 'none';
+      errorMessage.style.display = 'none';
+      if (baseCurrency === 'NGN') {
+        try {
+          const response = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTNGN');
+          const data = await response.json();
+          if (data.price) {
+            baseUsdtRateInput.value = parseFloat(data.price).toFixed(2);
+            baseLiveIndicator.style.display = 'inline';
+          } else {
+            throw new Error('No price data');
+          }
+        } catch (error) {
+          errorMessage.textContent = `Failed to fetch live ${baseCurrency}/USDT rate from Binance. Please enter manually.`;
+          errorMessage.style.display = 'block';
+          baseUsdtRateInput.value = '';
+        }
+      } else {
+        errorMessage.textContent = `${baseCurrency}/USDT not supported on Binance. Please enter rate manually (e.g., from P2P).`;
+        errorMessage.style.display = 'block';
+      }
+    });
+
+    fetchTargetRateBtn.addEventListener('click', async () => {
+      const targetCurrency = targetCurrencySelect.value;
+      targetLiveIndicator.style.display = 'none';
+      errorMessage.style.display = 'none';
+      if (targetCurrency === 'NGN') {
+        try {
+          const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=ngn');
+          const data = await response.json();
+          if (data.tether && data.tether.ngn) {
+            targetUsdtRateInput.value = data.tether.ngn.toFixed(2);
+            targetLiveIndicator.style.display = 'inline';
+          } else {
+            throw new Error('No price data');
+          }
+        } catch (error) {
+          errorMessage.textContent = `Failed to fetch live USDT/NGN rate from CoinGecko. Please enter manually.`;
+          errorMessage.style.display = 'block';
+          targetUsdtRateInput.value = '';
+        }
+      } else {
+        errorMessage.textContent = `Live USDT/${targetCurrency} not supported. Please enter rate manually (e.g., from P2P).`;
+        errorMessage.style.display = 'block';
+      }
+    });
+
+    // Handle manual rate input (hides live indicator)
+    baseUsdtRateInput.addEventListener('input', () => {
+      baseLiveIndicator.style.display = 'none';
+    });
+    targetUsdtRateInput.addEventListener('input', () => {
+      targetLiveIndicator.style.display = 'none';
+    });
+
+    // Handle currency changes
+    baseCurrencySelect.addEventListener('change', updateLabelsAndRates);
+    targetCurrencySelect.addEventListener('change', updateLabelsAndRates);
+
+    // Handle form submission
+    calcForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      errorMessage.style.display = 'none';
+      comparisonTable.innerHTML = '';
+      resultsEl.classList.add('d-none');
+
+      // Get form inputs
+      const usdt = parseFloat(document.getElementById('usdtAmount').value);
+      const baseCurrency = baseCurrencySelect.value;
+      const targetCurrency = targetCurrencySelect.value;
+      const profitSplit = parseFloat(document.getElementById('profitSplit').value) / 100;
+      const baseUsdtRate = parseFloat(baseUsdtRateInput.value);
+      const targetUsdtRate = parseFloat(targetUsdtRateInput.value);
+
+      // Validate inputs
+      if (
+        isNaN(usdt) || usdt <= 0 ||
+        isNaN(profitSplit) || profitSplit < 0 || profitSplit > 1 ||
+        isNaN(baseUsdtRate) || baseUsdtRate <= 0 ||
+        isNaN(targetUsdtRate) || targetUsdtRate <= 0 ||
+        baseCurrency === targetCurrency
+      ) {
+        errorMessage.textContent = baseCurrency === targetCurrency
+          ? 'Base and target currencies must be different.'
+          : 'Please fill all fields with valid positive numbers.';
+        errorMessage.style.display = 'block';
+        return;
+      }
+
+      // Collect platform data
+      const platforms = Array.from(document.querySelectorAll('.platform-row')).map(row => ({
+        name: row.querySelector('.platform-name').value,
+        conversionRate: parseFloat(row.querySelector('.conversion-rate').value),
+        feePerc: parseFloat(row.querySelector('.fee-perc').value) / 100
+      }));
+
+      if (platforms.length === 0 || platforms.some(p => !p.name || isNaN(p.conversionRate) || isNaN(p.feePerc) || p.conversionRate <= 0 || p.feePerc < 0)) {
+        errorMessage.textContent = 'Please add at least one platform with valid inputs.';
+        errorMessage.style.display = 'block';
+        return;
+      }
+
+      // Calculate profits for each platform
+      let hasResults = false;
+      platforms.forEach(platform => {
+        const { name, conversionRate, feePerc } = platform;
+
+        // Minimum payment for seller to break even
+        const P_min = (usdt * targetUsdtRate) / ((1 - feePerc) * conversionRate);
+        const maxBuyerProfit = usdt * baseUsdtRate - P_min;
+
+        // Check arbitrage condition
+        if (maxBuyerProfit <= 0) {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${name}</td>
+            <td>${conversionRate.toFixed(2)}</td>
+            <td>${(feePerc * 100).toFixed(1)}%</td>
+            <td colspan="2">No arbitrage profit possible</td>
+          `;
+          comparisonTable.appendChild(row);
+          return;
+        }
+
+        // Split profit
+        const buyerProfitBase = profitSplit * maxBuyerProfit;
+        const P = usdt * baseUsdtRate - buyerProfitBase; // Amount buyer pays
+        const convertedAmount = P * (1 - feePerc); // After fee deduction
+        const S = convertedAmount * conversionRate; // Amount seller receives
+        const sellerProfitTarget = S - usdt * targetUsdtRate;
+
+        // Add to comparison table
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${name}</td>
+          <td>${conversionRate.toFixed(2)}</td>
+          <td>${(feePerc * 100).toFixed(1)}%</td>
+          <td>${buyerProfitBase.toFixed(2)} ${baseCurrency}</td>
+          <td>${sellerProfitTarget.toFixed(2)} ${targetCurrency}</td>
+        `;
+        comparisonTable.appendChild(row);
+        hasResults = true;
+      });
+
+      if (hasResults) {
+        resultsEl.classList.remove('d-none');
+      } else {
+        errorMessage.textContent = 'No profitable arbitrage opportunities found.';
+        errorMessage.style.display = 'block';
+      }
+    });
+
+    // Initialize labels and rates
+    updateLabelsAndRates();
+  </script>
+</body>
+</html>
+
+
+
+<!-- <!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>USDT Arbitrage Profit Calculator</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -16,7 +423,6 @@
     .platform-note { font-style: italic; color: #a0a0a0; }
     .error-message { color: #f87171; font-weight: 500; display: none; }
     .form-text { color: #a0a0a0; font-size: 0.85rem; }
-    #autoSplitNote { color: #60a5fa; font-size: 0.9rem; display: none; }
     @media (min-width: 992px) {
       .calculator-container { display: flex; gap: 2rem; }
       .calc-form-wrapper, .calc-result-wrapper { flex: 1; }
@@ -47,7 +453,7 @@
               <option value="GHS">GHS (Ghanaian Cedi)</option>
               <option value="KES">KES (Kenyan Shilling)</option>
             </select>
-            <div class="form-text">Currency you pay and receive profit in.</div>
+            <div class="form-text">Your currency.</div>
           </div>
         </div>
         <div class="row g-3 mt-2">
@@ -71,7 +477,7 @@
           <div class="col-md-6">
             <label for="baseUsdtRate" class="form-label"><span id="baseCurrencyLabel">XOF</span>/USDT Rate</label>
             <input type="number" id="baseUsdtRate" class="form-control" value="602" step="0.01" placeholder="e.g., 602" required>
-            <div class="form-text">Exchange rate of base currency to USDT.</div>
+            <div class="form-text">Rate to sell USDT for base currency.</div>
           </div>
           <div class="col-md-6">
             <label for="targetCurrency" class="form-label">Target Currency</label>
@@ -81,32 +487,26 @@
               <option value="KES">KES (Kenyan Shilling)</option>
               <option value="XOF">XOF (West African CFA)</option>
             </select>
-            <div class="form-text">Currency the seller receives.</div>
+            <div class="form-text">Seller's currency.</div>
           </div>
         </div>
         <div class="row g-3 mt-2">
           <div class="col-md-6">
             <label for="targetUsdtRate" class="form-label"><span id="targetCurrencyLabel">NGN</span>/USDT Rate</label>
             <input type="number" id="targetUsdtRate" class="form-control" value="1620" step="0.01" placeholder="e.g., 1620" required>
-            <div class="form-text">Exchange rate of target currency to USDT.</div>
+            <div class="form-text">Rate at which seller values USDT.</div>
           </div>
           <div class="col-md-6">
             <label for="baseTargetRate" class="form-label">Platform Conversion Rate (<span id="baseTargetLabel">NGN per XOF</span>)</label>
             <input type="number" id="baseTargetRate" class="form-control" value="2.68" step="0.01" placeholder="e.g., 2.68" required>
-            <div class="form-text">Amount of target currency received per unit of base currency.</div>
+            <div class="form-text">Target currency per base currency.</div>
           </div>
         </div>
         <div class="row g-3 mt-2">
           <div class="col-md-12">
-            <label for="profitSplit" class="form-label">Profit Split (%)</label>
-            <select id="profitSplit" class="form-select">
-              <option value="auto" data-auto="true">Auto (Fair split based on fee)</option>
-              <option value="70">70/30 (You 70%)</option>
-              <option value="60">60/40 (You 60%)</option>
-              <option value="50">50/50</option>
-            </select>
-            <div class="form-text">Your share of the arbitrage profit.</div>
-            <div id="autoSplitNote" class="mt-1">Auto split calculated: <span id="autoSplitValue"></span></div>
+            <label for="profitSplit" class="form-label">Profit Split (% for Buyer)</label>
+            <input type="number" id="profitSplit" class="form-control" value="50" min="0" max="100" step="1" placeholder="e.g., 50">
+            <div class="form-text">Your share of the arbitrage profit (0-100%). Seller gets 100 - your share.</div>
           </div>
         </div>
         <div id="errorMessage" class="error-message mt-3 text-center">Please fill in all fields with valid positive numbers.</div>
@@ -117,22 +517,23 @@
       <div id="results" class="result-box d-none">
         <h4 class="text-light">Transaction Summary</h4>
         <p><strong>Platform:</strong> <span id="selectedPlatform"></span></p>
-        <p><strong>Profit Split:</strong> <span id="appliedSplit"></span></p>
+        <p><strong>Profit Split:</strong> <span id="appliedSplit"></span>% for Buyer, <span id="sellerSplit"></span>% for Seller</p>
         <p class="platform-note"><span id="platformNote"></span></p>
         <ul>
-          <li>You Pay (<span id="baseCurrencySummary">XOF</span>): <span id="buyerTotalBase"></span></li>
-          <li>Your Profit (<span id="baseCurrencyProfit">XOF</span>): <span id="buyerProfitBase"></span> (<span id="targetCurrencySummary">NGN</span>: <span id="buyerProfitTarget"></span>)</li>
-          <li>Seller Profit (<span id="targetCurrencyProfit">NGN</span>): <span id="sellerProfitTarget"></span></li>
+          <li>Buyer Pays (<span id="baseCurrencySummary">XOF</span>): <span id="buyerTotalBase"></span></li>
+          <li>Buyer Profit (<span id="baseCurrencyProfit">XOF</span>): <span id="buyerProfitBase"></span></li>
+          <li>Seller Profit (<span id="targetCurrencySummary">NGN</span>): <span id="sellerProfitTarget"></span></li>
         </ul>
       </div>
       <div id="flowContainer" class="transaction-flow d-none">
-        <h4 class="text-light">How It Works</h4>
-        <div class="flow-step">1. You pay <span id="flowBuyerPays"></span> <span id="flowBaseCurrency1">XOF</span> via <span id="flowPlatform"></span> (fee <span id="flowBuyerFee"></span> <span id="flowBaseCurrency2">XOF</span>).</div>
-        <div class="flow-step">2. Platform converts <span id="flowBuyerPaysBase"></span> <span id="flowBaseCurrency3">XOF</span> to <span id="flowSellerReceives"></span> <span id="flowTargetCurrency1">NGN</span> for seller.</div>
-        <div class="flow-step">3. Seller sends you <span id="flowUsdt2"></span> USDT.</div>
-        <div class="flow-step">4. You sell USDT for <span id="flowBuyerReceives"></span> <span id="flowBaseCurrency4">XOF</span>, earning <span id="flowBuyerProfit"></span> <span id="flowBaseCurrency5">XOF</span> profit.</div>
-        <div class="flow-step">5. Seller profit is <span id="flowSellerProfit"></span> <span id="flowTargetCurrency2">NGN</span>.</div>
-        <p class="platform-note">Repeat while rates remain favorable.</p>
+        <h4 class="text-light">Transaction Flow</h4>
+        <div class="flow-step">1. Buyer pays <span id="flowBuyerPays"></span> <span id="flowBaseCurrency1">XOF</span> via <span id="flowPlatform"></span>.</div>
+        <div class="flow-step">2. Platform deducts fee: <span id="flowFee"></span> <span id="flowBaseCurrency2">XOF</span>.</div>
+        <div class="flow-step">3. Platform converts <span id="flowConvertedAmount"></span> <span id="flowBaseCurrency3">XOF</span> to <span id="flowSellerReceives"></span> <span id="flowTargetCurrency1">NGN</span> for seller.</div>
+        <div class="flow-step">4. Seller sends <span id="flowUsdt"></span> USDT to buyer.</div>
+        <div class="flow-step">5. Buyer sells <span id="flowUsdt2"></span> USDT for <span id="flowBuyerReceives"></span> <span id="flowBaseCurrency4">XOF</span>.</div>
+        <div class="flow-step">6. Buyer profit: <span id="flowBuyerProfit"></span> <span id="flowBaseCurrency5">XOF</span>.</div>
+        <div class="flow-step">7. Seller profit: <span id="flowSellerProfit"></span> <span id="flowTargetCurrency2">NGN</span>.</div>
       </div>
     </div>
   </div>
@@ -143,160 +544,114 @@
     const resultsEl = document.getElementById('results');
     const flowEl = document.getElementById('flowContainer');
     const errorMessage = document.getElementById('errorMessage');
-    const baseCurrencySelect = document.getElementById('baseCurrency');
-    const targetCurrencySelect = document.getElementById('targetCurrency');
-    const baseCurrencyLabel = document.getElementById('baseCurrencyLabel');
-    const targetCurrencyLabel = document.getElementById('targetCurrencyLabel');
-    const baseTargetLabel = document.getElementById('baseTargetLabel');
-    const profitSplitSelect = document.getElementById('profitSplit');
-    const autoSplitNote = document.getElementById('autoSplitNote');
-    const autoSplitValue = document.getElementById('autoSplitValue');
 
-    // Update form labels dynamically
-    function updateLabels() {
-      const baseCurrency = baseCurrencySelect.value;
-      const targetCurrency = targetCurrencySelect.value;
-      baseCurrencyLabel.textContent = baseCurrency;
-      targetCurrencyLabel.textContent = targetCurrency;
-      baseTargetLabel.textContent = `${targetCurrency} per ${baseCurrency}`;
-      document.getElementById('baseCurrencySummary').textContent = baseCurrency;
-      document.getElementById('baseCurrencyProfit').textContent = baseCurrency;
-      document.getElementById('targetCurrencySummary').textContent = targetCurrency;
-      document.getElementById('targetCurrencyProfit').textContent = targetCurrency;
-      ['1', '2', '3', '4', '5'].forEach(i => document.getElementById(`flowBaseCurrency${i}`).textContent = baseCurrency);
-      ['1', '2'].forEach(i => document.getElementById(`flowTargetCurrency${i}`).textContent = targetCurrency);
-    }
-
-    // Update transfer fee and auto split note when platform changes
-    document.getElementById('platform').addEventListener('change', e => {
-      const fee = e.target.selectedOptions[0].dataset.fee || 0;
-      document.getElementById('transferFee').value = fee;
-      updateAutoSplitNote();
-    });
-
-    // Update auto split note when transfer fee or profit split changes
-    document.getElementById('transferFee').addEventListener('input', updateAutoSplitNote);
-    profitSplitSelect.addEventListener('change', updateAutoSplitNote);
-
-    // Calculate fair profit split based on transfer fee
-    function calculateFairSplit(feePerc) {
-      const feeImpact = feePerc * 5; // 1% fee increases buyer share by 5%
-      let buyerShare = 50 + feeImpact;
-      buyerShare = Math.min(Math.round(buyerShare), 80); // Cap at 80%
-      buyerShare = Math.max(buyerShare, 50); // Minimum 50%
-      return buyerShare / 100; // Return as decimal (e.g., 0.55)
-    }
-
-    // Update auto split note display
-    function updateAutoSplitNote() {
-      const feePerc = parseFloat(document.getElementById('transferFee').value) / 100;
-      const isAuto = profitSplitSelect.selectedOptions[0].dataset.auto === 'true';
-      if (isNaN(feePerc) || !isAuto) {
-        autoSplitNote.style.display = 'none';
-        return;
-      }
-      const buyerShare = calculateFairSplit(feePerc);
-      const sellerShare = 1 - buyerShare;
-      autoSplitValue.textContent = `${(buyerShare * 100).toFixed(0)}/${(sellerShare * 100).toFixed(0)} (You ${(buyerShare * 100).toFixed(0)}%)`;
-      autoSplitNote.style.display = 'block';
-    }
-
-    // Handle form submission
-    calcForm.addEventListener('submit', e => {
+    calcForm.addEventListener('submit', (e) => {
       e.preventDefault();
 
       // Get input values
       const usdt = parseFloat(document.getElementById('usdtAmount').value);
-      const feePerc = parseFloat(document.getElementById('transferFee').value) / 100;
+      const baseCurrency = document.getElementById('baseCurrency').value;
+      const platform = document.getElementById('platform').value;
+      const transferFee = parseFloat(document.getElementById('transferFee').value) / 100;
       const baseUsdtRate = parseFloat(document.getElementById('baseUsdtRate').value);
+      const targetCurrency = document.getElementById('targetCurrency').value;
       const targetUsdtRate = parseFloat(document.getElementById('targetUsdtRate').value);
-      const baseTargetRate = parseFloat(document.getElementById('baseTargetRate').value); // target per base
-      const profitSplitOption = profitSplitSelect.value;
-      const isAutoSplit = profitSplitOption === 'auto';
-      const split = isAutoSplit ? calculateFairSplit(feePerc) : parseFloat(profitSplitOption) / 100;
-      const platform = document.getElementById('platform');
-      const platformNote = platform.selectedOptions[0].dataset.note;
-      const baseCurrency = baseCurrencySelect.value;
-      const targetCurrency = targetCurrencySelect.value;
+      const baseTargetRate = parseFloat(document.getElementById('baseTargetRate').value);
+      const profitSplit = parseFloat(document.getElementById('profitSplit').value) / 100;
 
       // Validate inputs
       if (
         isNaN(usdt) || usdt <= 0 ||
-        isNaN(feePerc) || feePerc < 0 ||
+        isNaN(transferFee) || transferFee < 0 ||
         isNaN(baseUsdtRate) || baseUsdtRate <= 0 ||
         isNaN(targetUsdtRate) || targetUsdtRate <= 0 ||
         isNaN(baseTargetRate) || baseTargetRate <= 0 ||
-        isNaN(split) ||
+        isNaN(profitSplit) || profitSplit < 0 || profitSplit > 1 ||
         baseCurrency === targetCurrency
       ) {
-        errorMessage.textContent = baseCurrency === targetCurrency
-          ? 'Base and target currencies must be different.'
-          : 'Please fill in all fields with valid positive numbers.';
+        errorMessage.textContent = baseCurrency === targetCurrency ? 'Base and target currencies must be different.' : 'Please fill in all fields with valid positive numbers.';
         errorMessage.style.display = 'block';
         resultsEl.classList.add('d-none');
         flowEl.classList.add('d-none');
         return;
       }
 
-      // Calculate arbitrage profit
-      try {
-        const costPerUsdtInTarget = baseUsdtRate * baseTargetRate; // base per USDT * target per base = target per USDT
-        const totalProfitTargetPerUsdt = targetUsdtRate - costPerUsdtInTarget;
-        if (totalProfitTargetPerUsdt <= 0) {
-          errorMessage.textContent = 'No arbitrage profit possible with these rates.';
-          errorMessage.style.display = 'block';
-          resultsEl.classList.add('d-none');
-          flowEl.classList.add('d-none');
-          return;
-        }
-
-        const totalProfitTarget = totalProfitTargetPerUsdt * usdt;
-        const buyerProfitTarget = totalProfitTarget * split;
-        const sellerProfitTarget = totalProfitTarget * (1 - split);
-        const sellerTargetTargetPerUsdt = costPerUsdtInTarget + sellerProfitTarget / usdt;
-        const buyerBaseBeforeFeePerUsdt = sellerTargetTargetPerUsdt / baseTargetRate;
-        const buyerBaseBeforeFee = buyerBaseBeforeFeePerUsdt * usdt;
-        const buyerFeeBase = buyerBaseBeforeFee * feePerc;
-        const buyerTotalBase = buyerBaseBeforeFee + buyerFeeBase;
-        const buyerProfitBase = buyerProfitTarget / baseTargetRate; // Convert profit to base currency
-
-        // Update Transaction Summary
-        document.getElementById('selectedPlatform').textContent = platform.value;
-        document.getElementById('platformNote').textContent = platformNote;
-        document.getElementById('appliedSplit').textContent = isAutoSplit
-          ? `Auto (${(split * 100).toFixed(0)}/${((1 - split) * 100).toFixed(0)})`
-          : `${(split * 100).toFixed(0)}/${((1 - split) * 100).toFixed(0)}`;
-        document.getElementById('buyerTotalBase').textContent = buyerTotalBase.toFixed(2);
-        document.getElementById('buyerProfitBase').textContent = buyerProfitBase.toFixed(2);
-        document.getElementById('buyerProfitTarget').textContent = buyerProfitTarget.toFixed(2);
-        document.getElementById('sellerProfitTarget').textContent = sellerProfitTarget.toFixed(2);
-
-        // Update Transaction Flow
-        document.getElementById('flowBuyerPays').textContent = buyerTotalBase.toFixed(2);
-        document.getElementById('flowBuyerFee').textContent = buyerFeeBase.toFixed(2);
-        document.getElementById('flowBuyerPaysBase').textContent = buyerBaseBeforeFee.toFixed(2);
-        document.getElementById('flowPlatform').textContent = platform.value;
-        document.getElementById('flowSellerReceives').textContent = (buyerBaseBeforeFee * baseTargetRate).toFixed(2);
-        document.getElementById('flowUsdt2').textContent = usdt.toFixed(2);
-        document.getElementById('flowBuyerReceives').textContent = (usdt * baseUsdtRate).toFixed(2);
-        document.getElementById('flowBuyerProfit').textContent = buyerProfitBase.toFixed(2);
-        document.getElementById('flowSellerProfit').textContent = sellerProfitTarget.toFixed(2);
-
-        // Show results and flow
-        errorMessage.style.display = 'none';
-        resultsEl.classList.remove('d-none');
-        flowEl.classList.remove('d-none');
-      } catch (error) {
-        errorMessage.textContent = 'Calculation error. Check your inputs.';
+      // Check arbitrage condition
+      if (baseUsdtRate <= targetUsdtRate / ((1 - transferFee) * baseTargetRate)) {
+        errorMessage.textContent = 'No arbitrage profit possible with these rates.';
         errorMessage.style.display = 'block';
         resultsEl.classList.add('d-none');
         flowEl.classList.add('d-none');
+        return;
       }
+
+      // Calculate P_min (minimum payment for seller to break even)
+      const P_min = (usdt * targetUsdtRate) / ((1 - transferFee) * baseTargetRate);
+      const max_buyer_profit = usdt * baseUsdtRate - P_min;
+
+      // Calculate buyer's profit based on split
+      const buyer_profit_base = profitSplit * max_buyer_profit;
+      const P = usdt * baseUsdtRate - buyer_profit_base;
+
+      // Calculate fee and amount after fee
+      const fee = P * transferFee;
+      const converted_amount = P - fee;
+
+      // Calculate seller's received amount
+      const S = converted_amount * baseTargetRate;
+
+      // Calculate seller's profit
+      const seller_profit_target = S - usdt * targetUsdtRate;
+
+      // Update transaction summary
+      document.getElementById('selectedPlatform').textContent = platform;
+      document.getElementById('appliedSplit').textContent = (profitSplit * 100).toFixed(0);
+      document.getElementById('sellerSplit').textContent = ((1 - profitSplit) * 100).toFixed(0);
+      document.getElementById('platformNote').textContent = document.querySelector(`#platform option[value="${platform}"]`).dataset.note;
+      document.getElementById('buyerTotalBase').textContent = P.toFixed(2);
+      document.getElementById('buyerProfitBase').textContent = buyer_profit_base.toFixed(2);
+      document.getElementById('sellerProfitTarget').textContent = seller_profit_target.toFixed(2);
+
+      // Update transaction flow
+      document.getElementById('flowBuyerPays').textContent = P.toFixed(2);
+      document.getElementById('flowPlatform').textContent = platform;
+      document.getElementById('flowFee').textContent = fee.toFixed(2);
+      document.getElementById('flowConvertedAmount').textContent = converted_amount.toFixed(2);
+      document.getElementById('flowSellerReceives').textContent = S.toFixed(2);
+      document.getElementById('flowUsdt').textContent = usdt.toFixed(2);
+      document.getElementById('flowUsdt2').textContent = usdt.toFixed(2);
+      document.getElementById('flowBuyerReceives').textContent = (usdt * baseUsdtRate).toFixed(2);
+      document.getElementById('flowBuyerProfit').textContent = buyer_profit_base.toFixed(2);
+      document.getElementById('flowSellerProfit').textContent = seller_profit_target.toFixed(2);
+
+      // Update currency labels
+      ['baseCurrencySummary', 'baseCurrencyProfit', 'flowBaseCurrency1', 'flowBaseCurrency2', 'flowBaseCurrency3', 'flowBaseCurrency4', 'flowBaseCurrency5'].forEach(id => document.getElementById(id).textContent = baseCurrency);
+      ['targetCurrencySummary', 'flowTargetCurrency1', 'flowTargetCurrency2'].forEach(id => document.getElementById(id).textContent = targetCurrency);
+
+      // Show results
+      errorMessage.style.display = 'none';
+      resultsEl.classList.remove('d-none');
+      flowEl.classList.remove('d-none');
     });
 
-    // Initialize labels and auto split note on page load
+    // Update labels when currencies or platform change
+    document.getElementById('baseCurrency').addEventListener('change', updateLabels);
+    document.getElementById('targetCurrency').addEventListener('change', updateLabels);
+    document.getElementById('platform').addEventListener('change', (e) => {
+      const fee = e.target.selectedOptions[0].dataset.fee || 0;
+      document.getElementById('transferFee').value = fee;
+    });
+
+    function updateLabels() {
+      const baseCurrency = document.getElementById('baseCurrency').value;
+      const targetCurrency = document.getElementById('targetCurrency').value;
+      document.getElementById('baseCurrencyLabel').textContent = baseCurrency;
+      document.getElementById('targetCurrencyLabel').textContent = targetCurrency;
+      document.getElementById('baseTargetLabel').textContent = `${targetCurrency} per ${baseCurrency}`;
+    }
+
+    // Initial label update
     updateLabels();
-    updateAutoSplitNote();
   </script>
 </body>
-</html>
+</html> -->
