@@ -1,90 +1,72 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends "base.html" %}
 
 {% block content %}
-<section class="max-w-4xl mx-auto p-8 mt-10">
-  <div class="space-y-6">
-    <!-- Profile Card -->
-    <div class="bg-gray-800 p-4 md:p-6 rounded-xl shadow-lg border border-gray-700">
-      <div class="flex flex-col md:flex-row items-center gap-8">
-        <img class="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover shadow-lg"
-             src="{% if profile.profile_image %}{{ profile.profile_image.url }}{% else %}{% static 'images/default-profile.png' %}{% endif %}"
-             alt="Profile Picture" />
-        <div class="text-center md:text-left flex-1">
-          <div class="flex items-center mb-4">
-            <i class="fas fa-user-circle text-2xl text-gray-400 mr-2"></i>
-            <h1 class="text-3xl font-bold text-white">{{ profile.full_name|default:user.username }}</h1>
-          </div>
-          <p class="text-gray-400 mt-1">@{{ user.username }}</p>
-          <p class="text-gray-400 mt-1">Email: {{ user.email }}</p>
-          <p class="text-sm text-gray-400 mt-4">Joined {{ user.date_joined|date:"F j, Y" }}</p>
-          <a href="{% url 'edit_profile' %}" class="mt-6 inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-all">
-            <i class="fas fa-edit mr-2"></i>Edit Profile
-          </a>
-        </div>
-      </div>
+<div class="container mx-auto">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-t-lg shadow-lg">
+        <h2 class="text-4xl font-bold text-center">P2P Marketplace</h2>
+        <p class="text-center text-gray-200 mt-2">Browse available sell offers from our trusted merchants.</p>
     </div>
 
-    <!-- Personal Details Card -->
-    <div class="bg-gray-800 p-4 md:p-6 rounded-xl shadow-lg border border-gray-700">
-      <h3 class="text-lg md:text-xl font-semibold text-green-400">
-        <i class="fas fa-info-circle mr-2"></i>Personal Details
-      </h3>
-      <div class="mt-4 space-y-2">
-        <div class="flex justify-between">
-          <div class="flex items-center">
-            <i class="fas fa-phone text-gray-400 mr-2"></i>
-            <span class="text-sm text-gray-400">Phone Number</span>
-          </div>
-          <span class="text-sm text-white">{{ profile.phone_number|default:"Not provided" }}</span>
+    <!-- Sell Offers: Stacked on Small Screens, Grid on Large Screens -->
+    <div class="mt-6 space-y-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
+        {% for offer in offers %}
+        <div class="bg-gray-800 p-4 rounded-lg shadow-md transition duration-300 hover:shadow-xl hover:-translate-y-1 lg:p-6">
+            <!-- Merchant Name with Icon, Verification Badge, and Total Orders -->
+            <div class="flex items-center mb-2 lg:mb-4">
+                <i class="fas fa-user-circle text-lg text-gray-400 mr-2 lg:text-2xl"></i>
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <h3 class="text-lg font-semibold text-white lg:text-2xl">{{ offer.merchant.username }}</h3>
+                        <span class="ml-2 px-1 py-0.5 text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 rounded-full lg:px-2 lg:py-1">Verified</span>
+                    </div>
+                    <p class="text-xs text-gray-400 lg:text-sm">Total Orders: {{ offer.merchant_total_orders }}</p>
+                </div>
+            </div>
+            <!-- Price and Details: Two Items per Row -->
+            <div class="space-y-1 mb-2 lg:space-y-2 lg:mb-4">
+                <!-- Row 1: Price and Available -->
+                <div class="flex justify-between items-baseline">
+                    <!-- Price -->
+                    <div class="flex items-baseline space-x-2">
+                        <p class="text-xs text-gray-300 lg:text-sm">Unit price:</p>
+                        <p class="text-lg text-green-300 lg:text-sm">₦{{ offer.price_per_unit }}</p>
+                    </div>
+                    <!-- Available -->
+                    <div class="flex items-baseline space-x-2">
+                        <p class="text-xs text-gray-300 lg:text-sm">Available:</p>
+                        <p class="text-xs text-green-400 lg:text-sm">₦{{ offer.merchant.wallet.balance }}</p>
+                    </div>
+                </div>
+                <!-- Row 2: Min and Max -->
+                <div class="flex justify-between items-baseline">
+                    <!-- Min -->
+                    <div class="flex items-baseline space-x-2">
+                        <p class="text-xs text-gray-300 lg:text-sm">Min:</p>
+                        <p class="text-xs text-red-400 lg:text-sm">₦{{ offer.min_amount }}</p>
+                    </div>
+                    <!-- Max -->
+                    <div class="flex items-baseline space-x-2">
+                        <p class="text-xs text-gray-300 lg:text-sm">Max:</p>
+                        <p class="text-xs text-blue-400 lg:text-sm">₦{{ offer.merchant.wallet.balance }}</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Buy Button -->
+            <a href="{% url 'create_order' offer.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded-md text-sm block text-center transition duration-200 lg:px-6 lg:py-3 lg:text-base">
+                Buy Now
+            </a>
         </div>
-        <div class="flex justify-between">
-          <div class="flex items-center">
-            <i class="fas fa-calendar text-gray-400 mr-2"></i>
-            <span class="text-sm text-gray-400">Date of Birth</span>
-          </div>
-          <span class="text-sm text-white">{{ profile.date_of_birth|default:"Not provided" }}</span>
-        </div>
-      </div>
+        {% empty %}
+        <p class="text-center text-gray-400 text-lg lg:col-span-3">No Agent available at the moment. Please check back later.</p>
+        {% endfor %}
     </div>
 
-    <!-- Bank Details Card -->
-    <div class="bg-gray-800 p-4 md:p-6 rounded-xl shadow-lg border border-gray-700">
-      <h3 class="text-lg md:text-xl font-semibold text-green-400">
-        <i class="fas fa-university mr-2"></i>Bank Details
-      </h3>
-      <div class="mt-4 space-y-2">
-        <div class="flex justify-between">
-          <div class="flex items-center">
-            <i class="fas fa-university text-gray-400 mr-2"></i>
-            <span class="text-sm text-gray-400">Bank Name</span>
-          </div>
-          <span class="text-sm text-white">{{ profile.bank_name|default:"Not provided" }}</span>
-        </div>
-        <div class="flex justify-between">
-          <div class="flex items-center">
-            <i class="fas fa-credit-card text-gray-400 mr-2"></i>
-            <span class="text-sm text-gray-400">Account Number</span>
-          </div>
-          <span class="text-sm text-white">{{ profile.account_no|default:"Not provided" }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- ID Document Card (if exists) -->
-    {% if profile.id_document %}
-    <div class="bg-gray-800 p-4 md:p-6 rounded-xl shadow-lg border border-gray-700">
-      <h3 class="text-lg md:text-xl font-semibold text-green-400">
-        <i class="fas fa-id-card mr-2"></i>ID Document
-      </h3>
-      <div class="mt-4">
-        <a href="{{ profile.id_document.url }}" target="_blank"
-           class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all">
-          View ID Document
+    <!-- Back to Dashboard -->
+    <div class="text-center mt-8">
+        <a href="{% url 'dashboard' %}" class="bg-gray-700 hover:bg-gray-800 text-white px-6 py-3 rounded-md text-base transition duration-200">
+            Back to Dashboard
         </a>
-      </div>
     </div>
-    {% endif %}
-  </div>
-</section>
-{% endblock %}
+</div>
+{% endblock content %}
