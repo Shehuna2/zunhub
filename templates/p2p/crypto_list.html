@@ -34,11 +34,7 @@
   </style>
 </head>
 
-<body
-  x-data="cryptoPage()"
-  x-init="initTheme()"
-  class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen"
->
+<body x-data="cryptoPage()" class="bg-gray-900 text-gray-100 min-h-screen">
   <!-- Sticky Header -->
   <header class="bg-white dark:bg-gray-800 shadow sticky top-0 z-50">
     <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-between p-6 space-y-4 md:space-y-0">
@@ -75,13 +71,6 @@
             <option value="name">Name</option>
             <option value="symbol">Symbol</option>
           </select>
-          <button
-            @click="toggleSortDir()"
-            class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none"
-            :aria-label="sortDir==='asc' ? 'Sort descending' : 'Sort ascending'"
-          >
-            <i class="fa-solid" :class="sortDir==='asc' ? 'fa-arrow-down-a-z' : 'fa-arrow-up-a-z'"></i>
-          </button>
         </div>
 
         <!-- View Toggle -->
@@ -103,15 +92,6 @@
             <i class="fa-solid fa-list"></i>
           </button>
         </div>
-
-        <!-- Theme Toggle -->
-        <button
-          @click="toggleTheme()"
-          class="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 text-lg"
-          aria-label="Toggle theme"
-        >
-          <i class="fa-solid" :class="isDark ? 'fa-sun' : 'fa-moon'"></i>
-        </button>
       </div>
     </div>
   </header>
@@ -138,8 +118,8 @@
             loading="lazy"
           />
           <div>
-            <h3 class="text-lg font-semibold">{{ crypto.name }}</h3>
-            <p class="text-gray-500 dark:text-gray-400 uppercase text-sm">{{ crypto.symbol }}</p>
+            <h3 class="text-lg font-semibold">{{ crypto.symbol }}</h3>
+            <p class="text-gray-500 dark:text-gray-400 uppercase text-sm">{{ crypto.name }}</p>
           </div>
         </div>
         <a
@@ -160,17 +140,6 @@
         sortKey: 'name',
         sortDir: 'asc',
         viewMode: 'grid',
-        isDark: false,
-
-        initTheme() {
-          this.isDark = localStorage.theme === 'dark';
-          document.documentElement.classList.toggle('dark', this.isDark);
-        },
-        toggleTheme() {
-          this.isDark = !this.isDark;
-          document.documentElement.classList.toggle('dark', this.isDark);
-          localStorage.theme = this.isDark ? 'dark' : 'light';
-        },
 
         filterCryptos() {
           const q = this.search.toLowerCase();
