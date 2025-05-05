@@ -1,51 +1,10 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Wallet, SellOffer, Order, Dispute
+from .models import Wallet, SellOffer, Order, Dispute, BuyOffer, SellOrder
 from .views import admin_dashboard
 from .utils import notify_users
-# from django.urls import reverse, path
-# from django.utils.html import format_html
 
 
-
-# class CustomUserAdmin(UserAdmin):
-#     list_display = ('username', 'email', 'is_merchant', 'is_staff', 'is_superuser')
-#     list_filter = ('is_merchant', 'is_staff', 'is_superuser')
-#     search_fields = ('username', 'email')
-#     fieldsets = UserAdmin.fieldsets + (
-#         ('Merchant Info', {'fields': ('is_merchant',)}),
-#     )
-#     actions = ['make_merchant', 'remove_merchant']
-
-#     def make_merchant(self, request, queryset):
-#         queryset.update(is_merchant=True)
-#     make_merchant.short_description = "Grant Merchant Role"
-
-#     def remove_merchant(self, request, queryset):
-#         queryset.update(is_merchant=False)
-#     remove_merchant.short_description = "Remove Merchant Role"
-
-
-# class CustomAdminSite(admin.AdminSite):
-#     site_header = "Admin Panel"
-
-#     def admin_dashboard_link(self):
-#         url = reverse("admin_dashboard")
-#         return format_html('<a href="{}" class="button">Order Metrics Dashboard</a>', url)
-
-# admin_site = CustomAdminSite(name="custom_admin")
-
-
-# class WalletAdmin(admin.ModelAdmin):
-#     list_display = ("user", "balance")
-#     actions = ["add_funds"]
-
-#     def add_funds(self, request, queryset):
-#         for wallet in queryset:
-#             wallet.deposit(5000)  # Add NGN 5000 for testing
-#         self.message_user(request, "Added NGN 5000 to selected wallets.")
-
-#     add_funds.short_description = "Add NGN 5000 to selected wallets"
 
 @admin.register(Dispute)
 class DisputeAdmin(admin.ModelAdmin):
@@ -110,9 +69,18 @@ class DisputeAdmin(admin.ModelAdmin):
     reject_dispute.short_description = "Reject Dispute (Keep funds in escrow)"
 
 
+@admin.register(BuyOffer)
+class BuyOfferAdmin(admin.ModelAdmin):
+    list_display = ("amount_available", "price_per_unit", "min_amount", "max_amount", "created_at")
+    list_filter = ("merchant", "price_per_unit")
+    search_fields = ("merchant__username", "price_per_unit")
 
-# admin.site.register(User, CustomUserAdmin)
-# admin.site.register(Wallet, WalletAdmin)
+@admin.register(SellOrder)
+class SellOrderAdmin(admin.ModelAdmin):
+    list_display = ("buyer_offer", "seller", "amount_requested", "total_price", "status", "created_at")
+    list_filter = ("status",)
+    search_fields = ("buyer_offer__merchant__username", "seller__username")
+
+
 admin.site.register(SellOffer)
 admin.site.register(Order)
-# admin.site.register(UserProfile)

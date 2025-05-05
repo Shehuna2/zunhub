@@ -2,25 +2,16 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # path('accounts/register/', views.register, name='register'),
-    # path('accounts/login/', views.user_login, name='login'),
-    # path('logout/', views.user_logout, name='logout'),
+
     path('', views.dashboard, name='dashboard'),
     path("admin-dashboard/", views.admin_dashboard, name="admin_dashboard"),
 
-    
-    # path('wallet/', views.wallet_dashboard, name='wallet'),
-    # path('wallet/funding/', views.merchant_list, name='funding'),
-    # path('wallet/deposit/', views.deposit, name='deposit'),
-    # path('wallet/withdraw/', views.withdraw, name='withdraw'),
 
-
-    path('merchants/', views.merchant_list, name='merchant_list'),
+    # path('merchants/', views.merchant_list, name='merchant_list'),
     path('marketplace/', views.marketplace, name='marketplace'),
     path('order/<int:order_id>/', views.order_details, name='order_details'),
     path('orders/buyer/', views.buyer_orders, name='buyer_orders'),
     path('orders/merchant/', views.merchant_orders, name='merchant_orders'),
-    # path("update-bank-details/", views.update_bank_details, name="update_bank_details"),
     
     path('p2p/sell-offer/create/', views.create_sell_offer, name='create_sell_offer'), # Merchant create p2p offer
     path('p2p/order/create/<int:offer_id>/', views.create_order, name='create_order'), # Buyer create order   
@@ -30,4 +21,13 @@ urlpatterns = [
     path("p2p/dispute/cancel/<int:dispute_id>/", views.cancel_dispute, name="cancel_dispute"), # Buyer cancel dispute
     path("p2p/dispute/track/<int:dispute_id>/", views.track_dispute, name="track_dispute"), # Buyer track dispute
     path("p2p/disputes/", views.dispute_list, name="dispute_list"), # Merchant view disputes
+
+    path('p2p/buy-offer/create/', views.create_buy_offer, name='create_buy_offer'),
+    path('p2p/buy-offers/',        views.buy_offers_marketplace, name='buy_offers_marketplace'),
+    path('p2p/sell-order/create/<int:offer_id>/', views.create_sell_order, name='create_sell_order'),
+    path('p2p/sell-order/confirm/<int:order_id>/', views.merchant_confirm_sell, name='merchant_confirm_sell'),
+    path('p2p/sell-order/<int:order_id>/', views.sell_order_details, name='sell_order_details'), 
+
+    path('p2p/sell-order/<int:order_id>/confirm-payment/',views.merchant_confirm_sell,name='merchant_confirm_sell'),
+    path('p2p/sell-order/<int:order_id>/seller-release/', views.seller_confirm_release, name='seller_release'),
 ]
