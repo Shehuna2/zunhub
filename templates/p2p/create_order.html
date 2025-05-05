@@ -33,9 +33,9 @@
                 <!-- Input: Quantity -->
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-400">Enter Quantity</label>
-                    <input type="number" name="amount_requested" min="{{ sell_offer.min_amount }}" max="{{ sell_offer.max_amount }}" required
+                    <input type="number" name="amount_requested" min="{{ sell_offer.min_amount }}" max="{{ sell_offer.max_amount }}" value="{{ form.amount_requested.value|default_if_none:'' }}" required
                         class="w-full mt-1 p-2 bg-gray-700 text-gray-200 rounded border border-gray-600 focus:outline-none focus:border-blue-500">
-                    <p class="text-xs text-gray-400">Min: ₦{{ sell_offer.min_amount }} | Max: ₦{{ sell_offer.merchant.wallet.balance }}</p>
+                    <p class="text-xs text-gray-400">Min: ₦{{ sell_offer.min_amount }} | Max: ₦{{ sell_offer.max_amount }}</p>
                 </div>
 
                 <!-- Total Price -->
@@ -64,7 +64,7 @@
     <script>
         // Auto-calculate total price based on input quantity
         document.querySelector('input[name="amount_requested"]').addEventListener('input', function() {
-            let pricePerUnit = {{ sell_offer.price_per_unit }};
+            let pricePerUnit = parseFloat("{{ sell_offer.price_per_unit|safe }}");
             let amount_requested = this.value;
             let totalPrice = (amount_requested * pricePerUnit).toFixed(2);
             document.getElementById("totalPrice").innerText = `₦${totalPrice}`;

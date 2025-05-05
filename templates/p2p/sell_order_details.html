@@ -1,0 +1,70 @@
+{# templates/p2p/sell_order_details.html #}
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto p-6 max-w-3xl">
+  <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-t-lg shadow-lg">
+    <h2 class="text-4xl font-bold text-center">Sell Order Details</h2>
+  </div>
+  <div class="bg-gray-800 p-6 rounded-b-lg shadow-lg space-y-4">
+    <div class="grid grid-cols-2 gap-4">
+      <div><strong>Merchant:</strong> {{ order.buyer_offer.merchant.username }}</div>
+      <div><strong>Seller:</strong> {{ order.seller.username }}</div>
+      <div><strong>Order ID:</strong> {{ order.id }}</div>
+      <div><strong>Rate:</strong> <span class="text-green-400">₦{{ order.buyer_offer.price_per_unit }}</span></div>
+      <div><strong>Quantity:</strong> ₦{{ order.amount_requested }}</div>
+      <div><strong>Total:</strong> ₦{{ order.total_price }}</div>
+      <div><strong>Created:</strong> {{ order.created_at }}</div>
+      <div><strong>Status:</strong> {{ order.get_status_display }}</div>
+    </div>
+
+    {# Show seller's account for merchant to pay fiat #}
+   
+    <div class="mt-6 bg-gray-700 p-4 rounded-lg">
+      <h3 class="text-lg font-semibold text-white mb-2">Account to Receive Payment</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-gray-800 p-3 rounded">
+          <span class="text-gray-300">Full Name:</span>
+          <span class="text-white font-medium">{{ order.seller.profile.full_name }}</span>
+        </div>
+        <div class="bg-gray-800 p-3 rounded">
+          <span class="text-gray-300">Bank Name:</span>
+          <span class="text-white font-medium">{{ order.seller.profile.bank_name }}</span>
+        </div>
+        <div class="bg-gray-800 p-3 rounded">
+          <span class="text-gray-300">Account No:</span>
+          <span class="text-white font-medium">{{ order.seller.profile.account_no }}</span>
+        </div>
+      </div>
+    </div>
+
+
+
+    {% if request.user == order.buyer_offer.merchant and order.status == 'pending' %}
+    <form action="{% url 'merchant_confirm_sell' order.id %}" method="post">
+      {% csrf_token %}
+      <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg">
+        Confirm Payment
+      </button>
+    </form>
+    {% endif %}
+
+    {% if request.user == order.seller and order.status == 'paid' %}
+    <form action="{% url 'seller_release' order.id %}" method="post" class="mt-4">
+      {% csrf_token %}
+      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">
+        Release Tokens
+      </button>
+    </form>
+    {% endif %}
+
+    
+
+    <div class="text-center mt-4">
+      <a href="{% url 'buy_offers_marketplace' %}" class="text-blue-400 hover:underline">
+        Back to Buy Offers
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock content %}
