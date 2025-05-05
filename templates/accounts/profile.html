@@ -2,58 +2,89 @@
 {% load static %}
 
 {% block content %}
-<section class="max-w-4xl mx-auto p-8 mt-10 bg-gradient-to-br from-blue-900 to-purple-800 border border-gray-200 rounded-xl shadow-lg">
-  <div class="flex flex-col md:flex-row items-center gap-8">
-    <!-- Profile Picture -->
-    <div class="relative">
-      <img class="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover shadow-lg"
-           src="{% if profile.profile_image %}{{ profile.profile_image.url }}{% else %}{% static 'images/bnb-bnb-logo.png' %}{% endif %}" 
-           alt="Profile Picture" />
+<section class="max-w-4xl mx-auto p-8 mt-10">
+  <div class="space-y-6">
+    <!-- Profile Card -->
+    <div class="bg-gray-800 p-4 md:p-6 rounded-xl shadow-lg border border-gray-700">
+      <div class="flex flex-col md:flex-row items-center gap-8">
+        <img class="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover shadow-lg"
+             src="{% if profile.profile_image %}{{ profile.profile_image.url }}{% else %}{% static 'images/default-profile.png' %}{% endif %}"
+             alt="Profile Picture" />
+        <div class="text-center md:text-left flex-1">
+          <div class="flex items-center mb-4">
+            <i class="fas fa-user-circle text-2xl text-gray-400 mr-2"></i>
+            <h1 class="text-3xl font-bold text-white">{{ profile.full_name|default:user.username }}</h1>
+          </div>
+          <p class="text-gray-400 mt-1">@{{ user.username }}</p>
+          <p class="text-gray-400 mt-1">Email: {{ user.email }}</p>
+          <p class="text-sm text-gray-400 mt-4">Joined {{ user.date_joined|date:"F j, Y" }}</p>
+          <a href="{% url 'edit_profile' %}" class="mt-6 inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-all">
+            <i class="fas fa-edit mr-2"></i>Edit Profile
+          </a>
+        </div>
+      </div>
     </div>
 
-    <!-- User Information -->
-    <div class="text-center md:text-left flex-1">
-      <h1 class="text-3xl font-bold text-gray-800">{{ profile.full_name|default:user.username }}</h1>
-      <p class="text-gray-600 mt-1">@{{ user.username }}</p>
-
-      <!-- Grid Layout for Details -->
-      <dl class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <dt class="text-sm font-medium text-gray-500">📧 Email</dt>
-          <dd class="mt-1 text-sm text-gray-900">{{ user.email }}</dd>
+    <!-- Personal Details Card -->
+    <div class="bg-gray-800 p-4 md:p-6 rounded-xl shadow-lg border border-gray-700">
+      <h3 class="text-lg md:text-xl font-semibold text-green-400">
+        <i class="fas fa-info-circle mr-2"></i>Personal Details
+      </h3>
+      <div class="mt-4 space-y-2">
+        <div class="flex justify-between">
+          <div class="flex items-center">
+            <i class="fas fa-phone text-gray-400 mr-2"></i>
+            <span class="text-sm text-gray-400">Phone Number</span>
+          </div>
+          <span class="text-sm text-white">{{ profile.phone_number|default:"Not provided" }}</span>
         </div>
-        <div>
-          <dt class="text-sm font-medium text-gray-500">📞 Phone Number</dt>
-          <dd class="mt-1 text-sm text-gray-900">{{ profile.phone_number }}</dd>
+        <div class="flex justify-between">
+          <div class="flex items-center">
+            <i class="fas fa-calendar text-gray-400 mr-2"></i>
+            <span class="text-sm text-gray-400">Date of Birth</span>
+          </div>
+          <span class="text-sm text-white">{{ profile.date_of_birth|default:"Not provided" }}</span>
         </div>
-        <div>
-          <dt class="text-sm font-medium text-gray-500">🎂 Date of Birth</dt>
-          <dd class="mt-1 text-sm text-gray-900">{{ profile.date_of_birth }}</dd>
-        </div>
-        <div>
-          <dt class="text-sm font-medium text-gray-500">🏦 Bank Name</dt>
-          <dd class="mt-1 text-sm text-gray-900">{{ profile.bank_name }}</dd>
-        </div>
-        <div>
-          <dt class="text-sm font-medium text-gray-500">💳 Account Number</dt>
-          <dd class="mt-1 text-sm text-gray-900">{{ profile.account_no }}</dd>
-        </div>
-        {% if profile.id_document %}
-        <div>
-          <dt class="text-sm font-medium text-gray-500">📄 ID Document</dt>
-          <dd class="mt-1 text-sm text-gray-900">
-            <a href="{{ profile.id_document.url }}" target="_blank" class="text-white bg-blue-600 hover:bg-blue-700 font-medium py-1 px-3 rounded">View ID</a>
-          </dd>
-        </div>
-        {% endif %}
-      </dl>
-
-      <!-- Join Date and Edit Button -->
-      <p class="text-sm text-gray-400 mt-4">Joined {{ user.date_joined|date:"F j, Y" }}</p>
-      <a href="{% url 'edit_profile' %}" class="mt-6 inline-block bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-all">
-        Edit Profile
-      </a>
+      </div>
     </div>
+
+    <!-- Bank Details Card -->
+    <div class="bg-gray-800 p-4 md:p-6 rounded-xl shadow-lg border border-gray-700">
+      <h3 class="text-lg md:text-xl font-semibold text-green-400">
+        <i class="fas fa-university mr-2"></i>Bank Details
+      </h3>
+      <div class="mt-4 space-y-2">
+        <div class="flex justify-between">
+          <div class="flex items-center">
+            <i class="fas fa-university text-gray-400 mr-2"></i>
+            <span class="text-sm text-gray-400">Bank Name</span>
+          </div>
+          <span class="text-sm text-white">{{ profile.bank_name|default:"Not provided" }}</span>
+        </div>
+        <div class="flex justify-between">
+          <div class="flex items-center">
+            <i class="fas fa-credit-card text-gray-400 mr-2"></i>
+            <span class="text-sm text-gray-400">Account Number</span>
+          </div>
+          <span class="text-sm text-white">{{ profile.account_no|default:"Not provided" }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ID Document Card (if exists) -->
+    {% if profile.id_document %}
+    <div class="bg-gray-800 p-4 md:p-6 rounded-xl shadow-lg border border-gray-700">
+      <h3 class="text-lg md:text-xl font-semibold text-green-400">
+        <i class="fas fa-id-card mr-2"></i>ID Document
+      </h3>
+      <div class="mt-4">
+        <a href="{{ profile.id_document.url }}" target="_blank"
+           class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all">
+          View ID Document
+        </a>
+      </div>
+    </div>
+    {% endif %}
   </div>
 </section>
 {% endblock %}

@@ -1,0 +1,36 @@
+{# templates/p2p/buy_offers_marketplace.html #}
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto p-6">
+  <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-t-lg shadow-lg">
+    <h2 class="text-4xl font-bold text-center">P2P Buy Offers</h2>
+    <p class="text-center text-gray-200 mt-2">Select a merchant buy‑offer to sell your internal tokens.</p>
+  </div>
+
+  <div class="mt-6 space-y-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
+    {% for offer in offers %}
+    <div class="bg-gray-800 p-4 rounded-lg shadow-md transition duration-300 hover:shadow-xl hover:-translate-y-1">
+      <div class="flex items-center mb-2">
+        <i class="fas fa-store text-lg text-gray-400 mr-2"></i>
+        <h3 class="text-lg font-semibold text-white">{{ offer.merchant.username }}</h3>
+      </div>
+      <p class="text-sm text-gray-300">Unit Price: <span class="text-green-300">₦{{ offer.price_per_unit }}</span></p>
+      <p class="text-sm text-gray-300">Min: ₦{{ offer.min_amount }} | Max: ₦{{ offer.max_amount }}</p>
+      <p class="text-sm text-gray-300">Available: ₦{{ offer.amount_available }}</p>
+      <a href="{% url 'create_sell_order' offer.id %}" class="mt-4 block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-center">
+        Sell to This Merchant
+      </a>
+    </div>
+    {% empty %}
+    <p class="text-gray-400 text-center col-span-3">No buy offers available at the moment.</p>
+    {% endfor %}
+  </div>
+
+  <div class="text-center mt-8">
+    <a href="{% url 'dashboard' %}" class="bg-gray-700 hover:bg-gray-800 text-white px-6 py-3 rounded-md">
+      Back to Dashboard
+    </a>
+  </div>
+</div>
+{% endblock content %}
