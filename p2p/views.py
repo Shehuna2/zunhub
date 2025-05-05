@@ -1,17 +1,25 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
+from django.views.decorators.http import require_POST
+
+from django.core.paginator import Paginator
+
+from django.db.models import Sum
+from itertools import chain
+from django.db.models import Value, CharField
+
 from django.db.models import Count, Q
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 
 from django.http import HttpResponseForbidden, JsonResponse
 from django.contrib import messages
-from .forms import OrderForm, DisputeForm, SellOfferForm
-from .models import Wallet, SellOffer, Order, Dispute
+from .forms import OrderForm, DisputeForm, SellOfferForm, BuyOfferForm, SellOrderForm
+from .models import Wallet, SellOffer, Order, Dispute, BuyOffer, SellOrder
 from gasfee.models import CryptoPurchase
 
-
+User = get_user_model()
 
 def merchant_required(function):
     return user_passes_test(lambda u: hasattr(u, 'is_merchant') and u.is_merchant)(function)
@@ -30,6 +38,75 @@ def create_sell_offer(request):
     else:
         form = SellOfferForm(user=request.user)
     return render(request, "p2p/create_sell_offer.html", {"form": form})
+
+
+@merchant_required
+@login_required
+def create_buy_offer(request):
+    if request.method == 'POST':
+        form = BuyOfferForm(request.POST, user=request.user)
+        if form.is_valid():
+            offer = form.save(commit=False)
+            offer.merchant = request.user
+            # lock their tokens in escrow
+            wallet = Wallet.objects.get(user=request.user)
+            wallet.lock_funds(offer.amount_available)
+            offer.save()
+            messages.success(request, "Buy offer created!")
+            return redirect('merchant_orders')
+    else:
+        form = BuyOfferForm(user=request.user)
+    return render(request, 'p2p/create_buy_offer.html', {'form': form})
+
+@login_required
+def buy_offers_marketplace(request):
+    offers = BuyOffer.objects.filter(is_active=True).exclude(merchant=request.user)
+    return render(request, 'p2p/buy_offers_marketplace.html', {'offers': offers})
+
+@login_required
+def create_sell_order(request, offer_id):
+    """User places a sell-order against a merchant’s buy-offer."""
+    offer = get_object_or_404(BuyOffer, id=offer_id, is_active=True)
+
+    if request.method == 'POST':
+        form = SellOrderForm(request.POST, buy_offer=offer, initial={'seller': request.user})
+        if form.is_valid():
+            so = form.save(commit=False)
+            so.buyer_offer = offer
+            so.seller      = request.user
+
+            # Lock the seller's tokens into escrow
+            wallet = Wallet.objects.get(user=request.user)
+            if not wallet.lock_funds(so.amount_requested):
+                messages.error(request, "Insufficient available balance to lock for this order.")
+                return redirect('create_sell_order', offer.id)
+
+            so.save()
+            messages.success(request, f"Sell order #{so.id} placed! Redirecting to details…")
+            return redirect('sell_order_details', so.id)
+
+        # If form invalid, fall through to re-render with errors
+        messages.error(request, "Please fix the errors below and try again.")
+    else:
+        form = SellOrderForm(buy_offer=offer, initial={'seller': request.user})
+
+    return render(request, 'p2p/create_sell_order.html', {
+        'form':  form,
+        'offer': offer
+    })
+
+
+@login_required
+def sell_order_details(request, order_id):
+    """Show a SellOrder’s details to the seller and the merchant buyer-offer owner."""
+    order = get_object_or_404(SellOrder, id=order_id)
+
+    # Only the seller who created it or the merchant who posted the BuyOffer can see it
+    if request.user != order.seller and request.user != order.buyer_offer.merchant:
+        return HttpResponseForbidden("You are not authorized to view this order.")
+
+    return render(request, "p2p/sell_order_details.html", {"order": order})
+
 
 
 @user_passes_test(lambda u: u.is_superuser)  # Ensure only admins can access
@@ -99,13 +176,7 @@ def dashboard(request):
     return render(request, "p2p/dashboard.html", context)
 
 
-User = get_user_model()
-
-def merchant_list(request):
-    merchants = User.objects.filter(is_merchant=True)
-    return render(request, "p2p/merchants.html", {"merchants": merchants})
-
-
+@login_required
 def marketplace(request):
     """Display all active sell offers from merchants with total completed orders."""
     offers = SellOffer.objects.filter(is_available=True).select_related('merchant').annotate(
@@ -203,6 +274,45 @@ def confirm_payment(request, order_id):
 
     return JsonResponse({"error": "Invalid action"}, status=400)
 
+@login_required
+@require_POST
+def merchant_confirm_sell(request, order_id):
+    """
+    Merchant acknowledges they’ve paid the seller off-chain.
+    We only bump status from 'pending' → 'paid'; no wallet changes here.
+    """
+    so = get_object_or_404(SellOrder, id=order_id, buyer_offer__merchant=request.user)
+
+    if so.status != 'pending':
+        return JsonResponse({"error": "Order cannot be marked paid."}, status=400)
+
+    so.status = 'paid'
+    so.save(update_fields=['status'])
+
+    return JsonResponse({"message": f"Order #{so.id} marked as paid. Waiting on seller to release tokens."})
+
+
+@login_required
+@require_POST
+def seller_confirm_release(request, order_id):
+    """Allow the seller (user) to release locked tokens to the merchant after merchant has paid off-chain."""
+    so = get_object_or_404(SellOrder, id=order_id)
+
+    # Only the seller can release their tokens
+    if request.user != so.seller or so.status != 'paid':
+        return JsonResponse({"error": "Unauthorized or invalid state"}, status=403)
+
+    seller_wallet   = Wallet.objects.get(user=so.seller)
+    merchant_wallet = Wallet.objects.get(user=so.buyer_offer.merchant)
+
+    # transfer escrowed tokens
+    if seller_wallet.transfer_escrow(so.buyer_offer.merchant, so.amount_requested):
+        so.status = 'completed'
+        so.save(update_fields=['status'])
+        return JsonResponse({"message": f"Tokens released! Order #{so.id} completed."})
+    else:
+        return JsonResponse({"error": "Unable to release tokens"}, status=400)
+
 
 @login_required
 def create_dispute(request, order_id):
@@ -282,17 +392,65 @@ def dispute_list(request):
 
 @login_required
 def buyer_orders(request):
-    """Show all orders placed by the buyer."""
-    orders = Order.objects.filter(buyer=request.user).order_by('-created_at')
-    return render(request, "p2p/buyer_orders.html", {"orders": orders})
 
+    # 1. User bought tokens
+    buy_orders = Order.objects.filter(buyer=request.user).order_by('-created_at')
+
+    # 2. User sold tokens
+    sell_orders = SellOrder.objects.filter(seller=request.user).order_by('-created_at')
+
+    return render(request, "p2p/buyer_orders.html", {'buy_orders':  buy_orders,'sell_orders': sell_orders,})
+
+
+
+# @login_required
+# def merchant_orders(request):
+#     # 1. Users selling to merchant
+#     sell_orders = SellOrder.objects.filter(buyer_offer__merchant=request.user).order_by('-created_at')
+
+#     # 2. merchant selling to users
+#     buy_orders = Order.objects.filter(sell_offer__merchant=request.user).order_by('-created_at')
+
+#     return render(request, "p2p/merchant_orders.html", {'sell_orders': sell_orders,'buy_orders':  buy_orders,})
 
 @login_required
 def merchant_orders(request):
-    """Show all orders received by the merchant."""
-    orders = Order.objects.filter(sell_offer__merchant=request.user).order_by('-created_at')
-    return render(request, "p2p/merchant_orders.html", {"orders": orders})
+    # 1. Users selling to merchant
+    sell_qs = SellOrder.objects.filter(buyer_offer__merchant=request.user).annotate(
+        order_type=Value('sell', output_field=CharField())
+    )
+    # 2. Merchant selling to users
+    buy_qs = Order.objects.filter(sell_offer__merchant=request.user).annotate(
+        order_type=Value('buy', output_field=CharField())
+    )
+    # merge into a single list, sorted by created_at
+    p2p_orders = sorted(
+        chain(sell_qs, buy_qs),
+        key=lambda o: o.created_at,
+        reverse=True
+    )
+    paginator = Paginator(p2p_orders, 10)  # 10 orders per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
+    # Now do Python-based aggregates on the list
+    total_orders     = len(p2p_orders)
+    total_amount     = sum(o.total_price for o in p2p_orders) or 0
+    total_completed  = sum(1 for o in p2p_orders if o.status == 'completed')
+    total_disputed   = sum(1 for o in p2p_orders if o.status == 'disputed')
+    total_pending    = sum(1 for o in p2p_orders if o.status == 'pending')
+    total_paid       = sum(1 for o in p2p_orders if o.status == 'paid')
+
+    return render(request, "p2p/merchant_orders.html", {
+        'p2p_orders':       p2p_orders,
+        'total_orders':     total_orders,
+        'total_amount':     total_amount,
+        'total_completed':  total_completed,
+        'total_disputed':   total_disputed,
+        'total_pending':    total_pending,
+        'total_paid':       total_paid,
+        'page_obj':         page_obj,
+    })
 
 
 

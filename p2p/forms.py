@@ -1,12 +1,6 @@
 from django import forms
-from .models import SellOffer, Order, Dispute, Wallet
+from .models import SellOffer, Order, Dispute, Wallet, BuyOffer, SellOrder
 
-# class UserRegisterForm(UserCreationForm):
-#     email = forms.EmailField(required=True)
-
-#     class Meta:
-#         model = User
-#         fields = ['username', 'email', 'password1', 'password2']
 
 
 class SellOfferForm(forms.ModelForm):
@@ -43,6 +37,57 @@ class SellOfferForm(forms.ModelForm):
         if min_amount and max_amount and min_amount > max_amount:
             raise forms.ValidationError("Min amount cannot be greater than max amount.")
         return cleaned_data
+    
+
+class BuyOfferForm(forms.ModelForm):
+    class Meta:
+        model = BuyOffer
+        fields = ['amount_available', 'min_amount', 'max_amount', 'price_per_unit']
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user')
+        super().__init__(*args, **kwargs)
+
+    def clean_amount_available(self):
+        amt = self.cleaned_data['amount_available']
+        wallet = Wallet.objects.get(user=self.user)
+        if amt > wallet.balance - wallet.locked_balance:
+            raise forms.ValidationError("Not enough tokens to back this offer.")
+        return amt
+
+    def clean_max_amount(self):
+        max_amt = self.cleaned_data['max_amount']
+        amt = self.cleaned_data.get('amount_available')
+        if amt and max_amt > amt:
+            raise forms.ValidationError("Max amount cannot exceed amount available.")
+        return max_amt
+    def clean(self):
+        cleaned_data = super().clean()
+        min_amt = cleaned_data.get('min_amount')
+        max_amt = cleaned_data.get('max_amount')
+        if min_amt and max_amt and min_amt > max_amt:
+            raise forms.ValidationError("Min amount cannot be greater than max amount.")
+        return cleaned_data
+    
+class SellOrderForm(forms.ModelForm):
+    class Meta:
+        model = SellOrder
+        fields = ['amount_requested']
+
+    def __init__(self, *args, **kwargs):
+        self.buy_offer = kwargs.pop('buy_offer')
+        super().__init__(*args, **kwargs)
+
+    def clean_amount_requested(self):
+        amt = self.cleaned_data['amount_requested']
+        # check against offer
+        if amt < self.buy_offer.min_amount or amt > self.buy_offer.max_amount:
+            raise forms.ValidationError("Outside merchant’s allowed range.")
+        # check user funds
+        wallet = Wallet.objects.get(user=self.initial['seller'])
+        if amt > wallet.balance - wallet.locked_balance:
+            raise forms.ValidationError("Insufficient tokens to sell.")
+        return amt
 
 class OrderForm(forms.ModelForm):
     class Meta:
