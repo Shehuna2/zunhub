@@ -392,26 +392,43 @@ def dispute_list(request):
 
 @login_required
 def buyer_orders(request):
-
     # 1. User bought tokens
-    buy_orders = Order.objects.filter(buyer=request.user).order_by('-created_at')
-
+    buy_qs = Order.objects.filter(buyer=request.user).annotate(
+        order_type=Value('buy', output_field=CharField())
+    )
     # 2. User sold tokens
-    sell_orders = SellOrder.objects.filter(seller=request.user).order_by('-created_at')
+    sell_qs = SellOrder.objects.filter(seller=request.user).annotate(
+        order_type=Value('sell', output_field=CharField())
+    )
 
-    return render(request, "p2p/buyer_orders.html", {'buy_orders':  buy_orders,'sell_orders': sell_orders,})
+    # Merge and paginate
+    all_orders = sorted(
+        chain(buy_qs, sell_qs),
+        key=lambda o: o.created_at,
+        reverse=True
+    )
+    paginator = Paginator(all_orders, 5)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    # Aggregates
+    total_orders    = len(all_orders)
+    total_amount    = sum(o.total_price for o in all_orders) or 0
+    total_completed = sum(1 for o in all_orders if o.status == 'completed')
+    total_disputed  = sum(1 for o in all_orders if o.status == 'disputed')
+    total_pending   = sum(1 for o in all_orders if o.status == 'pending')
+    total_paid      = sum(1 for o in all_orders if o.status == 'paid')
+
+    return render(request, 'p2p/buyer_orders.html', {
+        'page_obj': page_obj,
+        'total_orders': total_orders,
+        'total_amount': total_amount,
+        'total_completed': total_completed,
+        'total_disputed': total_disputed,
+        'total_pending': total_pending,
+        'total_paid': total_paid,
+    })
 
 
-
-# @login_required
-# def merchant_orders(request):
-#     # 1. Users selling to merchant
-#     sell_orders = SellOrder.objects.filter(buyer_offer__merchant=request.user).order_by('-created_at')
-
-#     # 2. merchant selling to users
-#     buy_orders = Order.objects.filter(sell_offer__merchant=request.user).order_by('-created_at')
-
-#     return render(request, "p2p/merchant_orders.html", {'sell_orders': sell_orders,'buy_orders':  buy_orders,})
 
 @login_required
 def merchant_orders(request):

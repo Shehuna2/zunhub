@@ -1,125 +1,221 @@
 {% extends "base.html" %}
+{% load humanize_naira %}
 
 {% block content %}
-<div class="bg-gradient-to-r from-indigo-900 via-purple-800 to-pink-700 text-white p-4 sm:p-8 rounded-b-3xl shadow-2xl">
-    <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center uppercase tracking-wider">My Orders</h2>
-    <p class="mt-2 text-center text-base sm:text-lg opacity-80">Review your buy and sell activity</p>
+<div class="bg-gradient-to-r from-indigo-900 via-purple-800 to-pink-700 text-white p-6 sm:p-10 rounded-b-3xl shadow-2xl">
+  <h2 class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-center uppercase tracking-wider">My P2P Orders</h2>
+  <p class="mt-3 text-center text-lg sm:text-xl opacity-80">Review all your buy and sell orders in one place</p>
 </div>
-<section class="max-w-6xl mx-auto mt-12 p-8 bg-gray-900 rounded-3xl shadow-lg border border-gray-800 space-y-12">
-    {# Section: Tokens You Bought from Merchants #}
-    <div>
-        <h3 class="text-2xl font-semibold text-white mb-4">Tokens I Bought</h3>
-        {% if buy_orders %}
-        <div class="overflow-x-auto rounded-lg">
-            <table class="w-full table-auto border-separate border-spacing-y-4">
-                <thead>
-                    <tr>
-                        <th class="px-6 py-4 text-left text-gray-300 uppercase tracking-wide">Order ID</th>
-                        <th class="px-6 py-4 text-left text-gray-300 uppercase tracking-wide">Merchant</th>
-                        <th class="px-6 py-4 text-left text-gray-300 uppercase tracking-wide">Amount</th>
-                        <th class="px-6 py-4 text-left text-gray-300 uppercase tracking-wide">Rate</th>
-                        <th class="px-6 py-4 text-left text-gray-300 uppercase tracking-wide">Total</th>
-                        <th class="px-6 py-4 text-center text-gray-300 uppercase tracking-wide">Status</th>
-                        <th class="px-6 py-4 text-center text-gray-300 uppercase tracking-wide">View</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for order in buy_orders %}
-                    <tr class="bg-gray-800 hover:bg-gray-700 transition-colors duration-200 rounded-xl">
-                        <td class="px-6 py-4 font-medium text-white">#{{ order.id }}</td>
-                        <td class="px-6 py-4 text-gray-200">{{ order.sell_offer.merchant.username }}</td>
-                        <td class="px-6 py-4 text-gray-200">₦{{ order.amount_requested }}</td>
-                        <td class="px-6 py-4 text-gray-200">₦{{ order.sell_offer.price_per_unit }}</td>
-                        <td class="px-6 py-4 text-gray-200">₦{{ order.total_price }}</td>
-                        <td class="px-6 py-4 text-center">
-                            {% if order.status == 'pending' %}
-                                <span class="inline-block px-4 py-1 bg-yellow-500 text-gray-900 font-medium rounded-full uppercase text-xs">Pending</span>
-                            {% elif order.status == 'paid' %}
-                                <span class="inline-block px-4 py-1 bg-blue-600 text-white font-medium rounded-full uppercase text-xs">Awaiting Release</span>
-                            {% elif order.status == 'completed' %}
-                                <span class="inline-block px-4 py-1 bg-green-500 text-white font-medium rounded-full uppercase text-xs">Completed</span>
-                            {% elif order.status == 'disputed' %}
-                                <span class="inline-block px-4 py-1 bg-red-600 text-white font-medium rounded-full uppercase text-xs">Disputed</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            <a href="{% url 'order_details' order.id %}" 
-                               class="inline-block px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-full shadow-lg transform hover:scale-105 transition-transform duration-200">
-                                View
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <p class="text-gray-400">You haven't bought any tokens yet.</p>
-        {% endif %}
-    </div>
 
-    {# Section: Tokens You Sold to Merchants #}
-    <div>
-        <h3 class="text-2xl font-semibold text-white mb-4">Tokens I Sold</h3>
-        {% if sell_orders %}
-        <div class="overflow-x-auto rounded-lg">
-            <table class="w-full table-auto border-separate border-spacing-y-4">
-                <thead>
-                    <tr>
-                        <th class="px-6 py-4 text-left text-gray-300 uppercase tracking-wide">Order ID</th>
-                        <th class="px-6 py-4 text-left text-gray-300 uppercase tracking-wide">Merchant</th>
-                        <th class="px-6 py-4 text-left text-gray-300 uppercase tracking-wide">Amount</th>
-                        <th class="px-6 py-4 text-left text-gray-300 uppercase tracking-wide">Rate</th>
-                        <th class="px-6 py-4 text-left text-gray-300 uppercase tracking-wide">Total</th>
-                        <th class="px-6 py-4 text-center text-gray-300 uppercase tracking-wide">Status</th>
-                        <th class="px-6 py-4 text-center text-gray-300 uppercase tracking-wide">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for order in sell_orders %}
-                    <tr class="bg-gray-800 hover:bg-gray-700 transition-colors duration-200 rounded-xl">
-                        <td class="px-6 py-4 font-medium text-white">#{{ order.id }}</td>
-                        <td class="px-6 py-4 text-gray-200">{{ order.buyer_offer.merchant.username }}</td>
-                        <td class="px-6 py-4 text-gray-200">₦{{ order.amount_requested }}</td>
-                        <td class="px-6 py-4 text-gray-200">₦{{ order.buyer_offer.price_per_unit }}</td>
-                        <td class="px-6 py-4 text-gray-200">₦{{ order.total_price }}</td>
-                        <td class="px-6 py-4 text-center">
-                            {% if order.status == 'pending' %}
-                                <span class="inline-block px-4 py-1 bg-yellow-500 text-gray-900 font-medium rounded-full uppercase text-xs">Pending</span>
-                            {% elif order.status == 'paid' %}
-                                
-                                {# Seller (you) releases to merchant #}
-                                <button type="button" data-url="{% url 'seller_release' order.id %}" 
-                                        class="inline-block px-5 py-2 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-full release-btn">
-                                    Release Tokens
-                                </button>
-                            {% elif order.status == 'completed' %}
-                                <span class="inline-block px-4 py-1 bg-green-500 text-white font-medium rounded-full uppercase text-xs">Completed</span>
-                            {% elif order.status == 'disputed' %}
-                                <span class="inline-block px-4 py-1 bg-red-600 text-white font-medium rounded-full uppercase text-xs">Disputed</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            <a href="{% url 'sell_order_details' order.id %}" 
-                               class="inline-block px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-full shadow-lg transform hover:scale-105 transition-transform duration-200">
-                                View
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <p class="text-gray-400">You haven't sold any tokens yet.</p>
-        {% endif %}
+<section class="max-w-7xl mx-auto mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+  <!-- Summary Cards -->
+  <div class="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-6">
+    <!-- Total Orders -->
+    <div class="bg-white bg-opacity-10 backdrop-blur p-6 rounded-2xl shadow-lg flex flex-col items-center">
+      <div class="text-3xl font-bold text-white">{{ total_orders }}</div>
+      <div class="mt-2 text-gray-300 uppercase text-sm">Total Orders</div>
     </div>
+    <!-- Total Amount -->
+    <div class="bg-white bg-opacity-10 backdrop-blur p-6 rounded-2xl shadow-lg flex flex-col items-center">
+      <div class="text-3xl font-bold text-white">{{ total_amount|humanize_naira }}</div>
+      <div class="mt-2 text-gray-300 uppercase text-sm">Total Volume</div>
+    </div>
+    <!-- Completed -->
+    <div class="bg-green-600 bg-opacity-20 p-6 rounded-2xl shadow-lg flex flex-col items-center">
+      <div class="text-3xl font-bold text-white">{{ total_completed }}</div>
+      <div class="mt-2 text-gray-100 uppercase text-sm">Completed</div>
+    </div>
+    <!-- Disputed -->
+    <div class="bg-red-600 bg-opacity-20 p-6 rounded-2xl shadow-lg flex flex-col items-center">
+      <div class="text-3xl font-bold text-white">{{ total_disputed }}</div>
+      <div class="mt-2 text-gray-100 uppercase text-sm">Disputed</div>
+    </div>
+    <!-- Pending -->
+    <div class="bg-yellow-500 bg-opacity-20 p-6 rounded-2xl shadow-lg flex flex-col items-center">
+      <div class="text-3xl font-bold text-white">{{ total_pending }}</div>
+      <div class="mt-2 text-gray-900 uppercase text-sm">Pending</div>
+    </div>
+    <!-- Paid -->
+    <div class="bg-blue-500 bg-opacity-20 p-6 rounded-2xl shadow-lg flex flex-col items-center">
+      <div class="text-3xl font-bold text-white">{{ total_paid }}</div>
+      <div class="mt-2 text-gray-100 uppercase text-sm">Paid</div>
+    </div>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="lg:col-span-3 overflow-x-auto rounded-3xl shadow-lg border border-gray-800 bg-gray-900 p-6">
+    <table class="w-full table-auto border-separate border-spacing-y-4">
+      <thead>
+        <tr>
+          <th class="px-6 py-3 text-left text-gray-300 uppercase tracking-wide">Order ID</th>
+          <th class="px-6 py-3 text-left text-gray-300 uppercase tracking-wide">Counterparty</th>
+          <th class="px-6 py-3 text-left text-gray-300 uppercase tracking-wide">Amount</th>
+          <th class="px-6 py-3 text-left text-gray-300 uppercase tracking-wide">Total</th>
+          <th class="px-6 py-3 text-center text-gray-300 uppercase tracking-wide">Type</th>
+          <th class="px-6 py-3 text-center text-gray-300 uppercase tracking-wide">Status</th>
+          <th class="px-6 py-3 text-center text-gray-300 uppercase tracking-wide">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in page_obj %}
+        <tr class="bg-gray-800 hover:bg-gray-700 transition-colors duration-200 rounded-2xl">
+          <td class="px-6 py-4 font-medium text-white">#{{ order.id }}</td>
+          <td class="px-6 py-4 text-gray-200">
+            {% if order.order_type == 'buy' %}{{ order.sell_offer.merchant.username }}{% else %}{{ order.buyer_offer.merchant.username }}{% endif %}
+          </td>
+          <td class="px-6 py-4 text-gray-200">₦{{ order.amount_requested }}</td>
+          <td class="px-6 py-4 text-gray-200">₦{{ order.total_price }}</td>
+          <td class="px-6 py-4 text-center">
+            <span class="inline-block px-4 py-1 font-medium rounded-full uppercase text-xs 
+              {% if order.order_type == 'buy' %}bg-green-500 text-white{% else %}bg-pink-500 text-white{% endif %}">
+              {{ order.order_type|title }}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-center">
+            {% if order.status == 'pending' %}
+              <span class="inline-block px-4 py-1 bg-yellow-500 text-gray-900 font-medium rounded-full uppercase text-xs">Pending</span>
+            {% elif order.status == 'paid' %}
+              {% if order.order_type == 'sell' and request.user == order.seller %}
+                <button type="button" data-url="{% url 'seller_confirm_release' order.id %}" class="inline-block px-5 py-2 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-full release-btn">Release Tokens</button>
+              {% else %}
+                <span class="inline-block px-4 py-1 bg-blue-500 text-white font-medium rounded-full uppercase text-xs">Awaiting Seller</span>
+              {% endif %}
+            {% elif order.status == 'completed' %}
+              <span class="inline-block px-4 py-1 bg-green-700 text-white font-medium rounded-full uppercase text-xs">Completed</span>
+            {% elif order.status == 'disputed' %}
+              <span class="inline-block px-4 py-1 bg-red-600 text-white font-medium rounded-full uppercase text-xs">Disputed</span>
+            {% endif %}
+          </td>
+          <td class="px-6 py-4 text-center">
+            {% if order.order_type == 'buy' %}
+              <a href="{% url 'order_details' order.id %}" class="inline-block px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-full shadow-lg transform hover:scale-105 transition-transform duration-200 text-sm sm:text-base">View Details</a>
+            {% else %}
+              <a href="{% url 'sell_order_details' order.id %}" class="inline-block px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-full shadow-lg transform hover:scale-105 transition-transform duration-200 text-sm sm:text-base">View Details</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-gray-400 text-center py-6">No P2P orders found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <!-- Pagination Controls -->
+    <div class="mt-6 flex justify-center space-x-4">
+      {% if page_obj.has_previous %}
+        <a href="?page=1" class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600">First</a>
+        <a href="?page={{ page_obj.previous_page_number }}" class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600">Previous</a>
+      {% endif %}
+      <span class="px-4 py-2 bg-gray-800 text-gray-300 rounded-lg">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+      </span>
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600">Next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}" class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600">Last</a>
+      {% endif %}
+    </div>
+  </div>
 </section>
 
-<div class="text-center mt-6">
-    <a href="{% url 'marketplace' %}" 
-       class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-full shadow-lg font-semibold transform hover:scale-105 transition-transform duration-200">
-        Back to Marketplace
-    </a>
+<!-- Confirmation Modal -->
+<div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden">
+  <div class="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-2xl w-11/12 max-w-md">
+    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Confirm Release</h3>
+    <p class="text-gray-700 dark:text-gray-300 mb-6">Are you sure you want to release tokens?</p>
+    <div class="flex justify-end space-x-4">
+      <button id="modal-cancel" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg">Cancel</button>
+      <button id="modal-confirm" class="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg">Yes, Release</button>
+    </div>
+  </div>
 </div>
+
+<!-- Toast Notification Container -->
+<div id="toast" class="fixed bottom-6 right-6 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg opacity-0 transform translate-y-4 transition-all duration-300 pointer-events-none">
+  <span id="toast-message"></span>
+</div>
+
+<script>
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  function showToast(message, isError = false) {
+    const toast = document.getElementById('toast');
+    const msg = document.getElementById('toast-message');
+    msg.textContent = message;
+    toast.classList.remove('bg-green-600', 'bg-red-600');
+    toast.classList.add(isError ? 'bg-red-600' : 'bg-green-600');
+    toast.classList.remove('opacity-0', 'translate-y-4');
+    toast.classList.add('opacity-100', 'translate-y-0');
+    setTimeout(() => {
+      toast.classList.remove('opacity-100', 'translate-y-0');
+      toast.classList.add('opacity-0', 'translate-y-4');
+    }, 3000);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const csrftoken = getCookie('csrftoken');
+    const modal = document.getElementById('confirm-modal');
+    const modalCancel = document.getElementById('modal-cancel');
+    const modalConfirm = document.getElementById('modal-confirm');
+    let activeBtn = null;
+
+    document.querySelectorAll('.release-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeBtn = btn;
+        modal.classList.remove('hidden');
+      });
+    });
+
+    modalCancel.addEventListener('click', () => {
+      modal.classList.add('hidden');
+      activeBtn = null;
+    });
+
+    modalConfirm.addEventListener('click', async () => {
+      modal.classList.add('hidden');
+      if (!activeBtn) return;
+      const btn = activeBtn;
+      activeBtn = null;
+      btn.disabled = true;
+      const url = btn.dataset.url;
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+          }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          const statusTd = btn.closest('tr')?.querySelector('td:nth-child(6)');
+          if (statusTd) {
+            statusTd.innerHTML = '<span class="inline-block px-4 py-1 bg-green-700 text-white font-medium rounded-full shadow-inner uppercase text-xs">Completed</span>';
+          }
+          btn.remove();
+          showToast(data.message);
+        } else {
+          showToast(data.error || 'An error occurred.', true);
+          btn.disabled = false;
+        }
+      } catch (e) {
+        showToast('Network error.', true);
+        btn.disabled = false;
+      }
+    });
+  });
+</script>
 {% endblock content %}
