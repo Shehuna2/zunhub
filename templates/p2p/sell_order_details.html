@@ -15,7 +15,7 @@
       <div><strong>Quantity:</strong> ₦{{ order.amount_requested }}</div>
       <div><strong>Total:</strong> ₦{{ order.total_price }}</div>
       <div><strong>Created:</strong> {{ order.created_at }}</div>
-      <div><strong>Status:</strong> {{ order.get_status_display }}</div>
+      <div><strong>Status:</strong> <span id="order-status">{{ order.get_status_display }}</span></div>
     </div>
 
     {# Show seller's account for merchant to pay fiat #}
@@ -37,34 +37,107 @@
         </div>
       </div>
     </div>
+  
+  {% if request.user == order.seller and order.status == 'paid' %}
+  <button
+    id="releaseBtn"
+    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg mt-4"
+  >
+    Release Tokens
+  </button>
 
-
-
-    {% if request.user == order.buyer_offer.merchant and order.status == 'pending' %}
-    <form action="{% url 'merchant_confirm_sell' order.id %}" method="post">
-      {% csrf_token %}
-      <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg">
-        Confirm Payment
-      </button>
-    </form>
-    {% endif %}
-
-    {% if request.user == order.seller and order.status == 'paid' %}
-    <form action="{% url 'seller_release' order.id %}" method="post" class="mt-4">
-      {% csrf_token %}
-      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">
-        Release Tokens
-      </button>
-    </form>
-    {% endif %}
-
-    
-
-    <div class="text-center mt-4">
-      <a href="{% url 'buy_offers_marketplace' %}" class="text-blue-400 hover:underline">
-        Back to Buy Offers
-      </a>
+  <!-- Modal -->
+  <div id="confirmModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition duration-300 ease-in-out">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md scale-95 opacity-0 transform transition duration-300 ease-in-out" id="confirmModalContent">
+      <h2 class="text-xl font-bold mb-4 text-gray-800">Confirm Release</h2>
+      <p class="mb-6 text-gray-700">Are you sure you want to release tokens for this order?</p>
+      <div class="flex justify-end gap-4">
+        <button id="cancelModal" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+        <button id="confirmRelease" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Yes, Release</button>
+      </div>
     </div>
   </div>
+{% endif %}
+
+{% if request.user == order.buyer_offer.merchant and order.status == 'pending' %}
+  <button
+    id="confirmPaymentBtn"
+    class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg"
+  >
+    Confirm Payment
+  </button>
+
+  <!-- Modal for Confirm Payment -->
+  <div id="paymentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition duration-300 ease-in-out">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md scale-95 opacity-0 transform transition duration-300 ease-in-out" id="paymentModalContent">
+      <h2 class="text-xl font-bold mb-4 text-gray-800">Confirm Payment</h2>
+      <p class="mb-6 text-gray-700">Are you sure you want to confirm payment for this order?</p>
+      <div class="flex justify-end gap-4">
+        <button id="cancelPaymentModal" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+        <button id="confirmPayment" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Yes, Confirm</button>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+<!-- Spinner Overlay -->
+<div id="spinnerOverlay" class="hidden fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
+  <div class="loader ease-linear rounded-full border-4 border-t-4 border-white h-12 w-12"></div>
 </div>
+
+<style>
+  .loader {
+    border-color: #f3f3f3;
+    border-top-color: #3498db;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+<!-- External Script for Shared Logic -->
+<script src="/static/js/order-actions.js" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const csrfToken = '{{ csrf_token }}';
+
+    window.handleOrderAction({
+      csrfToken,
+      triggerBtnId: 'confirmPaymentBtn',
+      modalId: 'paymentModal',
+      contentId: 'paymentModalContent',
+      cancelBtnId: 'cancelPaymentModal',
+      confirmBtnId: 'confirmPayment',
+      endpoint: "{% url 'merchant_confirm_sell' order.id %}",
+      successMessage: 'Payment confirmed successfully.',
+      statusText: 'Paid',
+      statusColor: 'text-yellow-400',
+      btnSuccessText: 'Payment Confirmed',
+      audit: 'merchant_confirm_sell'
+    });
+
+    window.handleOrderAction({
+      csrfToken,
+      triggerBtnId: 'releaseBtn',
+      modalId: 'confirmModal',
+      contentId: 'confirmModalContent',
+      cancelBtnId: 'cancelModal',
+      confirmBtnId: 'confirmRelease',
+      endpoint: "{% url 'seller_release' order.id %}",
+      successMessage: 'Tokens released successfully.',
+      statusText: 'Completed',
+      statusColor: 'text-green-400',
+      btnSuccessText: 'Tokens Released',
+      audit: 'seller_release'
+    });
+  });
+</script>
+
+
 {% endblock content %}

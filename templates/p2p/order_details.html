@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mx-auto p-6">
+<div class="container mx-auto p-6 max-w-3xl">
     <!-- Header -->
-    <div class="max-w-3xl mx-auto bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-t-lg shadow-lg">
+    <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-t-lg shadow-lg">
         <h2 class="text-4xl font-bold text-center">Order Details</h2>
     </div>
 
     <!-- Card Details -->
-    <div class="max-w-3xl mx-auto bg-gray-800 p-6 rounded-b-lg shadow-lg">
+    <div class="bg-gray-800 p-6 rounded-b-lg shadow-lg space-y-4">
         <div class="grid grid-cols-2 gap-4">
             <div><strong>Agent:</strong> {{ order.sell_offer.merchant.username }}</div>
             <div><strong>Buyer:</strong> {{ order.buyer.username }}</div>
@@ -16,53 +16,45 @@
             <div><strong>Rate:</strong> <span class="text-green-400">₦{{ order.sell_offer.price_per_unit }}</span></div>
             <div><strong>Amount:</strong> ₦{{ order.amount_requested }}</div>
             <div><strong>Total Price:</strong> ₦{{ order.total_price }}</div>
-            <div>
-                <strong>Created At:</strong> {{ order.created_at }}
-            </div>
-            <div>
-                <strong>Status:</strong>
-                <span class="inline-flex items-center gap-2 px-2 py-1 rounded text-white text-sm
-                    {% if order.status == 'pending' %} bg-gray-600 
-                    {% elif order.status == 'paid' %} bg-green-800 
-                    {% elif order.status == 'completed' %} bg-green-500 
-                    {% elif order.status == 'disputed' %} bg-red-500 
-                    {% endif %}">
-                    {% if order.status == 'pending' %}<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3" /></path></svg>
-                    {% elif order.status == 'paid' %}<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a4 4 0 00-8 0v2m12 0v10a2 2 0 01-2 2H7a2 2 0 01-2-2V9h14z" /></path></svg>
-                    {% elif order.status == 'completed' %}<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></path></svg>
-                    {% elif order.status == 'disputed' %}<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-1.414-1.414-4.95 4.95-4.95-4.95L5.636 5.636l4.95 4.95-4.95 4.95 1.414 1.414 4.95-4.95 4.95 4.95 1.414-1.414-4.95-4.95z" /></path></svg>
-                    {% endif %}
-                    {{ order.get_status_display }}
-                </span>
-            </div>
+            <div><strong>Created At:</strong> {{ order.created_at }}</div>
+            <div><strong>Status:</strong> <span id="order-status">{{ order.get_status_display }}</span></div>
         </div>
 
         {% if request.user == order.buyer %}
         <!-- Payment Instructions -->
         <div class="mt-6 bg-gray-700 p-4 rounded-lg">
-            <h3 class="text-lg font-semibold mb-4">Payment Instructions</h3>
-            <div class="space-y-2">
-                <div class="bg-gray-800 p-3 rounded flex justify-between">
-                    <span class="text-gray-300 font-medium">Full Name:</span>
-                    <span class="text-white">{{ order.sell_offer.merchant.profile.full_name }}</span>
+            <h3 class="text-lg font-semibold text-white mb-2">Payment Instructions</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-gray-800 p-3 rounded">
+                    <span class="text-gray-300">Full Name:</span>
+                    <span class="text-white font-medium">{{ order.sell_offer.merchant.profile.full_name }}</span>
                 </div>
-                <div class="bg-gray-800 p-3 rounded flex justify-between">
-                    <span class="text-gray-300 font-medium">Bank Name:</span>
-                    <span class="text-white">{{ order.sell_offer.merchant.profile.bank_name }}</span>
+                <div class="bg-gray-800 p-3 rounded">
+                    <span class="text-gray-300">Bank Name:</span>
+                    <span class="text-white font-medium">{{ order.sell_offer.merchant.profile.bank_name }}</span>
                 </div>
-                <div class="bg-gray-800 p-3 rounded flex justify-between">
-                    <span class="text-gray-300 font-medium">Account No:</span>
-                    <span class="text-white">{{ order.sell_offer.merchant.profile.account_no }}</span>
+                <div class="bg-gray-800 p-3 rounded">
+                    <span class="text-gray-300">Account No:</span>
+                    <span class="text-white font-medium">{{ order.sell_offer.merchant.profile.account_no }}</span>
                 </div>
             </div>
 
             {% if order.status == 'pending' %}
-            <form action="{% url 'mark_as_paid' order.id %}" method="POST" class="mt-4">
-                {% csrf_token %}
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">
-                    Mark as Paid
-                </button>
-            </form>
+            <button id="markAsPaidBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg mt-4">
+                Mark as Paid
+            </button>
+
+            <!-- Modal for Mark as Paid -->
+            <div id="markAsPaidModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition duration-300 ease-in-out">
+                <div class="bg-white rounded-lg p-6 w-full max-w-md scale-95 opacity-0 transform transition duration-300 ease-in-out" id="markAsPaidModalContent">
+                    <h2 class="text-xl font-bold mb-4 text-gray-800">Confirm Mark as Paid</h2>
+                    <p class="mb-6 text-gray-700">Are you sure you have made the payment for this order?</p>
+                    <div class="flex justify-end gap-4">
+                        <button id="cancelMarkAsPaidModal" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+                        <button id="confirmMarkAsPaid" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Yes, Confirm</button>
+                    </div>
+                </div>
+            </div>
             {% elif order.status == 'paid' %}
             <div class="mt-4 flex flex-wrap gap-3">
                 {% if order.dispute %}
@@ -87,9 +79,21 @@
         {% endif %}
 
         {% if request.user == order.sell_offer.merchant and order.status == 'paid' %}
-        <a href="{% url 'confirm_payment' order.id %}" class="block text-center bg-green-600 hover:bg-green-700 text-white py-2 rounded mt-4">
+        <button id="releaseFundsBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg mt-4">
             Release Funds
-        </a>
+        </button>
+
+        <!-- Modal for Release Funds -->
+        <div id="releaseFundsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition duration-300 ease-in-out">
+            <div class="bg-white rounded-lg p-6 w-full max-w-md scale-95 opacity-0 transform transition duration-300 ease-in-out" id="releaseFundsModalContent">
+                <h2 class="text-xl font-bold mb-4 text-gray-800">Confirm Release Funds</h2>
+                <p class="mb-6 text-gray-700">Are you sure you want to release funds for this order?</p>
+                <div class="flex justify-end gap-4">
+                    <button id="cancelReleaseFundsModal" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+                    <button id="confirmReleaseFunds" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Yes, Release</button>
+                </div>
+            </div>
+        </div>
         {% endif %}
 
         {% if request.user == order.sell_offer.merchant %}
@@ -103,4 +107,64 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Spinner Overlay -->
+<div id="spinnerOverlay" class="hidden fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
+    <div class="loader ease-linear rounded-full border-4 border-t-4 border-white h-12 w-12"></div>
+</div>
+
+<style>
+    .loader {
+        border-color: #f3f3f3;
+        border-top-color: #3498db;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+<!-- Toastify -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+<script src="/static/js/order-actions.js" defer></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const csrfToken = '{{ csrf_token }}';
+
+    window.handleOrderAction({
+      csrfToken,
+      triggerBtnId: 'markAsPaidBtn',
+      modalId: 'markAsPaidModal',
+      contentId: 'markAsPaidModalContent',
+      cancelBtnId: 'cancelMarkAsPaidModal',
+      confirmBtnId: 'confirmMarkAsPaid',
+      endpoint: "{% url 'mark_as_paid' order.id %}",
+      successMessage: 'Marked as Paid',
+      statusText: 'Paid',
+      statusColor: 'text-yellow-400',
+      btnSuccessText: 'Marked as Paid',
+      audit: 'mark_as_paid'
+    });
+
+    window.handleOrderAction({
+      csrfToken,
+      triggerBtnId: 'releaseFundsBtn',
+      modalId: 'releaseFundsModal',
+      contentId: 'releaseFundsModalContent',
+      cancelBtnId: 'cancelReleaseFundsModal',
+      confirmBtnId: 'confirmReleaseFunds',
+      endpoint: "{% url 'release_fund' order.id %}",
+      successMessage: 'Funds released successfully.',
+      statusText: 'Completed',
+      statusColor: 'text-green-400',
+      btnSuccessText: 'Funds Released',
+      audit: 'release_fund'
+    });
+  });
+</script>
+
 {% endblock content %}

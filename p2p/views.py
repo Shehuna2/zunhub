@@ -236,43 +236,41 @@ def create_order(request, offer_id):
 
 @login_required
 def mark_as_paid(request, order_id):
-    """Allows the buyer to mark an order as paid."""
     order = get_object_or_404(Order, id=order_id)
 
     if request.user != order.buyer:
-        return HttpResponseForbidden("You are not authorized to update this order.")
+        return JsonResponse({"error": "Unauthorized"}, status=403)
 
-    if order.status == 'pending':
-        order.status = 'paid'
-        order.save()
-        messages.success(request, "You have marked the order as paid. Please wait for the merchant to confirm.")
-    else:
-        messages.error(request, "This order cannot be marked as paid.")
+    if order.status != 'pending':
+        return JsonResponse({"error": "Order is not pending"}, status=400)
 
-    return redirect('order_details', order_id=order.id)
+    order.status = 'paid'
+    order.save(update_fields=["status"])
+    return JsonResponse({"message": "You have marked the order as paid."})
 
 
 @login_required
-def confirm_payment(request, order_id):
-    """Merchant confirms payment and releases internal currency."""
-    order = get_object_or_404(Order, id=order_id, sell_offer__merchant=request.user)
+@require_POST
+def release_fund(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
 
-    if order.status == "paid":
-        merchant_wallet = Wallet.objects.get(user=request.user)
-        buyer_wallet    = Wallet.objects.get(user=order.buyer)
+    if request.user != order.sell_offer.merchant:
+        return JsonResponse({"error": "Unauthorized"}, status=403)
 
-        if merchant_wallet.release_funds(order.amount_requested):
-            buyer_wallet.deposit(order.amount_requested)
-            order.status = "completed"
-            order.save(update_fields=["status"])
-            return JsonResponse({"message": "Payment confirmed. Escrow released to buyer."})
-        else:
-            return JsonResponse(
-                {"error": "Cannot release funds: insufficient locked balance."},
-                status=400
-            )
+    if order.status != "paid":
+        return JsonResponse({"error": "Order is not ready for release"}, status=400)
 
-    return JsonResponse({"error": "Invalid action"}, status=400)
+    merchant_wallet = Wallet.objects.get(user=request.user)
+    buyer_wallet = Wallet.objects.get(user=order.buyer)
+
+    if not merchant_wallet.release_funds(order.amount_requested):
+        return JsonResponse({"error": "Insufficient locked funds"}, status=400)
+
+    buyer_wallet.deposit(order.amount_requested)
+    order.status = "completed"
+    order.save(update_fields=["status"])
+
+    return JsonResponse({"message": "Funds released to buyer. Order completed."})
 
 @login_required
 @require_POST
