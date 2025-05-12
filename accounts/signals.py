@@ -3,10 +3,16 @@ from django.dispatch import receiver
 from .models import User, UserProfile
 
 @receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
+def manage_user_profile(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
-
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()
+    else:
+        try:
+            # Ensure profile exists before saving
+            if hasattr(instance, 'profile'):
+                instance.profile.save()
+            else:
+                # Create profile if it doesn't exist
+                UserProfile.objects.create(user=instance)
+        except UserProfile.DoesNotExist:
+            UserProfile.objects.create(user=instance)

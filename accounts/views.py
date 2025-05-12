@@ -3,14 +3,16 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from .forms import UserRegisterForm, ProfileForm
+from .models import UserProfile
 
 def register(request):
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
         if form.is_valid():
             user = form.save()
+            UserProfile.objects.create(user=user)  # Explicitly create profile
             login(request, user)
-            return redirect('edit_profile')  
+            return redirect('edit_profile')
     else:
         form = UserRegisterForm()
     return render(request, 'accounts/register.html', {'form': form})
@@ -29,11 +31,13 @@ def user_logout(request):
     logout(request)
     return redirect('login')
 
-
-@login_required
+login_required
 def profile_view(request):
     user = request.user
-    profile = user.profile
+    try:
+        profile = user.profile
+    except UserProfile.DoesNotExist:
+        profile = UserProfile.objects.create(user=user)  # Create if missing
     return render(request, 'accounts/profile.html', {'user': user, 'profile': profile})
 
 @login_required
@@ -53,14 +57,20 @@ def edit_profile(request):
 @login_required
 def update_bank_details(request):
     """Allows users to update their bank account details."""
-    profile = request.user.profile  # Access UserProfile
+    try:
+        profile = request.user.profile
+    except UserProfile.DoesNotExist:
+        profile = UserProfile.objects.create(user=request.user)
 
     if request.method == "POST":
-        profile.account_no = request.POST.get("account_no")
-        profile.bank_name = request.POST.get("bank_name")
-        profile.save()
+        form = ProfileForm(request.POST, instance=profile)  # Use ProfileForm for validation
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Bank details updated successfully.")
+            return redirect("update_bank_details")
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = ProfileForm(instance=profile)
 
-        messages.success(request, "Bank details updated successfully.")
-        return redirect("update_bank_details")
-
-    return render(request, "accounts/update_bank_details.html", {"profile": profile})
+    return render(request, "accounts/update_bank_details.html", {"profile": profile, "form": form})

@@ -1,61 +1,92 @@
-<nav id="sidebar" class="bg-gray-800 text-white p-4 fixed bottom-0 left-0 w-full flex justify-around items-center md:flex-col md:w-20 lg:w-64 md:h-screen md:justify-between md:space-y-0 md:pt-24 shadow-lg z-40 hidden md:block">
-  <div class="flex justify-around w-full md:flex-col md:space-y-6 md:px-4">
-    <a href="{% url 'dashboard' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
-        <i class="fa-solid fa-home text-2xl md:text-lg"></i>
-        <span class="text-xs md:text-sm lg:inline hidden">Home</span>
+{% comment %} Tailwind + Alpine.js Collapsible P2P Sidebar with ARIA, Persistent State, Icons, Tooltips, Keyboard Nav, and Utility Grouping with Accordion Behavior {% endcomment %}
+<nav id="sidebar" class="bg-gray-800 text-white p-4 fixed bottom-0 left-0 w-full flex justify-around items-center md:flex-col md:w-20 lg:w-64 md:h-screen md:justify-between md:space-y-0 md:pt-24 shadow-lg z-40 hidden md:block" role="navigation" aria-label="Sidebar Menu">
+  <div x-data="{
+    openMenu: localStorage.getItem('sidebar_open_menu') || '',
+    toggle(menu) {
+      this.openMenu = this.openMenu === menu ? '' : menu;
+      localStorage.setItem('sidebar_open_menu', this.openMenu);
+    },
+    isOpen(menu) {
+      return this.openMenu === menu;
+    }
+  }" class="flex justify-around w-full md:flex-col md:space-y-6 md:px-4">
+
+    <!-- Home -->
+    <a href="{% url 'dashboard' %}" class="group flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white" tabindex="0" title="Home" role="link">
+      <i class="fa-solid fa-home text-2xl md:text-lg" aria-hidden="true"></i>
+      <span class="text-xs md:text-sm lg:inline hidden">Home</span>
     </a>
-      {% if request.user.is_merchant %}
-          <a href="{% url 'marketplace' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
-              <i class="fa-solid fa-store text-2xl md:text-lg"></i>
-              <span class="text-xs md:text-sm lg:inline hidden">P2P</span>
+
+    <!-- P2P Collapsible Group -->
+    <div class="w-full relative" role="group" aria-label="P2P Menu">
+      <button @click="toggle('p2p')" :aria-expanded="isOpen('p2p')" class="group w-full flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white" title="P2P Menu" tabindex="0" role="button">
+        <i class="fa-solid fa-store text-2xl md:text-lg" aria-hidden="true"></i>
+        <span class="text-xs md:text-sm lg:inline hidden">P2P</span>
+        <i :class="isOpen('p2p') ? 'fa-chevron-up rotate-180' : 'fa-chevron-down'" class="fa-solid text-xs md:inline hidden ml-auto transition-transform duration-200" aria-hidden="true"></i>
+      </button>
+      <div x-show="isOpen('p2p')" x-transition x-cloak class="pl-8 mt-2 flex flex-col space-y-1">
+        {% if request.user.is_merchant %}
+          <a href="{% url 'create_sell_offer' %}" class="group flex items-center space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-white" title="Create Sell Offer" tabindex="0" role="link">
+            <i class="fa-solid fa-plus" aria-hidden="true"></i>
+            <span>Create Sell Offer</span>
           </a>
-          <a href="{% url 'create_sell_offer' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
-              <i class="fa-solid fa-plus text-2xl md:text-lg"></i>
-              <span class="text-xs md:text-sm lg:inline hidden">Create Sell Offer</span>
+          <a href="{% url 'create_buy_offer' %}" class="group flex items-center space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-white" title="Create Buy Offer" tabindex="0" role="link">
+            <i class="fa-solid fa-plus" aria-hidden="true"></i>
+            <span>Create Buy Offer</span>
           </a>
-          <a href="{% url 'create_buy_offer' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
-              <i class="fa-solid fa-plus text-2xl md:text-lg"></i>
-              <span class="text-xs md:text-sm lg:inline hidden">Create Buy Offer</span>
+          <a href="{% url 'merchant_orders' %}" class="group flex items-center space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-white" title="My Orders" tabindex="0" role="link">
+            <i class="fa-solid fa-box" aria-hidden="true"></i>
+            <span>My Orders</span>
           </a>
-          <a href="{% url 'merchant_orders' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
-              <i class="fa-solid fa-box text-2xl md:text-lg"></i>
-              <span class="text-xs md:text-sm lg:inline hidden">My Orders</span>
+        {% else %}
+          <a href="{% url 'buyer_orders' %}" class="group flex items-center space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-white" title="My Orders" tabindex="0" role="link">
+            <i class="fa-solid fa-shopping-cart" aria-hidden="true"></i>
+            <span>My Orders</span>
           </a>
-          <a href="{% url 'dispute_list' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
-              <i class="fa-solid fa-scale-balanced text-2xl md:text-lg"></i>
-              <span class="text-xs md:text-sm lg:inline hidden">Disputes</span>
-          </a>
-          <a href="{% url 'update_bank_details' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
-              <i class="fa-solid fa-university text-2xl md:text-lg"></i>
-              <span class="text-xs md:text-sm lg:inline hidden">Bank Details</span>
-          </a>
-      {% else %}
-          <a href="{% url 'marketplace' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
-              <i class="fa-solid fa-store text-2xl md:text-lg"></i>
-              <span class="text-xs md:text-sm lg:inline hidden">P2P</span>
-          </a>
-          <a href="{% url 'calculator' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
-              <i class="fa-solid fa-calculator text-2xl md:text-lg"></i>
-              <span class="text-xs md:text-sm lg:inline hidden">Calculator</span>
-          </a>
-          <a href="{% url 'buyer_orders' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
-              <i class="fa-solid fa-shopping-cart text-2xl md:text-lg"></i>
-              <span class="text-xs md:text-sm lg:inline hidden">My Orders</span>
-          </a>
-          <a href="{% url 'dispute_list' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
-              <i class="fa-solid fa-scale-balanced text-2xl md:text-lg"></i>
-              <span class="text-xs md:text-sm lg:inline hidden">Disputes</span>
-          </a>
-          <a href="{% url 'update_bank_details' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors">
-              <i class="fa-solid fa-university text-2xl md:text-lg"></i>
-              <span class="text-xs md:text-sm lg:inline hidden">Bank Details</span>
-          </a>
-      {% endif %}
+        {% endif %}
+        <a href="{% url 'marketplace' %}" class="group flex items-center space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-white" title="Marketplace" tabindex="0" role="link">
+          <i class="fa-solid fa-tags" aria-hidden="true"></i>
+          <span>Marketplace</span>
+        </a>
+        <a href="{% url 'dispute_list' %}" class="group flex items-center space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-white" title="Disputes" tabindex="0" role="link">
+          <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>
+          <span>Disputes</span>
+        </a>
+        <a href="{% url 'update_bank_details' %}" class="group flex items-center space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-white" title="Bank Details" tabindex="0" role="link">
+          <i class="fa-solid fa-university" aria-hidden="true"></i>
+          <span>Bank Details</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Utilities Collapsible Group -->
+    <div class="w-full relative" role="group" aria-label="Utility Menu">
+      <button @click="toggle('utilities')" :aria-expanded="isOpen('utilities')" class="group w-full flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white" title="Utilities" tabindex="0" role="button">
+        <i class="fa-solid fa-lightbulb text-2xl md:text-lg" aria-hidden="true"></i>
+        <span class="text-xs md:text-sm lg:inline hidden">Utilities</span>
+        <i :class="isOpen('utilities') ? 'fa-chevron-up rotate-180' : 'fa-chevron-down'" class="fa-solid text-xs md:inline hidden ml-auto transition-transform duration-200" aria-hidden="true"></i>
+      </button>
+      <div x-show="isOpen('utilities')" x-transition x-cloak class="pl-8 mt-2 flex flex-col space-y-1">
+        <a href="{% url 'asset_list' %}" class="group flex items-center space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-white" title="Buy Gas Fee" tabindex="0" role="link">
+          <i class="fa-solid fa-gas-pump" aria-hidden="true"></i>
+          <span>Buy Gas Fee</span>
+        </a>
+        <a href="{% url 'buy-airtime' %}" class="group flex items-center space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-white" title="Buy Airtime" tabindex="0" role="link">
+          <i class="fa-solid fa-phone" aria-hidden="true"></i>
+          <span>Buy Airtime</span>
+        </a>
+        <a href="{% url 'buy_data' %}" class="group flex items-center space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-white" title="Buy Data" tabindex="0" role="link">
+          <i class="fa-solid fa-wifi" aria-hidden="true"></i>
+          <span>Buy Data</span>
+        </a>
+      </div>
+    </div>
   </div>
+
   <div class="md:pb-6 md:px-4">
-      <a href="{% url 'logout' %}" class="flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-red-400 hover:bg-gray-700 p-3 rounded-lg transition-colors w-full">
-          <i class="fa-solid fa-right-from-bracket text-2xl md:text-lg"></i>
-          <span class="text-xs md:text-sm lg:inline hidden">Logout</span>
-      </a>
+    <a href="{% url 'logout' %}" class="group flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-red-400 hover:bg-gray-700 p-3 rounded-lg transition-colors w-full focus:outline-none focus:ring-2 focus:ring-red-400" title="Logout" tabindex="0" role="link">
+      <i class="fa-solid fa-right-from-bracket text-2xl md:text-lg" aria-hidden="true"></i>
+      <span class="text-xs md:text-sm lg:inline hidden">Logout</span>
+    </a>
   </div>
 </nav>

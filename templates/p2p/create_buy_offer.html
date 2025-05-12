@@ -1,64 +1,63 @@
-{% extends "base.html" %}
-
+{% extends 'base.html' %}
 {% block content %}
-<div class="container mx-auto p-6 max-w-lg">
-  <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-t-lg shadow-lg">
-    <h2 class="text-3xl font-bold text-center">Sell Tokens to {{ offer.merchant.username }}</h2>
-  </div>
-  <div class="bg-gray-800 p-6 rounded-b-lg shadow-lg">
-    {# Display non-field errors inline #}
-    {% if form.non_field_errors %}
-      <div class="mb-4 bg-red-600 text-white p-3 rounded">
-        {% for error in form.non_field_errors %}
-          <p>{{ error }}</p>
-        {% endfor %}
-      </div>
-    {% endif %}
-    <form method="post">
-      {% csrf_token %}
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-400">Unit Price</label>
-        <p class="text-lg text-green-300">₦{{ offer.price_per_unit }}</p>
-      </div>
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-400">Available to Sell</label>
-        <p class="text-lg text-blue-300">₦{{ offer.amount_available }}</p>
-      </div>
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-400">Quantity to Sell</label>
-        <input type="number" name="amount_requested" value="{{ form.amount_requested.value }}"
-               min="{{ offer.min_amount }}" max="{{ offer.max_amount }}" required
-               class="w-full mt-1 p-2 bg-gray-700 text-gray-200 rounded border border-gray-600 focus:outline-none focus:border-blue-500">
-        {# Field-specific errors inline #}
-        {% if form.amount_requested.errors %}
-          {% for error in form.amount_requested.errors %}
-            <p class="text-red-400 text-sm mt-1">{{ error }}</p>
-          {% endfor %}
-        {% endif %}
-        <p class="text-xs text-gray-400 mt-1">Min: ₦{{ offer.min_amount }} | Max: ₦{{ offer.max_amount }}</p>
-      </div>
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-400">Total You Will Receive</label>
-        <p class="text-lg text-blue-400" id="totalPrice">₦0.00</p>
-      </div>
-      <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">
-        Confirm Sell Order
-      </button>
-    </form>
-  </div>
-  <div class="text-center mt-4">
-    <a href="{% url 'buy_offers_marketplace' %}" class="text-blue-400 hover:underline">
-      Back to Buy Offers
-    </a>
-  </div>
-</div>
+<div class="max-w-lg mx-auto mt-10 bg-gray-800 p-6 rounded-lg shadow-lg">
+  <h2 class="text-2xl font-semibold text-white mb-6">Create Buy Offer</h2>
+  <form method="post" class="space-y-4">
+    {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="text-red-500 text-sm mt-2">{{ form.non_field_errors.0 }}</div>
+      {% endif %}
+    <!-- Unit Price (NGN) -->
+    <div>
+      <label for="id_price_per_unit" class="block text-sm font-medium text-gray-300 mb-1">Unit Price (NGN)</label>
+      <input type="number" step="0.01" name="price_per_unit" id="id_price_per_unit"
+             value="{{ form.price_per_unit.value|default_if_none:'' }}"
+             class="w-full p-3 bg-gray-700 text-gray-200 rounded border border-gray-600 focus:outline-none focus:border-blue-500">
+      {% if form.price_per_unit.errors %}
+        <p class="text-red-500 text-sm mt-1">{{ form.price_per_unit.errors.0 }}</p>
+      {% endif %}
+    </div>
 
-<script>
-  document.querySelector('input[name="amount_requested"]').addEventListener('input', function() {
-    const price = {{ offer.price_per_unit }};
-    const qty   = this.value || 0;
-    const total = (qty * price).toFixed(2);
-    document.getElementById('totalPrice').innerText = `₦${total}`;
-  });
-</script>
-{% endblock content %}
+    <!-- Amount Available -->
+    <div>
+      <label for="id_amount_available" class="block text-sm font-medium text-gray-300 mb-1">Available Amount</label>
+      <input type="number" step="0.01" name="amount_available" id="id_amount_available"
+             value="{{ form.amount_available.value|default_if_none:'' }}"
+             class="w-full p-3 bg-gray-700 text-gray-200 rounded border border-gray-600 focus:outline-none focus:border-blue-500">
+      {% if form.amount_available.errors %}
+        <p class="text-red-500 text-sm mt-1">{{ form.amount_available.errors.0 }}</p>
+      {% endif %}
+    </div>
+
+    <!-- Min Amount -->
+    <div>
+      <label for="id_min_amount" class="block text-sm font-medium text-gray-300 mb-1">Min Amount</label>
+      <input type="number" step="0.01" name="min_amount" id="id_min_amount"
+             value="{{ form.min_amount.value|default_if_none:'' }}"
+             class="w-full p-3 bg-gray-700 text-gray-200 rounded border border-gray-600 focus:outline-none focus:border-blue-500">
+      {% if form.min_amount.errors %}
+        <p class="text-red-500 text-sm mt-1">{{ form.min_amount.errors.0 }}</p>
+      {% endif %}
+    </div>
+
+    <!-- Max Amount -->
+    <div>
+      <label for="id_max_amount" class="block text-sm font-medium text-gray-300 mb-1">Max Amount</label>
+      <input type="number" step="0.01" name="max_amount" id="id_max_amount"
+             value="{{ form.max_amount.value|default_if_none:'' }}"
+             class="w-full p-3 bg-gray-700 text-gray-200 rounded border border-gray-600 focus:outline-none focus:border-blue-500">
+      {% if form.max_amount.errors %}
+        <p class="text-red-500 text-sm mt-1">{{ form.max_amount.errors.0 }}</p>
+      {% endif %}
+    </div>
+
+    <!-- Submit Button -->
+    <div>
+      <button type="submit"
+              class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
+        Create Buy Offer
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

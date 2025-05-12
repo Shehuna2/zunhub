@@ -8,24 +8,60 @@
     <p class="text-center text-gray-200 mt-2">Select a merchant buy‑offer to sell your internal tokens.</p>
   </div>
 
-  <div class="mt-6 space-y-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
-    {% for offer in offers %}
-    <div class="bg-gray-800 p-4 rounded-lg shadow-md transition duration-300 hover:shadow-xl hover:-translate-y-1">
-      <div class="flex items-center mb-2">
-        <i class="fas fa-store text-lg text-gray-400 mr-2"></i>
-        <h3 class="text-lg font-semibold text-white">{{ offer.merchant.username }}</h3>
-      </div>
-      <p class="text-sm text-gray-300">Unit Price: <span class="text-green-300">₦{{ offer.price_per_unit }}</span></p>
-      <p class="text-sm text-gray-300">Min: ₦{{ offer.min_amount }} | Max: ₦{{ offer.max_amount }}</p>
-      <p class="text-sm text-gray-300">Available: ₦{{ offer.amount_available }}</p>
-      <a href="{% url 'create_sell_order' offer.id %}" class="mt-4 block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-center">
-        Sell to This Merchant
-      </a>
+      <!-- Sell Offers: Stacked on Small Screens, Grid on Large Screens -->
+      <div class="mt-6 space-y-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
+        {% for offer in offers %}
+        <div class="bg-gray-800 p-4 rounded-lg shadow-md transition duration-300 hover:shadow-xl hover:-translate-y-1 lg:p-6">
+            <!-- Merchant Name with Icon, Verification Badge, and Total Orders -->
+            <div class="flex items-center mb-2 lg:mb-4">
+                <i class="fas fa-user-circle text-lg text-gray-400 mr-2 lg:text-2xl"></i>
+                <div class="flex flex-col">
+                    <div class="flex items-center">
+                        <h3 class="text-lg font-semibold text-white lg:text-2xl">{{ offer.merchant.username }}</h3>
+                        <span class="ml-2 px-1 py-0.5 text-xs font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 rounded-full lg:px-2 lg:py-1">Verified</span>
+                    </div>
+                    <p class="text-xs text-gray-400 lg:text-sm">Total Orders: {{ offer.merchant_total_orders }}</p>
+                </div>
+            </div>
+            <!-- Price and Details: Two Items per Row -->
+            <div class="space-y-1 mb-2 lg:space-y-2 lg:mb-4">
+                <!-- Row 1: Price and Available -->
+                <div class="flex justify-between items-baseline">
+                    <!-- Price -->
+                    <div class="flex items-baseline space-x-2">
+                        <p class="text-xs text-gray-300 lg:text-sm">Unit price:</p>
+                        <p class="text-lg text-green-300 lg:text-sm">₦{{ offer.price_per_unit }}</p>
+                    </div>
+                    <!-- Available -->
+                    <div class="flex items-baseline space-x-2">
+                        <p class="text-xs text-gray-300 lg:text-sm">Balance:</p>
+                        <p class="text-xs text-green-400 lg:text-sm">₦{{ offer.merchant.wallet.balance }}</p>
+                    </div>
+                </div>
+                <!-- Row 2: Min and Max -->
+                <div class="flex justify-between items-baseline">
+                    <!-- Min -->
+                    <div class="flex items-baseline space-x-2">
+                        <p class="text-xs text-gray-300 lg:text-sm">Min:</p>
+                        <p class="text-xs text-red-400 lg:text-sm">₦{{ offer.min_amount }}</p>
+                    </div>
+                    <!-- Max -->
+                    <div class="flex items-baseline space-x-2">
+                        <p class="text-xs text-gray-300 lg:text-sm">Max:</p>
+                        <p class="text-xs text-blue-400 lg:text-sm">₦{{ offer.max_amount }}</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Buy Button -->
+            <a href="{% url 'create_sell_order' offer.id %}" class="bg-red-800 hover:bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-1 rounded-md text-sm block text-center transition duration-200 lg:px-6 lg:py-3 lg:text-base">
+                Sell
+            </a>
+        </div>
+        {% empty %}
+        <p class="text-center text-gray-400 text-lg lg:col-span-3">No Agent available at the moment. Please check back later.</p>
+        {% endfor %}
     </div>
-    {% empty %}
-    <p class="text-gray-400 text-center col-span-3">No buy offers available at the moment.</p>
-    {% endfor %}
-  </div>
+
 
   <div class="text-center mt-8">
     <a href="{% url 'dashboard' %}" class="bg-gray-700 hover:bg-gray-800 text-white px-6 py-3 rounded-md">

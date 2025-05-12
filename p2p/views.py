@@ -2,17 +2,14 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
 from django.views.decorators.http import require_POST
-
+from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
 from django.core.paginator import Paginator
-
+from django.db import transaction
 from django.db.models import Sum
 from itertools import chain
 from django.db.models import Value, CharField
-
 from django.db.models import Count, Q
-from django.contrib.auth import get_user_model
-from django.core.mail import send_mail
-
 from django.http import HttpResponseForbidden, JsonResponse
 from django.contrib import messages
 from .forms import OrderForm, DisputeForm, SellOfferForm, BuyOfferForm, SellOrderForm
@@ -34,10 +31,11 @@ def create_sell_offer(request):
             sell_offer.merchant = request.user
             sell_offer.save()
             messages.success(request, "Sell offer created successfully.")
-            return redirect("dashboard")  # Adjust to your desired redirect URL
+            return redirect("dashboard")  
     else:
         form = SellOfferForm(user=request.user)
     return render(request, "p2p/create_sell_offer.html", {"form": form})
+
 
 
 @merchant_required
@@ -48,12 +46,16 @@ def create_buy_offer(request):
         if form.is_valid():
             offer = form.save(commit=False)
             offer.merchant = request.user
-            # lock their tokens in escrow
             wallet = Wallet.objects.get(user=request.user)
-            wallet.lock_funds(offer.amount_available)
-            offer.save()
-            messages.success(request, "Buy offer created!")
-            return redirect('merchant_orders')
+            with transaction.atomic():
+                if wallet.lock_funds(offer.amount_available):
+                    offer.save()
+                    messages.success(request, "Buy offer created!")
+                    return redirect('merchant_orders')
+                else:
+                    messages.error(request, "Insufficient funds to create this offer.")
+        else:
+            messages.error(request, "Please correct the errors below.")
     else:
         form = BuyOfferForm(user=request.user)
     return render(request, 'p2p/create_buy_offer.html', {'form': form})

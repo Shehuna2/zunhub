@@ -1,24 +1,61 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mx-auto p-4">
-    <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 max-w-md mx-auto">
-        <h1 class="text-2xl font-semibold text-green-400 mb-4">Create Sell Offer</h1>
-        <form method="post" class="space-y-4">
-            {% csrf_token %}
-            {% for field in form %}
-                <div>
-                    <label class="block text-gray-300 mb-1">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.errors %}
-                        <p class="text-red-400 text-sm mt-1">{{ field.errors }}</p>
-                    {% endif %}
-                </div>
-            {% endfor %}
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition w-full">
-                Create Offer
-            </button>
-        </form>
+<div class="container mx-auto p-6 mt-10">
+  <div class="max-w-md mx-auto bg-gray-800 rounded-lg shadow-md overflow-hidden">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 flex items-center justify-center">
+      <h2 class="text-2xl font-bold">Create Sell Offer</h2>
     </div>
+    <!-- Form -->
+    <div class="p-6">
+      <form method="post">
+        {% csrf_token %}
+        <!-- Unit Price -->
+        <div class="mb-4">
+          <label for="id_price_per_unit" class="block text-sm font-medium text-gray-400 mb-2">Unit Price (NGN)</label>
+          <div class="relative">
+            <input type="number" step="0.01" name="price_per_unit" id="id_price_per_unit" value="{{ form.price_per_unit.value }}" required
+                   class="w-full p-3 bg-gray-700 text-gray-200 rounded border border-gray-600 focus:outline-none focus:border-blue-500" />
+          </div>
+          {% if form.price_per_unit.errors %}
+            <p class="text-red-500 text-sm mt-1">{{ form.price_per_unit.errors|striptags }}</p>
+          {% endif %}
+        </div>
+        <!-- Amount Available -->
+        <div class="mb-4">
+          <label for="id_amount_available" class="block text-sm font-medium text-gray-400 mb-2">Amount Available</label>
+          <input type="number" step="0.0001" name="amount_available" id="id_amount_available" value="{{ form.amount_available.value }}" required
+                 class="w-full p-3 bg-gray-700 text-gray-200 rounded border border-gray-600 focus:outline-none focus:border-blue-500" />
+          {% if form.amount_available.errors %}
+            <p class="text-red-500 text-sm mt-1">{{ form.amount_available.errors|striptags }}</p>
+          {% endif %}
+        </div>
+        <!-- Min & Max -->
+        <div class="mb-6 grid grid-cols-2 gap-4">
+          <div>
+            <label for="id_min_amount" class="block text-sm font-medium text-gray-400 mb-2">Min Amount</label>
+            <input type="number" step="0.0001" name="min_amount" id="id_min_amount" value="{{ form.min_amount.value }}" required
+                   class="w-full p-3 bg-gray-700 text-gray-200 rounded border border-gray-600 focus:outline-none focus:border-blue-500" />
+            {% if form.min_amount.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ form.min_amount.errors|striptags }}</p>
+            {% endif %}
+          </div>
+          <div>
+            <label for="id_max_amount" class="block text-sm font-medium text-gray-400 mb-2">Max Amount</label>
+            <input type="number" step="0.0001" name="max_amount" id="id_max_amount" value="{{ form.max_amount.value }}" required
+                   class="w-full p-3 bg-gray-700 text-gray-200 rounded border border-gray-600 focus:outline-none focus:border-blue-500" />
+            {% if form.max_amount.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ form.max_amount.errors|striptags }}</p>
+            {% endif %}
+          </div>
+        </div>
+        <!-- Submit Button -->
+        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg transition">
+          Create Offer
+        </button>
+      </form>
+    </div>
+  </div>
 </div>
 {% endblock %}

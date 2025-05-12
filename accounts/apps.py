@@ -7,6 +7,9 @@ class AccountsConfig(AppConfig):
     name = 'accounts'
 
     def ready(self):
+        import accounts.signals  # Import signals to register them
+
+    def ready(self):
         if os.environ.get("AUTO_SUPERUSER", "").lower() == "true":
             from django.contrib.auth import get_user_model
             User = get_user_model()

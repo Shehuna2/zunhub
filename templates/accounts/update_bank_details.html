@@ -1,29 +1,58 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Update Bank Details</title>
-</head>
-<body>
-    <h2>Update Your Bank Details</h2>
-    <form method="POST">
-        {% csrf_token %}
-        <label>Bank Name:</label>
-        <input type="text" name="bank_name" value="{{ profile.bank_name }}" required><br>
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-lg mx-auto mt-10 bg-gray-800 p-6 rounded-lg shadow-lg">
+  <h2 class="text-2xl font-semibold text-white mb-6">Update Your Bank Details</h2>
+  <form method="POST" class="space-y-4">
+    {% csrf_token %}
 
-        <label>Account No:</label>
-        <input type="text" name="account_no" value="{{ profile.account_no }}" required><br>
+    <!-- Full Name (Non-editable) -->
+    <div>
+      <label for="id_full_name" class="block text-sm font-medium text-gray-300 mb-1">Full Name</label>
+      <input type="text" id="id_full_name" value="{{ user.profile.full_name|default:user.username }}" readonly
+             class="w-full p-3 bg-gray-600 text-gray-200 rounded border border-gray-600 focus:outline-none">
+    </div>
 
-        <button type="submit">Update</button>
-    </form>
+    <!-- Bank Name -->
+    <div>
+      <label for="id_bank_name" class="block text-sm font-medium text-gray-300 mb-1">Bank Name</label>
+      <input type="text" name="bank_name" id="id_bank_name" value="{{ form.bank_name.value|default_if_none:'' }}" required
+             class="w-full p-3 bg-gray-700 text-gray-200 rounded border border-gray-600 focus:outline-none focus:border-blue-500">
+      {% if form.bank_name.errors %}
+        <p class="text-red-500 text-sm mt-1">{{ form.bank_name.errors.0 }}</p>
+      {% endif %}
+    </div>
 
-    {% if error_message %}
-        <p style="color: red;">{{ error_message }}</p>
-    {% endif %}
+    <!-- Account No -->
+    <div>
+      <label for="id_account_no" class="block text-sm font-medium text-gray-300 mb-1">Account No</label>
+      <input type="text" name="account_no" id="id_account_no" value="{{ form.account_no.value|default_if_none:'' }}" required
+             class="w-full p-3 bg-gray-700 text-gray-200 rounded border border-gray-600 focus:outline-none focus:border-blue-500">
+      {% if form.account_no.errors %}
+        <p class="text-red-500 text-sm mt-1">{{ form.account_no.errors.0 }}</p>
+      {% endif %}
+    </div>
 
-    {% if success_message %}
-        <p style="color: green;">{{ success_message }}</p>
-    {% endif %}
-    <br>
-    <a href="{% url 'buyer_orders' %}">Back to Orders</a>
-</body>
-</html>
+    <!-- Submit Button -->
+    <div>
+      <button type="submit"
+              class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
+        Update
+      </button>
+    </div>
+  </form>
+
+  <!-- Display Messages -->
+  {% if messages %}
+    {% for message in messages %}
+      {% if message.tags == 'error' %}
+        <p class="text-red-500 text-sm mt-4">{{ message }}</p>
+      {% elif message.tags == 'success' %}
+        <p class="text-green-500 text-sm mt-4">{{ message }}</p>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  <br>
+  <a href="{% url 'profile' %}" class="text-blue-400 hover:underline">Go to Profile</a>
+</div>
+{% endblock %}
