@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full space-y-8 bg-gray-900 rounded-2xl shadow-2xl p-8 border border-gray-700">
+    <!-- Step Indicator -->
+    <div class="flex items-center justify-center space-x-4 mb-6 text-sm text-gray-400">
+      <div class="flex items-center space-x-2">
+        <div class="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white">1</div>
+        <span class="text-white font-medium">Asset & Amount</span>
+      </div>
+      <span class="text-gray-600">—</span>
+      <div class="flex items-center space-x-2">
+        <div class="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-gray-400">2</div>
+        <span>Send Asset</span>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <div class="text-center space-y-2">
+      <h2 class="text-4xl font-extrabold text-white">Sell Crypto</h2>
+      <p class="text-sm text-gray-400">Sell your crypto and get paid in Naira instantly.</p>
+    </div>
+
+    <!-- Form -->
+    <form method="post" class="space-y-6">
+      {% csrf_token %}
+
+      <!-- Asset Selection -->
+      <div>
+        <label for="{{ form.asset.id_for_label }}" class="block text-sm font-medium text-gray-300">
+          {{ form.asset.label }}
+        </label>
+        <div class="mt-1 relative rounded-md shadow-sm">
+          {{ form.asset|add_class:"w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500" }}
+        </div>
+      </div>
+
+      <!-- Source Selection -->
+      <div>
+        <label for="{{ form.source.id_for_label }}" class="block text-sm font-medium text-gray-300">
+          {{ form.source.label }}
+        </label>
+        <div class="mt-1 relative rounded-md shadow-sm">
+          {{ form.source|add_class:"w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500" }}
+        </div>
+      </div>
+
+      <!-- Amount Input -->
+      <div>
+        <label for="{{ form.amount_asset.id_for_label }}" class="block text-sm font-medium text-gray-300">
+          {{ form.amount_asset.label }}
+        </label>
+        <div class="mt-1 relative rounded-md shadow-sm">
+          {{ form.amount_asset|add_class:"w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500" }}
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit"
+              class="w-full py-3 text-lg text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 rounded-xl font-semibold shadow-lg transition duration-300">
+        Continue
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-xl mx-auto mt-12 bg-gray-900 p-8 rounded-2xl shadow-2xl border border-gray-700 space-y-8">
+
+  <!-- Step Indicator -->
+  <div class="flex items-center justify-center space-x-4 text-sm text-gray-400">
+    <div class="flex items-center space-x-2">
+      <div class="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white">1</div>
+      <span>Asset & Amount</span>
+    </div>
+    <span class="text-gray-600">—</span>
+    <div class="flex items-center space-x-2">
+      <div class="w-6 h-6 rounded-full bg-green-600 flex items-center justify-center text-white">2</div>
+      <span class="text-white font-medium">Send Asset</span>
+    </div>
+  </div>
+
+  <!-- Combined Details Card -->
+  <div class="bg-gray-800 rounded-xl p-6 border border-gray-700 space-y-6">
+    <!-- Header with Timer -->
+    <div class="flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <h3 class="text-lg font-semibold text-white">Time Remaining</h3>
+      </div>
+      <span class="inline-block px-3 py-1 text-sm font-medium bg-yellow-400 text-gray-900 rounded-full animate-pulse">
+        <span id="countdown">--</span>
+      </span>
+    </div>
+
+    <!-- Send & Receive Grid -->
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Send Card -->
+      <div class="bg-gray-900 rounded-lg p-4 border border-gray-700 text-center">
+        <p class="text-sm text-gray-400 mb-1">You Send</p>
+        <p class="text-2xl font-semibold text-green-500">{{ order.amount_asset|floatformat:4 }} {{ order.asset|upper }}</p>
+      </div>
+      <!-- Receive Card -->
+      <div class="bg-gray-900 rounded-lg p-4 border border-gray-700 text-center">
+        <p class="text-sm text-gray-400 mb-1">You Will Receive</p>
+        <p class="text-2xl font-semibold text-white">₦{{ order.amount_ngn }}</p>
+      </div>
+    </div>
+
+    <!-- Receiving Details -->
+      <div class="space-y-3">
+        <div class="bg-gray-800 rounded-xl p-5 border border-gray-700 space-y-5">
+          <h3 class="text-lg font-semibold text-white border-b border-gray-700 pb-2">Receiving Details</h3>
+        
+          {% if qr_code %}
+          <div class="flex justify-center mb-6 border-b border-gray-700 pb-4">
+            <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code" class="w-40 h-40" />
+          </div>
+          {% endif %}
+        
+          {% for key, val in details.items %}
+          <div class="flex justify-between items-center text-sm">
+            <div>
+              <div class="text-gray-400">{{ key|cut:"_"|title }}</div>
+              <div class="text-white font-medium break-all">{{ val }}</div>
+            </div>
+            <button
+              type="button"
+              onclick="navigator.clipboard.writeText('{{ val }}')"
+              class="ml-2 p-2 rounded hover:bg-gray-700 transition duration-150"
+              title="Copy"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-300 hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8 16h8m-8-4h8m-6-4h6m2 10a2 2 0 01-2 2H8a2 2 0 01-2-2V6a2 2 0 012-2h6l4 4v10z"/>
+              </svg>
+            </button>
+          </div>
+          {% empty %}
+          <p class="text-gray-400 text-sm">No details found.</p>
+          {% endfor %}
+        
+      </div>
+  </div>
+
+  <!-- Form Submit -->
+  <form method="post" class="space-y-4">
+    {% csrf_token %}
+    <button
+      id="submitBtn"
+      type="submit"
+      class="w-full py-3 bg-green-600 hover:bg-green-700 text-white text-lg rounded-xl font-semibold transition duration-200"
+    >
+      ✅ I have sent the asset
+    </button>
+  </form>
+
+</div>
+
+<!-- Scripts -->
+<script>
+  // Countdown
+  const expiresAt = new Date("{{ expires_at }}");
+  const countdownEl = document.getElementById("countdown");
+  const submitBtn = document.getElementById("submitBtn");
+
+  function updateCountdown() {
+    const now = new Date();
+    const diff = Math.max(0, expiresAt - now);
+    const m = Math.floor(diff / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    countdownEl.textContent = `${m}m ${s}s`;
+    if (diff <= 0) {
+      clearInterval(timer);
+      countdownEl.textContent = "Expired";
+      submitBtn.disabled = true;
+      submitBtn.classList.remove("bg-green-600", "hover:bg-green-700");
+      submitBtn.classList.add("bg-gray-500", "cursor-not-allowed");
+      submitBtn.textContent = "⛔ Time expired";
+    }
+  }
+  const timer = setInterval(updateCountdown, 1000);
+  updateCountdown();
+
+  // Copy Confirm
+  document.querySelectorAll("button[title='Copy']").forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.querySelector('svg').style.display = 'none';
+      btn.innerHTML = '<span class="text-green-400 text-xs">Copied</span>';
+      setTimeout(() => {
+        btn.innerHTML = `
+        <svg xmlns=\"http://www.w3.org/2000/svg\" class=\"w-5 h-5 text-gray-300 hover:text-white\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\">` +
+        `<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M8 16h8m-8-4h8m-6-4h6m2 10a2 2 0 01-2 2H8a2 2 0 01-2-2V6a2 2 0 012-2h6l4 4v10z\"/></svg>`;
+      }, 1500);
+    });
+  });
+</script>
+{% endblock %}
+
+
+
+

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-md mx-auto mt-10 bg-gray-800 p-6 rounded-lg shadow-lg text-center space-y-4">
+  <h2 class="text-2xl font-bold text-white">Order Submitted</h2>
+  <p class="text-gray-300">
+    Your sell order (ID: <strong>{{ order.id }}</strong>) is now awaiting confirmation.
+  </p>
+  <p class="text-gray-300">
+    We’ll credit your NGN wallet as soon as we detect your transfer.
+  </p>
+  <a href="{% url 'sell_step1' %}"
+     class="inline-block mt-4 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+    New Sell Order
+  </a>
+</div>
+{% endblock %}

@@ -5,6 +5,10 @@ import os
 
 load_dotenv()  # Load environment variables from .env file
 
+BINANCE_RECEIVE_DETAILS = os.getenv('BINANCE_RECEIVE_DETAILS')
+BINANCE_API_SECRET = os.getenv('BINANCE_API_SECRET')
+BINANCE_API_KEY = os.getenv('BINANCE_API_KEY')
+
 # Toncenter API Key
 TONCENTER_API_KEY = os.getenv("TONCENTER_API_KEY")
 TON_API_URL = os.getenv("TON_API_URL")
@@ -53,6 +57,18 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 
+
+# Optional: periodic task schedule
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    'check-sell-orders-every-minute': {
+        'task': 'bills.tasks.check_sell_orders',
+        'schedule': crontab(minute='*/1'),
+    },
+}
+
+
 # Add caching config
 CACHES = {
     "default": {
@@ -95,6 +111,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'widget_tweaks',
     'p2p',
     'bills',
     'gasfee',
@@ -192,14 +209,3 @@ MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
-# Auto-create superuser (Render deploy workaround)
-if os.environ.get("AUTO_SUPERUSER", "").lower() == "true":
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
-    if not User.objects.filter(username=os.environ.get("DJANGO_SUPERUSER_USERNAME")).exists():
-        User.objects.create_superuser(
-            username=os.environ["DJANGO_SUPERUSER_USERNAME"],
-            email=os.environ["DJANGO_SUPERUSER_EMAIL"],
-            password=os.environ["DJANGO_SUPERUSER_PASSWORD"]
-        )

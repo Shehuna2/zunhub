@@ -1,105 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Buy {{ crypto.name }}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js" defer></script>
-  <style>
-    /* Fade-in animation */
-    #receiptContainer {
-      transition: opacity 0.5s ease-in-out;
-    }
-    #receiptContainer.hidden {
-      opacity: 0;
-    }
-    #buyCryptoFormContainer {
-      transition: opacity 0.5s ease-in-out;
-    }
-    #buyCryptoFormContainer.hidden {
-      opacity: 0;
-    }
-    /* Receipt card styling */
-    .receipt-card {
-      background: linear-gradient(145deg, #111827, #1F2937);
-    }
-    .receipt-field {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.5rem 0.75rem;
-      border-radius: 0.5rem;
-      transition: background-color 0.2s;
-    }
-    .receipt-field:hover {
-      background-color: #374151;
-    }
-    .receipt-icon {
-      color: #34D399;
-      transition: transform 0.2s;
-    }
-    .receipt-field:hover .receipt-icon {
-      transform: scale(1.1);
-    }
-    .expandable {
-      max-width: 120px;
-      cursor: pointer;
-    }
-    .expanded {
-      max-width: none;
-      white-space: normal;
-      word-break: break-all;
-    }
-    .copy-btn {
-      position: relative;
-      overflow: hidden;
-    }
-    .copy-btn::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      background: rgba(34, 197, 94, 0.3);
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      transition: width 0.4s, height 0.4s;
-    }
-    .copy-btn.copied::after {
-      width: 200px;
-      height: 200px;
-    }
-    .copy-btn.copied .copy-icon {
-      display: none;
-    }
-    .copy-btn.copied .check-icon {
-      display: inline;
-    }
-    .check-icon {
-      display: none;
-    }
-    @media (max-width: 640px) {
-      .receipt-logo {
-        width: 1.5rem;
-        height: 1.5rem;
-      }
-      .receipt-title {
-        font-size: 1.25rem;
-      }
-      .expandable {
-        max-width: 80px;
-      }
-      .receipt-field {
-        padding: 0.5rem;
-      }
-    }
-  </style>
-</head>
-<body class="bg-gray-900 text-white">
-  {% include "p2p/header.html" %}
+{% extends "base.html" %}
+{% load humanize_naira %}
+
+{% block content %}
 
   <div class="container mx-auto p-6 mt-20">
     <div class="max-w-md mx-auto bg-gray-800 p-6 rounded-lg shadow-md">
@@ -419,5 +321,4 @@
       updateCostAndCrypto();
     });
   </script>
-</body>
-</html>
+{% endblock %}
