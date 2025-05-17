@@ -1,11 +1,13 @@
 from pathlib import Path
 from dotenv import load_dotenv
+import json
 import os
+
 
 
 load_dotenv()  # Load environment variables from .env file
 
-BINANCE_RECEIVE_DETAILS = os.getenv('BINANCE_RECEIVE_DETAILS')
+BINANCE_RECEIVE_DETAILS = json.loads(os.getenv("BINANCE_RECEIVE_DETAILS", "{}"))
 BINANCE_API_SECRET = os.getenv('BINANCE_API_SECRET')
 BINANCE_API_KEY = os.getenv('BINANCE_API_KEY')
 

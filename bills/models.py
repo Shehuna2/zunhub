@@ -16,6 +16,16 @@ ASSET_CHOICES = [
     ('bnb',  'BNB'),
 ]
 
+
+class ExchangeInfo(models.Model):
+    exchange = models.CharField(max_length=20, choices=EXCHANGE_CHOICES, unique=True)
+    receive_qr = models.ImageField(upload_to='exchange_qrcodes/')
+    contact_info = models.JSONField(blank=True, null=True, default=dict)
+    
+    def __str__(self):
+        return self.get_exchange_display()
+
+
 class AssetSellOrder(models.Model):
     user         = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     asset        = models.CharField(max_length=10, choices=ASSET_CHOICES)

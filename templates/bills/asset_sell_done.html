@@ -1,16 +1,55 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="max-w-md mx-auto mt-10 bg-gray-800 p-6 rounded-lg shadow-lg text-center space-y-4">
-  <h2 class="text-2xl font-bold text-white">Order Submitted</h2>
-  <p class="text-gray-300">
-    Your sell order (ID: <strong>{{ order.id }}</strong>) is now awaiting confirmation.
-  </p>
-  <p class="text-gray-300">
-    We’ll credit your NGN wallet as soon as we detect your transfer.
-  </p>
-  <a href="{% url 'sell_step1' %}"
-     class="inline-block mt-4 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
-    New Sell Order
-  </a>
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full space-y-8 bg-gray-900 rounded-2xl shadow-2xl p-8">
+
+    <!-- Step Indicator -->
+    <div class="flex justify-center space-x-2 mb-6">
+      <div class="h-3 w-3 rounded-full bg-green-600"></div>
+      <div class="h-3 w-3 rounded-full bg-green-600"></div>
+      <div class="h-3 w-3 rounded-full bg-green-600"></div>
+    </div>
+
+    <!-- Success Animation Icon -->
+    <div class="flex justify-center">
+      <div class="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center animate-bounce shadow-lg">
+        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+    </div>
+
+    <div class="text-center">
+      <h2 class="text-3xl font-bold text-white mt-4">Order Submitted</h2>
+      <p class="mt-2 text-sm text-gray-400 flex items-center justify-center gap-2">
+        <span>Your sell order (ID: <strong>{{ order.id }}</strong>) is now awaiting confirmation...</span>
+        <svg class="h-4 w-4 text-green-400 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
+          </path>
+        </svg>
+      </p>
+      
+      <p class="text-sm text-gray-400 mt-2">
+        We’ll credit your NGN wallet as soon as we detect your transfer.
+      </p>
+      <p class="text-sm text-gray-400 mt-2">
+        You can close this window now or create another sell order.
+      </p>
+    </div>
+
+    <div class="text-center mt-6 space-y-3">
+      <a href="{% url 'sell_step1' %}"
+         class="inline-block w-full py-3 text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 rounded-xl font-semibold shadow-md transition duration-300">
+        New Sell Order
+      </a>
+      <a href="{% url 'dashboard' %}"
+         class="inline-block w-full py-3 text-gray-300 bg-gray-700 hover:bg-gray-600 rounded-xl font-semibold shadow-md transition duration-300">
+        Close
+      </a>
+    </div>
+    
+  </div>
 </div>
 {% endblock %}

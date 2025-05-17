@@ -7,6 +7,7 @@ from decimal import Decimal
 from p2p.models import Wallet
 from .utils import purchase_airtime, purchase_data, get_data_plans
 import logging
+import json
 import re
 import ast
 import qrcode
@@ -15,10 +16,11 @@ from io import BytesIO
 from datetime import datetime, timedelta
 
 from .forms import SellStep1Form
-from .models import AssetSellOrder
+from .models import AssetSellOrder, ExchangeInfo
 from .services import lookup_rate, get_receiving_details
 
 logger = logging.getLogger(__name__)
+
 
 
 
@@ -31,23 +33,35 @@ def sell_step1(request):
             source = form.cleaned_data['source']
             amt    = form.cleaned_data['amount_asset']
 
+            # ❗ Prevent duplicate order with same parameters and pending/awaiting status
+            duplicate = AssetSellOrder.objects.filter(
+                user=request.user,
+                asset=asset,
+                source=source,
+                amount_asset=amt,
+                status__in=['pending', 'awaiting_confirmation']
+            ).exists()
+
+            if duplicate:
+                form.add_error(None, "You already have a similar pending order. Please complete it first.")
+                return render(request, 'bills/asset_sell_step1.html', {'form': form})
+
             try:
                 # Attempt to fetch the rate
                 rate = lookup_rate(asset, source)
             except Exception:
-                # If the external call fails, add a form‐level error and re-render
                 form.add_error(None, "Unable to fetch live exchange rate right now. Please try again in a moment.")
-                return render(request, 'p2p/sell_step1.html', {'form': form})
+                return render(request, 'bills/asset_sell_step1.html', {'form': form})
 
             total_ngn = (amt * rate).quantize(Decimal('0.01'))
 
             order = AssetSellOrder.objects.create(
-                user         = request.user,
-                asset        = asset,
-                source       = source,
-                amount_asset = amt,
-                rate_ngn     = rate,
-                amount_ngn   = total_ngn,
+                user=request.user,
+                asset=asset,
+                source=source,
+                amount_asset=amt,
+                rate_ngn=rate,
+                amount_ngn=total_ngn,
             )
             return redirect('sell_step2', order_id=order.id)
     else:
@@ -56,58 +70,47 @@ def sell_step1(request):
     return render(request, 'bills/asset_sell_step1.html', {'form': form})
 
 
-# p2p/views.py
-
-import logging
-logger = logging.getLogger(__name__)
-
-@login_required
 @login_required
 def sell_step2(request, order_id):
     order = get_object_or_404(AssetSellOrder, pk=order_id, user=request.user)
 
-    # Ensure order.details is a dict, try parsing if string
-    if isinstance(order.details, str):
-        try:
-            order.details = ast.literal_eval(order.details)
-            order.save()
-        except Exception as e:
-            logger.warning("Failed to parse order.details string: %s", e)
-            # Fallback: convert to empty dict to avoid errors
-            order.details = {}
-
-    # If after that details is still not a dict, fix it:
-    if not isinstance(order.details, dict):
-        order.details = {}
-
-    # Populate receiving details if empty dict
+    # Populate receiving details if empty
     if not order.details:
         order.details = get_receiving_details(order.source, order.asset)
         order.save()
 
-    logger.info("SELL_STEP2 – order.details (final): %r", order.details)
+    logger.info("SELL_STEP2 – order.details: %r", order.details)
 
     if request.method == 'POST':
         order.status = 'awaiting_confirmation'
         order.save()
         return redirect('sell_done', order_id=order.id)
 
-    # Now safe to use .get() on order.details
-    qr_data = order.details.get('uid') or order.details.get('email')
-    qr = qrcode.make(qr_data)
-    buffer = BytesIO()
-    qr.save(buffer, format='PNG')
-    qr_base64 = base64.b64encode(buffer.getvalue()).decode()
+    # Prepare QR content as plain UID or email
+    uid = order.details.get('uid')
+    email = order.details.get('email')
+    qr_data = uid or email or ''
 
+    # Fetch your exchange’s info
+    try:
+        exch = ExchangeInfo.objects.get(exchange=order.source)
+        qr_url = exch.receive_qr.url
+        # Optional fallback: use contact_info JSON
+        contact = exch.contact_info  
+    except ExchangeInfo.DoesNotExist:
+        qr_url = None
+        contact = order.details  # whatever you had before
+        
     expires_at = (order.created_at + timedelta(minutes=10)).isoformat()
 
     return render(request, 'bills/asset_sell_step2.html', {
-        'order': order,
-        'details': order.details,
-        'qr_code': qr_base64,
+        'order':     order,
+        'details':   contact,
+        'qr_url':    qr_url,
         'expires_at': expires_at,
     })
 
+    
 
 @login_required
 def sell_done(request, order_id):
@@ -115,10 +118,27 @@ def sell_done(request, order_id):
     return render(request, 'bills/asset_sell_done.html', {'order': order})
 
 
+@login_required
+def sell_order_history(request):
+    orders = AssetSellOrder.objects.filter(user=request.user)
 
+    # Filtering
+    search_query = request.GET.get('search', '')
+    status_filter = request.GET.get('status', '')
 
+    if search_query:
+        orders = orders.filter(id__icontains=search_query)
+    
+    if status_filter:
+        orders = orders.filter(status=status_filter)
 
+    orders = orders.order_by('-created_at')
 
+    return render(request, 'bills/asset_sell_history.html', {
+        'orders': orders,
+        'search_query': search_query,
+        'status_filter': status_filter,
+    })
 
 
 PHONE_REGEX = re.compile(r'^0[7-9][0-1]\d{8}$')

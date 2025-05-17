@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AssetSellOrder
+from .models import AssetSellOrder, ExchangeInfo
 
 @admin.register(AssetSellOrder)
 class SellOrderAdmin(admin.ModelAdmin):
@@ -27,3 +27,8 @@ class SellOrderAdmin(admin.ModelAdmin):
             'fields': ('rate_ngn', 'amount_ngn', 'status', 'details', 'created_at'),
         }),
     )
+
+
+@admin.register(ExchangeInfo)
+class ExchangeInfoAdmin(admin.ModelAdmin):
+    list_display = ('exchange',)

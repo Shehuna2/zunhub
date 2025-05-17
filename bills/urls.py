@@ -11,4 +11,5 @@ urlpatterns = [
     path('sell/step1/', views.sell_step1, name='sell_step1'),
     path('sell/step2/<int:order_id>/', views.sell_step2, name='sell_step2'),
     path('sell/done/<int:order_id>/', views.sell_done, name='sell_done'),
+    path('sell/history/', views.sell_order_history, name='sell_order_history'),
 ]

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="min-h-screen bg-gray-900 p-6 text-white">
+  <h2 class="text-2xl font-bold mb-6">Sell Order History</h2>
+
+  <!-- Search and Filter Bar -->
+  <form method="get" class="mb-6 flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0">
+    <input type="text" name="search" value="{{ search_query }}" placeholder="Search by Order ID"
+           class="w-full sm:w-64 px-4 py-2 rounded bg-gray-800 border border-gray-700 focus:outline-none text-white placeholder-gray-400" />
+    
+    <select name="status" class="w-full sm:w-48 px-4 py-2 rounded bg-gray-800 border border-gray-700 text-white">
+      <option value="">All Statuses</option>
+      <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+      <option value="awaiting_confirmation" {% if status_filter == 'awaiting_confirmation' %}selected{% endif %}>Awaiting Confirmation</option>
+      <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+    </select>
+
+    <button type="submit"
+            class="px-4 py-2 bg-gradient-to-br from-blue-900 to-purple-800 hover:bg-green-700 rounded text-white font-semibold shadow">
+      Apply
+    </button>
+  </form>
+
+  {% if orders %}
+    <div class="space-y-4">
+      {% for order in orders %}
+      {# decide target URL based on status #}
+      {% if order.status == 'pending' %}
+        {% url 'sell_step2' order.id as target_url %}
+      {% else %}
+        {% url 'sell_done' order.id as target_url %}
+      {% endif %}
+
+      <a href="{{ target_url }}"
+        class="block bg-gray-800 p-4 rounded-xl shadow hover:bg-gray-700 transition">
+        <div class="flex justify-between items-center">
+          <div>
+            <p class="font-semibold">Order #{{ order.id }}</p>
+            <p class="text-sm text-gray-400">{{ order.asset }} via {{ order.source }}</p>
+            <p class="text-sm text-gray-400">₦{{ order.amount_ngn }} for {{ order.amount_asset }} {{ order.asset }}</p>
+          </div>
+          <div class="text-right">
+            <span class="text-sm px-2 py-1 rounded-full 
+              {% if order.status == 'pending' %}
+                bg-blue-500
+              {% elif order.status == 'awaiting_confirmation' %}
+                bg-yellow-500
+              {% elif order.status == 'completed' %}
+                bg-green-600
+              {% else %}
+                bg-gray-500
+              {% endif %}
+            ">
+              {{ order.status|capfirst }}
+            </span>
+            <p class="text-xs text-gray-400 mt-1">{{ order.created_at|date:"M d, Y H:i" }}</p>
+          </div>
+        </div>
+      </a>
+    {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-gray-400">No orders found for your current search/filter.</p>
+  {% endif %}
+</div>
+{% endblock %}

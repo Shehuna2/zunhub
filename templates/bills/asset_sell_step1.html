@@ -59,10 +59,33 @@
 
       <!-- Submit Button -->
       <button type="submit"
-              class="w-full py-3 text-lg text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 rounded-xl font-semibold shadow-lg transition duration-300">
-        Continue
+        id="submitBtn"
+        class="w-full py-3 text-lg text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 rounded-xl font-semibold shadow-lg transition duration-300 flex items-center justify-center space-x-2">
+        <svg id="spinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+        </svg>
+        <span id="btnText">Continue</span>
       </button>
     </form>
   </div>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector("form");
+    const submitBtn = document.getElementById("submitBtn");
+    const spinner = document.getElementById("spinner");
+    const btnText = document.getElementById("btnText");
+
+    form.addEventListener("submit", function () {
+      submitBtn.disabled = true;
+      spinner.classList.remove("hidden");
+      btnText.textContent = "Processing...";
+      submitBtn.classList.add("bg-gray-500", "cursor-not-allowed");
+    });
+  });
+</script>
+
+
 {% endblock %}

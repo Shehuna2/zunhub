@@ -56,6 +56,10 @@
           <i class="fa-solid fa-university" aria-hidden="true"></i>
           <span>Bank Details</span>
         </a>
+        <a href="{% url 'sell_order_history' %}" class="group flex items-center space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-white" title="Buy Airtime" tabindex="0" role="link">
+          <i class="fa-solid fa-history" aria-hidden="true"></i>
+          <span>Order History</span>
+        </a>
       </div>
     </div>
 
@@ -67,10 +71,6 @@
         <i :class="isOpen('utilities') ? 'fa-chevron-up rotate-180' : 'fa-chevron-down'" class="fa-solid text-xs md:inline hidden ml-auto transition-transform duration-200" aria-hidden="true"></i>
       </button>
       <div x-show="isOpen('utilities')" x-transition x-cloak class="pl-8 mt-2 flex flex-col space-y-1">
-        <a href="{% url 'asset_list' %}" class="group flex items-center space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-white" title="Buy Gas Fee" tabindex="0" role="link">
-          <i class="fa-solid fa-gas-pump" aria-hidden="true"></i>
-          <span>Buy Gas Fee</span>
-        </a>
         <a href="{% url 'buy-airtime' %}" class="group flex items-center space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-white" title="Buy Airtime" tabindex="0" role="link">
           <i class="fa-solid fa-phone" aria-hidden="true"></i>
           <span>Buy Airtime</span>
@@ -78,6 +78,33 @@
         <a href="{% url 'buy_data' %}" class="group flex items-center space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-white" title="Buy Data" tabindex="0" role="link">
           <i class="fa-solid fa-wifi" aria-hidden="true"></i>
           <span>Buy Data</span>
+        </a>
+        <a href="{% url 'sell_order_history' %}" class="group flex items-center space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-white" title="Buy Airtime" tabindex="0" role="link">
+          <i class="fa-solid fa-history" aria-hidden="true"></i>
+          <span>History</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Crypto Collapsible Group -->
+    <div class="w-full relative" role="group" aria-label="assets Menu">
+      <button @click="toggle('assets')" :aria-expanded="isOpen('assets')" class="group w-full flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white" title="Utilities" tabindex="0" role="button">
+        <i class="fab fa-btc text-2xl md:text-lg" aria-hidden="true"></i>
+        <span class="text-xs md:text-sm lg:inline hidden">Crypto Asset</span>
+        <i :class="isOpen('assets') ? 'fa-chevron-up rotate-180' : 'fa-chevron-down'" class="fa-solid text-xs md:inline hidden ml-auto transition-transform duration-200" aria-hidden="true"></i>
+      </button>
+      <div x-show="isOpen('assets')" x-transition x-cloak class="pl-8 mt-2 flex flex-col space-y-1">
+        <a href="{% url 'asset_list' %}" class="group flex items-center space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-white" title="Buy Gas Fee" tabindex="0" role="link">
+          <i class="fa-solid fa-gas-pump" aria-hidden="true"></i>
+          <span>Buy Gas Fee</span>
+        </a>
+        <a href="{% url 'sell_step1' %}" class="group flex items-center space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-white" title="Buy Airtime" tabindex="0" role="link">
+          <span class="text-sm">&#8358;</span>
+          <span>Sell Asset</span>
+        </a>
+        <a href="{% url 'sell_order_history' %}" class="group flex items-center space-x-2 text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-white" title="Buy Airtime" tabindex="0" role="link">
+          <i class="fa-solid fa-history" aria-hidden="true"></i>
+          <span>Sell History</span>
         </a>
       </div>
     </div>

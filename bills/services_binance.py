@@ -11,7 +11,6 @@ BINANCE_API_SECRET = settings.BINANCE_API_SECRET
 # Set in settings.py: SELL_PROFIT_MARGIN = Decimal('0.02')
 SELL_MARGIN = getattr(settings, 'SELL_PROFIT_MARGIN', Decimal('0.02'))
 
-# Lazy initialize Binance client to avoid ping on import
 
 def get_binance_client():
     from binance.client import Client
