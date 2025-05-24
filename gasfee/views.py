@@ -9,8 +9,8 @@ from django.conf import settings
 
 
 from django.core.cache import cache
-from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse
 from django.db import transaction
 from django.utils import timezone
@@ -19,7 +19,7 @@ from web3 import Web3
 from dotenv import load_dotenv
 
 
-
+from .forms import CryptoForm
 from p2p.models import Wallet
 from .models import CryptoPurchase, Crypto
 from .utils import (
@@ -31,11 +31,23 @@ from .utils import (
 # )
 
 
-
-
 # Load environment variables
 load_dotenv()
 logger = logging.getLogger(__name__)
+
+
+
+@user_passes_test(lambda u: u.is_superuser) 
+def add_crypto_asset(request):
+    if request.method == 'POST':
+        form = CryptoForm(request.POST, request.FILES)  # Add request.FILES for logo
+        if form.is_valid():
+            form.save()
+            return redirect('asset_list')
+    else:
+        form = CryptoForm()
+    return render(request, 'gasfee/create_crypto.html', {'form': form})
+
 
 
 

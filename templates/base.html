@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+    {% load humanize %}
 {% include "p2p/head.html" %}
 <body class="bg-gradient-to-br from-gray-900 to-gray-800 text-white min-h-screen font-sans">
     <!-- Header -->
@@ -45,7 +46,7 @@
                     let eyeIcon = document.getElementById("eye-icon");
                     if (balance && eyeIcon) {
                         if (balance.innerText === "") {
-                            balance.innerText = "₦{{ user.wallet.balance|default:0 }}";
+                            balance.innerText = "₦{{ user.wallet.balance|default:0|intcomma }}";
                             eyeIcon.classList.remove("fa-eye-slash");
                             eyeIcon.classList.add("fa-eye");
                         } else {

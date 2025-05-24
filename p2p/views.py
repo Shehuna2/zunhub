@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db import transaction
+from decimal import Decimal
 from django.db.models import Sum
 from itertools import chain
 from django.db.models import Value, CharField
@@ -14,6 +15,7 @@ from django.http import HttpResponseForbidden, JsonResponse
 from django.contrib import messages
 from .forms import OrderForm, DisputeForm, SellOfferForm, BuyOfferForm, SellOrderForm
 from .models import Wallet, SellOffer, Order, Dispute, BuyOffer, SellOrder
+from bills.models import AssetSellOrder, PaymentProof
 from gasfee.models import CryptoPurchase
 
 User = get_user_model()
@@ -115,22 +117,54 @@ def sell_order_details(request, order_id):
 def admin_dashboard(request):
     if not request.user.is_superuser:
         return redirect("home")  # Redirect non-admins
+    
+    sell_asset_total_orders        = AssetSellOrder.objects.count()
+    pending_orders      = AssetSellOrder.objects.filter(status="pending").count()
+    awaiting_conf       = AssetSellOrder.objects.filter(status="awaiting_confirmation").count()
+    completed_orders    = AssetSellOrder.objects.filter(status="completed").count()
 
-    total_orders = Order.objects.count()
-    pending_orders = Order.objects.filter(status="pending").count()
-    completed_orders = Order.objects.filter(status="completed").count()
-    disputed_orders = Order.objects.filter(status="disputed").count()
 
-    total_disputes = Dispute.objects.count()
-    pending_disputes = Dispute.objects.filter(status="pending").count()
-    resolved_buyer = Dispute.objects.filter(status="resolved_buyer").count()
-    resolved_merchant = Dispute.objects.filter(status="resolved_merchant").count()
+    total_orders        = Order.objects.count()
+    pending_orders      = Order.objects.filter(status="pending").count()
+    completed_orders    = Order.objects.filter(status="completed").count()
+    disputed_orders     = Order.objects.filter(status="disputed").count()
 
-    recent_orders = Order.objects.order_by("-created_at")[:5]
-    recent_disputes = Dispute.objects.order_by("-created_at")[:5]
+    total_disputes      = Dispute.objects.count()
+    pending_disputes    = Dispute.objects.filter(status="pending").count()
+    resolved_buyer      = Dispute.objects.filter(status="resolved_buyer").count()
+    resolved_merchant   = Dispute.objects.filter(status="resolved_merchant").count()
 
-    context = {
+    recent_orders       = Order.objects.order_by("-created_at")[:5]
+    recent_disputes     = Dispute.objects.order_by("-created_at")[:5]
+
+    # Orders awaiting credit, with proof joined
+    raw_orders = (AssetSellOrder.objects
+                  .filter(status="awaiting_confirmation")
+                  .select_related(None)  # no FK except .user
+                  .prefetch_related("proof"))  # pulls PaymentProof
+    to_credit_orders = []
+    for order in raw_orders.order_by("created_at"):
+        cost_ngn = (order.amount_asset * order.rate_ngn).quantize(Decimal('0.01'))
+        order.profit = (order.amount_ngn - cost_ngn).quantize(Decimal('0.01'))
+        order.proof_url = order.proof.image.url if hasattr(order, 'proof') else None
+
+
+        # # Try to get the related proof
+        # try:
+        #     proof = order.proof  # use related_name
+        #     order.proof_url = proof.image.url
+        #     print(f"[✅ Proof Found] Order ID: {order.id}, Proof URL: {order.proof_url}")
+        # except PaymentProof.DoesNotExist:
+        #     order.proof_url = None
+        #     print(f"[❌ No Proof] Order ID: {order.id}")
+
+
+        to_credit_orders.append(order)
+
+
+    return render(request, "p2p/admin_dashboard.html", {
         "total_orders": total_orders,
+        "sell_asset_total_orders": sell_asset_total_orders,
         "pending_orders": pending_orders,
         "completed_orders": completed_orders,
         "disputed_orders": disputed_orders,
@@ -140,10 +174,11 @@ def admin_dashboard(request):
         "resolved_merchant": resolved_merchant,
         "recent_orders": recent_orders,
         "recent_disputes": recent_disputes,
-    }
-    
-    return render(request, "p2p/admin_dashboard.html", context)
 
+        "to_credit_orders": to_credit_orders,
+        "awaiting_confirmation": awaiting_conf,
+    })
+    
 
 @login_required
 def dashboard(request):

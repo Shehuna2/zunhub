@@ -1,0 +1,22 @@
+{% load humanize %}
+
+{% if to_credit_orders %}
+    <div class="space-y-2 max-h-96 overflow-y-auto">
+        {% for order in to_credit_orders %}
+        <div id="row-{{ order.id }}" class="bg-gray-700 p-4 rounded-lg flex justify-between items-center transition-opacity duration-500 hover:bg-gray-600">
+            <div>
+              <p class="font-semibold">Order #{{ order.id }}</p>
+              <p class="text-sm">₦{{ order.amount_ngn|intcomma }}</p>
+            </div>
+            <button
+              class="credit-btn px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded focus:outline-none"
+              data-order-id="{{ order.id }}"
+              data-url="{% url 'admin_credit_order' order.id %}">
+              Credit
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="text-gray-400">No orders awaiting credit.</p>
+{% endif %}

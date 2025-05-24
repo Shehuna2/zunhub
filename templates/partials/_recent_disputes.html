@@ -1,0 +1,15 @@
+{% if recent_disputes %}
+  <div class="space-y-2 max-h-96 overflow-y-auto" id="recentDisputesRows">
+    {% for dispute in recent_disputes %}
+    <div onclick="window.location='{% url 'track_dispute' dispute.id %}'" class="bg-gray-700 p-4 rounded-lg flex justify-between items-center cursor-pointer hover:bg-gray-600">
+      <div>
+        <p class="font-semibold">Dispute #{{ dispute.id }}</p>
+        <p class="text-sm text-gray-400">Order #{{ dispute.order.id }}</p>
+      </div>
+      <span class="px-2 py-1 bg-yellow-500 text-gray-900 rounded-full text-sm">{{ dispute.get_status_display }}</span>
+    </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="text-gray-400">No recent disputes.</p>
+{% endif %}

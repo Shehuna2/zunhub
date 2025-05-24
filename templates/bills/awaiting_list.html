@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block content %}
+
+    <!-- Global CSRF Token -->
+    <input type="hidden" id="csrfToken" value="{{ csrf_token }}">
+
+    <main class="max-w-6xl mx-auto py-10 space-y-8">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-t-lg shadow-lg">
+            <h2 class="text-4xl font-bold text-center">Orders Awaiting Crediting</h2>
+        </div>
+        
+        <!-- Two-Column Layout: Awaiting & Recent Orders -->
+        <div class="grid grid-cols-1 lg:grid-cols-1 gap-6">
+            <!-- Orders Awaiting Crediting -->
+            <section class="bg-gray-800 shadow-md p-6 rounded-lg">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-semibold text-white">Orders Awaiting Crediting</h3>
+                </div>
+                {% include 'bills/awaiting_credit.html' %}
+            </section>
+        </div>
+    </main>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50">
+        <div class="bg-gray-800 rounded-lg p-6 space-y-4 max-w-sm mx-auto">
+          <h2 class="text-lg text-white font-semibold">Confirm Credit</h2>
+          <p class="text-gray-300">Are you sure you want to credit this order?</p>
+          <div class="flex justify-end space-x-2">
+            <button onclick="closeConfirm()" class="px-3 py-1 bg-gray-600 hover:bg-gray-500 text-white rounded">Cancel</button>
+            <button id="confirmBtn" class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded">Yes, Credit</button>
+          </div>
+        </div>
+    </div>
+
+    <!-- Proof Modal -->
+    <div id="proofModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50">
+        <div class="bg-gray-900 rounded-lg p-6 max-w-3xl w-full relative">
+            <button onclick="closeProof()" class="absolute top-2 right-2 text-white text-xl font-bold" aria-label="Close">&times;</button>
+            <div id="proofContent" class="text-center">
+                <img id="proofImage" alt="Payment Proof" class="mx-auto max-h-[500px] rounded shadow-lg hidden" />
+                <iframe id="proofPDF" class="mx-auto w-full h-[500px] hidden" frameborder="0"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedOrderId = null;
+        let selectedUrl = null;
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmBtn = document.getElementById('confirmBtn');
+        const csrfToken = document.getElementById('csrfToken').value;
+
+        function attachCreditButtons() {
+            // Remove existing listener if any (optional, since we use delegation)
+            const container = document.getElementById('awaiting-credit-orders');
+            container.removeEventListener('click', handleCreditButtonClick); // Cleanup
+            container.addEventListener('click', handleCreditButtonClick);
+        }
+
+        function handleCreditButtonClick(event) {
+            if (event.target.classList.contains('credit-btn')) {
+                selectedOrderId = event.target.dataset.orderId;
+                selectedUrl = event.target.dataset.url;
+                confirmModal.classList.remove('hidden');
+            }
+        }
+
+        function closeConfirm() {
+            confirmModal.classList.add('hidden');
+            selectedOrderId = null;
+            selectedUrl = null;
+        }
+
+        confirmBtn.addEventListener('click', async () => {
+            if (!selectedOrderId || !selectedUrl) return;
+            const row = document.getElementById(`row-${selectedOrderId}`);
+            row.style.opacity = 0;
+            confirmBtn.disabled = true;
+            try {
+                const resp = await fetch(selectedUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                if (!resp.ok) throw new Error("Network error");
+                const data = await resp.json();
+                if (data.success) {
+                    if (document.getElementById('awaiting-count')) {
+                        document.getElementById('awaiting-count').textContent = data.awaiting_confirmation;
+                    }
+                    if (document.getElementById('completed-count')) {
+                        document.getElementById('completed-count').textContent = data.completed_orders;
+                    }
+                    setTimeout(() => row.remove(), 500);
+                } else {
+                    row.style.opacity = 1;
+                    alert('Credit failed');
+                }
+
+            } catch (e) {
+                row.style.opacity = 1;
+                alert('Credit failed: ' + e.message);
+            } finally {
+                closeConfirm();
+                confirmBtn.disabled = false;
+            }
+        });
+
+        function showProof(url) {
+            const modal = document.getElementById("proofModal");
+            const image = document.getElementById("proofImage");
+            const pdf = document.getElementById("proofPDF");
+
+            image.classList.add("hidden");
+            pdf.classList.add("hidden");
+
+            if (url.endsWith(".pdf")) {
+                pdf.src = url;
+                pdf.classList.remove("hidden");
+            } else {
+                image.src = url;
+                image.classList.remove("hidden");
+            }
+
+            modal.classList.remove("hidden");
+        }
+
+        function closeProof() {
+            document.getElementById("proofModal").classList.add("hidden");
+            document.getElementById("proofPDF").src = "";
+            document.getElementById("proofImage").src = "";
+        }
+
+        function fetchDashboardUpdates() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentPage = urlParams.get('page') || '1';
+        closeConfirm();
+        closeProof();
+        fetch(`{% url 'admin_dashboard_refresh' %}?page=${currentPage}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('Network response was not ok');
+            return res.json();
+        })
+        .then(data => {
+            if (data.credit_orders) {
+                // only replace the rows container, no extra heading
+                document.getElementById('awaiting-credit-orders').innerHTML = data.credit_orders;
+            }
+            attachCreditButtons();
+        })
+    }
+
+        attachCreditButtons(); // Initial attachment
+        setInterval(fetchDashboardUpdates, 30000); // Every 30 seconds
+    </script>
+{% endblock %}

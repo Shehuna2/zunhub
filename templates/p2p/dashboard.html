@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 
 {% block content %}
         <!-- Main Content -->
@@ -149,7 +150,7 @@
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="font-semibold">Amount:</span>
-                                    <span>₦{{ order.total_price }}</span>
+                                    <span>₦{{ order.total_price|intcomma }}</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="font-semibold">Status:</span>

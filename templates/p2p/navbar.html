@@ -111,6 +111,13 @@
   </div>
 
   <div class="md:pb-6 md:px-4">
+    <a href="{% url 'admin_dashboard' %}" class="group flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-red-400 hover:bg-gray-700 p-3 rounded-lg transition-colors w-full focus:outline-none focus:ring-2 focus:ring-red-400" title="Logout" tabindex="0" role="link">
+      <i class="fa-solid fa-monitor text-2xl md:text-lg" aria-hidden="true"></i>
+      <span class="text-xs md:text-sm lg:inline hidden">Admin Dashboard</span>
+    </a>
+  </div>
+
+  <div class="md:pb-6 md:px-4">
     <a href="{% url 'logout' %}" class="group flex flex-col items-center md:flex-row md:space-x-2 text-gray-400 hover:text-red-400 hover:bg-gray-700 p-3 rounded-lg transition-colors w-full focus:outline-none focus:ring-2 focus:ring-red-400" title="Logout" tabindex="0" role="link">
       <i class="fa-solid fa-right-from-bracket text-2xl md:text-lg" aria-hidden="true"></i>
       <span class="text-xs md:text-sm lg:inline hidden">Logout</span>

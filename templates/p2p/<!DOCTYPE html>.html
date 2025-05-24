@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+    {% load humanize %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-300">
+
+    <main class="max-w-6xl mx-auto py-10">
+        <h1 class="text-3xl font-bold text-center text-white mb-6">Admin Dashboard</h1>
+
+        <!-- Statistics Overview -->
+        <div class="grid grid-cols-6 gap-6 mb-8">
+            <div class="bg-gray-800 shadow-md p-6 rounded-lg text-center">
+                <h3 class="text-lg font-semibold text-white">Total Orders</h3>
+                <p class="text-2xl font-bold text-blue-400">{{ total_orders }}</p>
+            </div>
+
+            <div class="bg-gray-800 shadow-md p-6 rounded-lg text-center">
+                <h3 class="text-lg font-semibold text-yellow-400">Pending Orders</h3>
+                <p class="text-2xl font-bold text-yellow-300">{{ pending_orders }}</p>
+            </div>
+
+            <div class="bg-gray-800 shadow-md p-6 rounded-lg text-center">
+                <h3 class="text-lg font-semibold text-green-400">Completed Orders</h3>
+                <p class="text-2xl font-bold text-green-300" id="completed-count">{{ completed_orders }}</p>
+            </div>
+
+            <div class="bg-gray-800 shadow-md p-6 rounded-lg text-center">
+                <h3 class="text-lg font-semibold text-red-400">Total Disputes</h3>
+                <p class="text-2xl font-bold text-red-300">{{ total_disputes }}</p>
+            </div>
+
+            <div class="bg-gray-800 shadow-md p-6 rounded-lg text-center">
+                <h3 class="text-lg font-semibold text-orange-400">Pending Disputes</h3>
+                <p class="text-2xl font-bold text-orange-300">{{ pending_disputes }}</p>
+            </div>
+
+            <div class="bg-gray-800 shadow-md p-6 rounded-lg text-center">
+                <h3 class="text-lg font-semibold text-yellow-400">Awaiting Confirmation</h3>
+                <p class="text-2xl font-bold text-yellow-300" id="awaiting-count">{{ awaiting_confirmation }}</p>
+            </div>
+        </div>
+
+        <!-- Orders Awaiting Crediting -->
+        <section class="bg-gray-800 shadow-md p-6 rounded-lg mb-8">
+            <h3 class="text-xl font-semibold text-white mb-4">Orders Awaiting Crediting</h3>
+        
+            {% if to_credit_orders %}
+            <table class="w-full text-left border-collapse">
+                <thead>
+                <tr class="border-b border-gray-700">
+                    <th class="p-2 text-gray-400">Order ID</th>
+                    <th class="p-2 text-gray-400">User</th>
+                    <th class="p-2 text-gray-400">Asset ($)</th>
+                    <th class="p-2 text-gray-400">Amount (₦)</th>
+                    <th class="p-2 text-gray-400">Proof</th>
+                    <th class="p-2 text-gray-400">Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for order in to_credit_orders %}
+                <tr id="row-{{ order.id }}" class="hover:bg-gray-700 transition-opacity duration-500">
+                    <td class="p-2">{{ order.id }}</td>
+                    <td class="p-2">{{ order.user.username }}</td>
+                    <td class="p-2">{{ order.amount_asset|floatformat:2 }}  {{ order.asset|upper}}</td>
+                    <td class="p-2">₦{{ order.amount_ngn|intcomma }}</td>
+                    <td class="p-2">
+                        {% if order.proof_url %}
+                            <button onclick="showProof('{{ order.proof_url }}')"
+                                    class="text-blue-400 hover:underline focus:outline-none">
+                                View Proof
+                            </button>
+                        {% else %}
+                            <span class="text-gray-500 italic">No proof</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-2">
+                        <button
+                          onclick="confirmCredit({{ order.id }})"
+                          class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded shadow focus:outline-none"
+                        >
+                          Credit
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-gray-400">No orders awaiting credit.</p>
+            {% endif %}
+        </section>
+  
+        <!-- Recent Orders & Disputes sections unchanged... -->
+                     <!-- Latest Orders -->
+        <div class="bg-gray-800 shadow-md p-6 rounded-lg mb-8">
+            <h3 class="text-xl font-semibold text-white mb-4">Recent Orders</h3>
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-gray-700">
+                        <th class="p-2 text-gray-400">Order ID</th>
+                        <th class="p-2 text-gray-400">Buyer</th>
+                        <th class="p-2 text-gray-400">Status</th>
+                        <th class="p-2 text-gray-400">Amount</th>
+                        <th class="p-2 text-gray-400">Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in recent_orders %}
+                    <tr class="hover:bg-gray-700 transition cursor-pointer">
+                        <td class="p-2">{{ order.id }}</td>
+                        <td class="p-2">{{ order.buyer.username }}</td>
+                        <td class="p-2">{{ order.get_status_display }}</td>
+                        <td class="p-2">₦{{ order.total_price }}</td>
+                        <td class="p-2">{{ order.created_at }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="p-2 text-center text-gray-500">No recent orders</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Latest Disputes -->
+        <div class="bg-gray-800 shadow-md p-6 rounded-lg">
+            <h3 class="text-xl font-semibold text-white mb-4">Recent Disputes</h3>
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-gray-700">
+                        <th class="p-2 text-gray-400">Dispute ID</th>
+                        <th class="p-2 text-gray-400">Buyer</th>
+                        <th class="p-2 text-gray-400">Order ID</th>
+                        <th class="p-2 text-gray-400">Status</th>
+                        <th class="p-2 text-gray-400">Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dispute in recent_disputes %}
+                    <tr class="hover:bg-gray-700 transition cursor-pointer" onclick="window.location='{% url 'track_dispute' dispute.id %}'">
+                        <td class="p-2">{{ dispute.id }}</td>
+                        <td class="p-2">{{ dispute.buyer.username }}</td>
+                        <td class="p-2">{{ dispute.order.id }}</td>
+                        <td class="p-2">{{ dispute.get_status_display }}</td>
+                        <td class="p-2">{{ dispute.created_at }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="p-2 text-center text-gray-500">No recent disputes</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Navigation -->
+        <div class="mt-8 text-center">
+            <a href="/admin/" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Go to Default Admin Panel</a>
+        </div>
+    </main>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50">
+      <div class="bg-gray-800 rounded-lg p-6 space-y-4 max-w-sm mx-auto">
+        <h2 class="text-lg text-white font-semibold">Confirm Credit</h2>
+        <p class="text-gray-300">Are you sure you want to credit this order?</p>
+        <div class="flex justify-end space-x-2">
+          <button onclick="closeConfirm()" class="px-3 py-1 bg-gray-600 hover:bg-gray-500 text-white rounded">Cancel</button>
+          <button id="confirmBtn" class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded">Yes, Credit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Proof Modal -->
+    <div id="proofModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50">
+        <div class="bg-gray-900 rounded-lg p-6 max-w-3xl w-full relative">
+            <button onclick="closeProof()" class="absolute top-2 right-2 text-white text-xl font-bold" aria-label="Close">&times;</button>
+            <div id="proofContent" class="text-center">
+                <img id="proofImage" alt="Payment Proof" class="mx-auto max-h-[500px] rounded shadow-lg hidden" />
+                <iframe id="proofPDF" class="mx-auto w-full h-[500px] hidden" frameborder="0"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedOrderId = null;
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmBtn   = document.getElementById('confirmBtn');
+
+        function confirmCredit(orderId) {
+            selectedOrderId = orderId;
+            confirmModal.classList.remove('hidden');
+        }
+        function closeConfirm() {
+            confirmModal.classList.add('hidden');
+            selectedOrderId = null;
+        }
+
+        confirmBtn.addEventListener('click', async () => {
+            if (!selectedOrderId) return;
+            const row = document.getElementById(`row-${selectedOrderId}`);
+            row.style.opacity = 0;
+
+            // AJAX POST credit
+            const resp = await fetch(`/admin/credit-order/${selectedOrderId}/`, {
+              method: 'POST',
+              headers: {
+                'X-CSRFToken': document.querySelector('input[name="csrfmiddlewaretoken"]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+              }
+            });
+            const data = await resp.json();
+            if (data.success) {
+                // update stats
+                document.getElementById('awaiting-count').textContent = data.awaiting_confirmation;
+                document.getElementById('completed-count').textContent = data.completed_orders;
+                // remove row after fade
+                setTimeout(() => row.remove(), 500);
+            } else {
+                row.style.opacity = 1;
+                alert('Credit failed');
+            }
+            closeConfirm();
+        });
+
+        function showProof(url) {
+            const modal = document.getElementById("proofModal");
+            const image = document.getElementById("proofImage");
+            const pdf = document.getElementById("proofPDF");
+        
+            image.classList.add("hidden");
+            pdf.classList.add("hidden");
+        
+            if (url.endsWith(".pdf")) {
+                pdf.src = url;
+                pdf.classList.remove("hidden");
+            } else {
+                image.src = url;
+                image.classList.remove("hidden");
+            }
+        
+            modal.classList.remove("hidden");
+        }
+        
+        function closeProof() {
+            document.getElementById("proofModal").classList.add("hidden");
+            document.getElementById("proofPDF").src = "";
+            document.getElementById("proofImage").src = "";
+        }
+    </script>
+</body>
+</html>

@@ -1,44 +1,52 @@
 {% extends "base.html" %}
+{% load humanize %}
 {% block content %}
 <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
   <div class="max-w-md w-full space-y-8 bg-gray-900 rounded-2xl shadow-2xl p-8">
 
-    <!-- Step Indicator -->
+    <!-- Step Indicator (unchanged) -->
     <div class="flex justify-center space-x-2 mb-6">
       <div class="h-3 w-3 rounded-full bg-green-600"></div>
       <div class="h-3 w-3 rounded-full bg-green-600"></div>
       <div class="h-3 w-3 rounded-full bg-green-600"></div>
     </div>
 
-    <!-- Success Animation Icon -->
-    <div class="flex justify-center">
-      <div class="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center animate-bounce shadow-lg">
-        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-        </svg>
-      </div>
-    </div>
+    
 
-    <div class="text-center">
+    <!-- Awaiting vs Credited -->
+    <div id="awaitingView" class="text-center space-y-4">
       <h2 class="text-3xl font-bold text-white mt-4">Order Submitted</h2>
+      <!-- Large centered spinner -->
+      <div class="flex justify-center my-4">
+        <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center animate-spin shadow-lg">
+          <svg class="w-10 h-10 text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+          </svg>
+        </div>
+      </div>
       <p class="mt-2 text-sm text-gray-400 flex items-center justify-center gap-2">
-        <span>Your sell order (ID: <strong>{{ order.id }}</strong>) is now awaiting confirmation...</span>
-        <svg class="h-4 w-4 text-green-400 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor"
-                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z">
-          </path>
-        </svg>
+        <span>Awaiting confirmation...</span>
       </p>
-      
-      <p class="text-sm text-gray-400 mt-2">
-        We’ll credit your NGN wallet as soon as we detect your transfer.
-      </p>
-      <p class="text-sm text-gray-400 mt-2">
-        You can close this window now or create another sell order.
-      </p>
+      <p class="text-sm text-gray-400">Your account will be credited as soon as we detect your transfer.</p>
     </div>
 
+    <div id="creditedView" class="hidden text-center space-y-4">
+      <!-- Success Icon (unchanged) -->
+      <div class="flex justify-center">
+        <div class="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center animate-pulse shadow-lg">
+          <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+      </div>
+      <h2 class="text-3xl font-bold text-white mt-4">Order Credited</h2>
+      <p class="text-sm text-gray-400">Your order <strong>#{{ order.id }}</strong> has been successfully completed.</p>
+      <p class="text-sm text-gray-400"><strong>₦{{ order.amount_ngn|intcomma  }}</strong> just hit your balance.</p>
+      <p class="text-sm text-gray-400">Abeg spend wisely oo! Country hard.</p>
+    </div>
+
+    <!-- Action Buttons (unchanged) -->
     <div class="text-center mt-6 space-y-3">
       <a href="{% url 'sell_step1' %}"
          class="inline-block w-full py-3 text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 rounded-xl font-semibold shadow-md transition duration-300">
@@ -49,7 +57,33 @@
         Close
       </a>
     </div>
-    
   </div>
 </div>
+
+<script>
+// Poll every 10s for credit status
+function pollStatus() {
+  fetch(`{% url 'order_status' order.id %}`, {
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.status === 'completed') {
+      // Stop further polling by not scheduling another call
+      document.getElementById('awaitingView').classList.add('hidden');
+      document.getElementById('creditedView').classList.remove('hidden');
+    } else {
+      // Schedule next poll
+      setTimeout(pollStatus, 10000);
+    }
+  })
+  .catch(() => {
+    // even on error, try again
+    setTimeout(pollStatus, 10000);
+  });
+}
+
+// Kick off the first poll
+pollStatus();
+</script>
 {% endblock %}

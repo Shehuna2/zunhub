@@ -19,7 +19,7 @@ ASSET_CHOICES = [
 
 class ExchangeInfo(models.Model):
     exchange = models.CharField(max_length=20, choices=EXCHANGE_CHOICES, unique=True)
-    receive_qr = models.ImageField(upload_to='exchange_qrcodes/')
+    receive_qr = models.ImageField(upload_to='exchange_qrcodes/', blank=True, null=True,)
     contact_info = models.JSONField(blank=True, null=True, default=dict)
     
     def __str__(self):
@@ -39,3 +39,11 @@ class AssetSellOrder(models.Model):
 
     def __str__(self):
         return f"{self.user.username} → Platform: {self.amount_asset} {self.asset.upper()} for ₦{self.amount_ngn}"
+
+class PaymentProof(models.Model):
+    order = models.OneToOneField(AssetSellOrder, on_delete=models.CASCADE, related_name="proof")
+    image = models.ImageField(upload_to="payment_proofs/")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Proof for Order #{self.order.id}"

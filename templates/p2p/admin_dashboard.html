@@ -1,114 +1,214 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Admin Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-900 text-gray-300">
+{% extends 'base.html' %}
+{% load humanize %}
+{% block content %}
 
-    <div class="max-w-6xl mx-auto py-10">
-        <h1 class="text-3xl font-bold text-center text-white mb-6">Admin Dashboard</h1>
+    <!-- Global CSRF Token -->
+    <input type="hidden" id="csrfToken" value="{{ csrf_token }}">
+
+    <main class="max-w-6xl mx-auto py-10 space-y-8">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-t-lg shadow-lg">
+            <h2 class="text-4xl font-bold text-center">Admin Dashboard</h2>
+            <p class="text-center text-gray-200 mt-2">Make it your home.</p>
+        </div>
+
+        <!-- Service Card -->
+        <div class="bg-gray-800 p-4 md:p-6 rounded-xl shadow-lg mt-6 border border-gray-700">
+            <h3 class="text-lg md:text-xl font-semibold text-green-400">
+                <i class="fa-solid fa-concierge-bell mr-2"></i>Services
+            </h3>
+            <div class="mt-4 grid grid-cols-2 sm:grid-cols-2 gap-3">
+                <a
+                    href="{% url 'add_crypto_asset' %}"
+                    class="lovely-btn service-btn block text-center py-2 bg-gradient-to-br from-blue-900 to-purple-800 px-4 rounded-lg font-semibold text-white hover:bg-gray-700 transition"
+                    aria-label="Pay Gas Fee"
+                >
+                <i class="fab fa-btc" aria-hidden="true"> </i> Add Crypto
+                </a>
+                <a
+                    href="{% url 'buy-airtime' %}"
+                    class="lovely-btn service-btn block text-center py-2 bg-gradient-to-br from-blue-900 to-purple-800 px-4 rounded-lg font-semibold bg-gray-600 text-white hover:bg-gray-700 transition"
+                    aria-label="Buy Airtime"
+                >
+                    <i class="fa-solid fa-lightbulb mr-1 icon-color "></i>Add Utilities
+                </a>
+            </div>
+        </div>
 
         <!-- Statistics Overview -->
-        <div class="grid grid-cols-3 gap-6 mb-8">
-            <div class="bg-gray-800 shadow-md p-6 rounded-lg text-center">
-                <h3 class="text-lg font-semibold text-white">Total Orders</h3>
-                <p class="text-2xl font-bold text-blue-400">{{ total_orders }}</p>
-            </div>
-
-            <div class="bg-gray-800 shadow-md p-6 rounded-lg text-center">
-                <h3 class="text-lg font-semibold text-yellow-400">Pending Orders</h3>
-                <p class="text-2xl font-bold text-yellow-300">{{ pending_orders }}</p>
-            </div>
-
-            <div class="bg-gray-800 shadow-md p-6 rounded-lg text-center">
-                <h3 class="text-lg font-semibold text-green-400">Completed Orders</h3>
-                <p class="text-2xl font-bold text-green-300">{{ completed_orders }}</p>
-            </div>
-
-            <div class="bg-gray-800 shadow-md p-6 rounded-lg text-center">
-                <h3 class="text-lg font-semibold text-red-400">Total Disputes</h3>
-                <p class="text-2xl font-bold text-red-300">{{ total_disputes }}</p>
-            </div>
-
-            <div class="bg-gray-800 shadow-md p-6 rounded-lg text-center">
-                <h3 class="text-lg font-semibold text-orange-400">Pending Disputes</h3>
-                <p class="text-2xl font-bold text-orange-300">{{ pending_disputes }}</p>
-            </div>
-
-            <div class="bg-gray-800 shadow-md p-6 rounded-lg text-center">
-                <h3 class="text-lg font-semibold text-blue-400">Total Users</h3>
-                <p class="text-2xl font-bold text-blue-300">{{ total_users }}</p>
-            </div>
+        <div id="summary-cards" class="hidden md:grid grid grid-cols-5 gap-6 mb-8">
+            {% include "partials/_summary_cards.html" %}
+        </div>
+        <!-- Two-Column Layout: Awaiting & Recent Orders -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Orders Awaiting Crediting -->
+            <section id="awaiting-credit-orders" class="bg-gray-800 shadow-md p-6 rounded-lg">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-semibold text-white">Orders Awaiting Crediting</h3>
+                    <a href="{% url 'awaiting_list' %}" class="text-sm text-blue-400 hover:underline">View All</a>
+                </div>
+                {% include "partials/_awaiting_credit.html" %}
+            </section>
+            <!-- Recent Disputes -->
+            <section id="recent-disputes" class="bg-gray-800 shadow-md p-6 rounded-lg">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-semibold text-white">Recent Disputes</h3>
+                    <a href="{% url 'dispute_list' %}" class="text-sm text-blue-400 hover:underline">View All</a>
+                  </div>                  
+                {% include "partials/_recent_disputes.html" %}
+            </section>
         </div>
 
-        <!-- Latest Orders -->
-        <div class="bg-gray-800 shadow-md p-6 rounded-lg mb-8">
-            <h3 class="text-xl font-semibold text-white mb-4">Recent Orders</h3>
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="border-b border-gray-700">
-                        <th class="p-2 text-gray-400">Order ID</th>
-                        <th class="p-2 text-gray-400">Buyer</th>
-                        <th class="p-2 text-gray-400">Status</th>
-                        <th class="p-2 text-gray-400">Amount</th>
-                        <th class="p-2 text-gray-400">Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for order in recent_orders %}
-                    <tr class="hover:bg-gray-700 transition cursor-pointer">
-                        <td class="p-2">{{ order.id }}</td>
-                        <td class="p-2">{{ order.buyer.username }}</td>
-                        <td class="p-2">{{ order.get_status_display }}</td>
-                        <td class="p-2">₦{{ order.total_price }}</td>
-                        <td class="p-2">{{ order.created_at }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="p-2 text-center text-gray-500">No recent orders</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+        <!-- Two-Column Layout: Disputes & Quick Actions -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Quick Actions Placeholder -->
+            <section class="bg-gray-800 shadow-md p-6 rounded-lg">
+                <h3 class="text-xl font-semibold text-white mb-4">Quick Actions</h3>
+                <p class="text-gray-400">Use this space for additional widgets or tools.</p>
+            </section>
 
-        <!-- Latest Disputes -->
-        <div class="bg-gray-800 shadow-md p-6 rounded-lg">
-            <h3 class="text-xl font-semibold text-white mb-4">Recent Disputes</h3>
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="border-b border-gray-700">
-                        <th class="p-2 text-gray-400">Dispute ID</th>
-                        <th class="p-2 text-gray-400">Buyer</th>
-                        <th class="p-2 text-gray-400">Order ID</th>
-                        <th class="p-2 text-gray-400">Status</th>
-                        <th class="p-2 text-gray-400">Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for dispute in recent_disputes %}
-                    <tr class="hover:bg-gray-700 transition cursor-pointer" onclick="window.location='{% url 'track_dispute' dispute.id %}'">
-                        <td class="p-2">{{ dispute.id }}</td>
-                        <td class="p-2">{{ dispute.buyer.username }}</td>
-                        <td class="p-2">{{ dispute.order.id }}</td>
-                        <td class="p-2">{{ dispute.get_status_display }}</td>
-                        <td class="p-2">{{ dispute.created_at }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="p-2 text-center text-gray-500">No recent disputes</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <section class="bg-gray-800 shadow-md p-6 rounded-lg">
+                <h3 class="text-xl font-semibold text-white mb-4">Quick Actions</h3>
+                <p class="text-gray-400">Use this space for additional widgets or tools.</p>
+            </section>
         </div>
+    </main>
 
-        <!-- Navigation -->
-        <div class="mt-8 text-center">
-            <a href="/admin/" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Go to Default Admin Panel</a>
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50">
+        <div class="bg-gray-800 rounded-lg p-6 space-y-4 max-w-sm mx-auto">
+          <h2 class="text-lg text-white font-semibold">Confirm Credit</h2>
+          <p class="text-gray-300">Are you sure you want to credit this order?</p>
+          <div class="flex justify-end space-x-2">
+            <button onclick="closeConfirm()" class="px-3 py-1 bg-gray-600 hover:bg-gray-500 text-white rounded">Cancel</button>
+            <button id="confirmBtn" class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded">Yes, Credit</button>
+          </div>
         </div>
     </div>
 
-</body>
-</html>
+    <!-- Proof Modal -->
+    <div id="proofModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50">
+        <div class="bg-gray-900 rounded-lg p-6 max-w-3xl w-full relative">
+            <button onclick="closeProof()" class="absolute top-2 right-2 text-white text-xl font-bold" aria-label="Close">&times;</button>
+            <div id="proofContent" class="text-center">
+                <img id="proofImage" alt="Payment Proof" class="mx-auto max-h-[500px] rounded shadow-lg hidden" />
+                <iframe id="proofPDF" class="mx-auto w-full h-[500px] hidden" frameborder="0"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedOrderId = null;
+        let selectedUrl = null;
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmBtn   = document.getElementById('confirmBtn');
+        const csrfToken     = document.getElementById('csrfToken').value;
+
+        document.querySelectorAll('.credit-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                selectedOrderId = btn.dataset.orderId;
+                selectedUrl     = btn.dataset.url;
+                confirmModal.classList.remove('hidden');
+            });
+        });
+
+        function closeConfirm() {
+            confirmModal.classList.add('hidden');
+            selectedOrderId = null;
+        }
+
+        confirmBtn.addEventListener('click', async () => {
+        if (!selectedOrderId || !selectedUrl) return;
+        const row = document.getElementById(`row-${selectedOrderId}`);
+        row.style.opacity = 0;
+
+        try {
+            const resp = await fetch(selectedUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+            });
+            if (!resp.ok) throw new Error("Network error");
+
+            const data = await resp.json();
+            if (data.success) {
+            document.getElementById('awaiting-count').textContent = data.awaiting_confirmation;
+            document.getElementById('completed-count').textContent = data.completed_orders;
+            setTimeout(() => row.remove(), 500);
+            } else {
+            row.style.opacity = 1;
+            alert('Credit failed');
+            }
+        } catch (e) {
+            row.style.opacity = 1;
+            alert('Credit failed: ' + e.message);
+        } finally {
+            closeConfirm();
+        }
+        });
+
+
+        function showProof(url) {
+            const modal = document.getElementById("proofModal");
+            const image = document.getElementById("proofImage");
+            const pdf = document.getElementById("proofPDF");
+        
+            image.classList.add("hidden");
+            pdf.classList.add("hidden");
+        
+            if (url.endsWith(".pdf")) {
+                pdf.src = url;
+                pdf.classList.remove("hidden");
+            } else {
+                image.src = url;
+                image.classList.remove("hidden");
+            }
+        
+            modal.classList.remove("hidden");
+        }
+        
+        function closeProof() {
+            document.getElementById("proofModal").classList.add("hidden");
+            document.getElementById("proofPDF").src = "";
+            document.getElementById("proofImage").src = "";
+        }
+        function fetchDashboardUpdates() {
+            fetch("{% url 'admin_dashboard_refresh' %}", {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.credit_orders) {
+                    document.getElementById('awaiting-credit-orders').innerHTML =
+                        '<h3 class="text-xl font-semibold text-white mb-4">Orders Awaiting Crediting</h3>' + data.credit_orders;
+                }
+                if (data.recent_disputes) {
+                    document.getElementById('recent-disputes').innerHTML =
+                        '<h3 class="text-xl font-semibold text-white mb-4">Recent Disputes</h3>' + data.recent_disputes;
+                }
+                if (data.summary_cards) {
+                    document.getElementById('summary-cards').innerHTML = data.summary_cards;
+                }
+
+                attachCreditButtons(); // reattach button event listeners
+            });
+        }
+
+        function attachCreditButtons() {
+            document.querySelectorAll('.credit-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    selectedOrderId = btn.dataset.orderId;
+                    selectedUrl = btn.dataset.url;
+                    confirmModal.classList.remove('hidden');
+                });
+            });
+        }
+
+        // Start interval updates
+        setInterval(fetchDashboardUpdates, 10000); // every 15 seconds
+    </script>
+{% endblock %}

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load humanize %}
 {% block content %}
 <div class="container mx-auto">
     <!-- Header -->
@@ -35,7 +35,7 @@
                     <!-- Available -->
                     <div class="flex items-baseline space-x-2">
                         <p class="text-xs text-gray-300 lg:text-sm">Balance:</p>
-                        <p class="text-xs text-green-400 lg:text-sm">₦{{ offer.merchant.wallet.balance }}</p>
+                        <p class="text-xs text-green-400 lg:text-sm">₦{{ offer.merchant.wallet.balance|intcomma }}</p>
                     </div>
                 </div>
                 <!-- Row 2: Min and Max -->
@@ -43,12 +43,12 @@
                     <!-- Min -->
                     <div class="flex items-baseline space-x-2">
                         <p class="text-xs text-gray-300 lg:text-sm">Min:</p>
-                        <p class="text-xs text-red-400 lg:text-sm">₦{{ offer.min_amount }}</p>
+                        <p class="text-xs text-red-400 lg:text-sm">₦{{ offer.min_amount|intcomma }}</p>
                     </div>
                     <!-- Max -->
                     <div class="flex items-baseline space-x-2">
                         <p class="text-xs text-gray-300 lg:text-sm">Max:</p>
-                        <p class="text-xs text-blue-400 lg:text-sm">₦{{ offer.max_amount }}</p>
+                        <p class="text-xs text-blue-400 lg:text-sm">₦{{ offer.max_amount|intcomma }}</p>
                     </div>
                 </div>
             </div>

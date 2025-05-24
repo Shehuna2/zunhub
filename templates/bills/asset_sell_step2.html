@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 {% block content %}
 <div class="max-w-xl mx-auto mt-12 bg-gray-900 p-8 rounded-2xl shadow-2xl border border-gray-700 space-y-8">
 
@@ -35,65 +36,78 @@
       <!-- Send Card -->
       <div class="bg-gray-900 rounded-lg p-4 border border-gray-700 text-center">
         <p class="text-sm text-gray-400 mb-1">You Send</p>
-        <p class="text-2xl font-semibold text-green-500">{{ order.amount_asset|floatformat:4 }} {{ order.asset|upper }}</p>
+        <p class="text-2xl font-semibold text-green-500" id="sentAmount">{{ order.amount_asset|floatformat:4 }} {{ order.asset|upper }}</p>
       </div>
       <!-- Receive Card -->
       <div class="bg-gray-900 rounded-lg p-4 border border-gray-700 text-center">
         <p class="text-sm text-gray-400 mb-1">You Will Receive</p>
-        <p class="text-2xl font-semibold text-white">₦{{ order.amount_ngn }}</p>
+        <p class="text-2xl font-semibold text-white" id="receiveAmount">₦{{ order.amount_ngn|intcomma }}</p>
       </div>
     </div>
 
     <!-- Receiving Details -->
-      <div class="space-y-3">
-        <div class="bg-gray-800 rounded-xl p-5 border border-gray-700 space-y-5">
-          <h3 class="text-lg font-semibold text-white border-b border-gray-700 pb-2">Receiving Details</h3>
-        
-          {% if qr_url %}
-            <div class="flex justify-center mb-4">
-              <img src="{{ qr_url }}" alt="{{ order.source }} QR Code" class="w-40 h-40 object-contain rounded-lg border border-gray-700"/>
-            </div>
-          {% endif %}
+    <div class="space-y-3">
+      <div class="bg-gray-800 rounded-xl p-5 border border-gray-700 space-y-5">
+        <h3 class="text-lg font-semibold text-white border-b border-gray-700 pb-2">Receiving Details</h3>
 
-        
-          {% for key, val in details.items %}
-          <div class="flex justify-between items-center text-sm">
-            <div>
-              <div class="text-gray-400">{{ key|cut:"_"|title }}</div>
-              <div class="text-white font-medium break-all">{{ val }}</div>
-            </div>
-            <button
-              type="button"
-              onclick="navigator.clipboard.writeText('{{ val }}')"
-              class="ml-2 p-2 rounded hover:bg-gray-700 transition duration-150"
-              title="Copy"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-300 hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M8 16h8m-8-4h8m-6-4h6m2 10a2 2 0 01-2 2H8a2 2 0 01-2-2V6a2 2 0 012-2h6l4 4v10z"/>
-              </svg>
-            </button>
+        {% if qr_code %}
+        <div class="flex justify-center mb-6 border-b border-gray-700 pb-4">
+          <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code" class="w-40 h-40" />
+        </div>
+        {% endif %}
+
+        {% for key, val in details.items %}
+        <div class="flex justify-between items-center text-sm">
+          <div>
+            <div class="text-gray-400">{{ key|cut:"_"|title }}</div>
+            <div class="text-white font-medium break-all">{{ val }}</div>
           </div>
-          {% empty %}
-          <p class="text-gray-400 text-sm">No details found.</p>
-          {% endfor %}
-        
+          <button type="button" onclick="navigator.clipboard.writeText('{{ val }}')" class="ml-2 p-2 rounded hover:bg-gray-700 transition duration-150" title="Copy">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-300 hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16h8m-8-4h8m-6-4h6m2 10a2 2 0 01-2 2H8a2 2 0 01-2-2V6a2 2 0 012-2h6l4 4v10z"/>
+            </svg>
+          </button>
+        </div>
+        {% empty %}
+        <p class="text-gray-400 text-sm">No details found.</p>
+        {% endfor %}
       </div>
+    </div>
   </div>
 
-  <!-- Form Submit -->
-  <form id="confirmationForm" method="post" class="space-y-4">
-    {% csrf_token %}
-    <button
-      id="submitBtn"
-      type="submit"
-      class="w-full py-3 bg-green-600 hover:bg-green-700 text-white text-lg rounded-xl font-semibold transition duration-200 flex items-center justify-center space-x-2"
-    >
-      ✅ I have sent the asset
-    </button>
 
-  </form>
-  
+
+  <!-- Awaiting vs Credited Views -->
+  <div id="awaitingView" enctype="multipart/form-data" class="space-y-4">
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+
+      <!-- File Upload Field (moved inside the form!) -->
+    <div>
+      <label for="id_image" class="block text-sm font-medium text-gray-300 mb-1">
+        Upload Proof of Payment
+      </label>
+      <input
+        type="file"
+        name="image"               {# must match form field name #}
+        id="id_image"
+        accept="image/*,application/pdf"
+        class="w-full text-sm text-gray-300 bg-gray-800 border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-green-600"
+        required
+      >
+      {{ proof_form.image.errors }}  {# show any upload errors #}
+    </div>
+
+      <button id="submitBtn" type="submit" class="w-full py-3 bg-green-600 hover:bg-green-700 text-white text-lg rounded-xl font-semibold transition duration-200">
+        ✅ I have sent the asset
+      </button>
+    </form>
+  </div>
+
+  <div id="creditedView" class="hidden text-center space-y-4">
+    <h2 class="text-2xl font-bold text-white">Thank you!</h2>
+    <p class="text-gray-400">Your transfer has been confirmed and credited. You may close this window.</p>
+  </div>
 
 </div>
 
@@ -102,62 +116,49 @@
   // Countdown
   const expiresAt = new Date("{{ expires_at }}");
   const countdownEl = document.getElementById("countdown");
-  const submitBtn = document.getElementById("submitBtn");
+  const submitBtn   = document.getElementById("submitBtn");
+  let timer = setInterval(updateCountdown, 1000);
+  updateCountdown();
 
   function updateCountdown() {
     const now = new Date();
     const diff = Math.max(0, expiresAt - now);
-    const m = Math.floor(diff / 60000);
-    const s = Math.floor((diff % 60000) / 1000);
+    const m = Math.floor(diff / 60000), s = Math.floor((diff % 60000)/1000);
     countdownEl.textContent = `${m}m ${s}s`;
     if (diff <= 0) {
       clearInterval(timer);
       countdownEl.textContent = "Expired";
       submitBtn.disabled = true;
-      submitBtn.classList.remove("bg-green-600", "hover:bg-green-700");
-      submitBtn.classList.add("bg-gray-500", "cursor-not-allowed");
+      submitBtn.classList.replace("bg-green-600", "bg-gray-500");
       submitBtn.textContent = "⛔ Time expired";
     }
   }
-  const timer = setInterval(updateCountdown, 1000);
-  updateCountdown();
 
-  // Copy Confirm
+  // Poll every 10s for credit status
+  function pollStatus() {
+    fetch(`{% url 'order_status' order.id %}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'completed') {
+          document.getElementById('awaitingView').classList.add('hidden');
+          document.getElementById('creditedView').classList.remove('hidden');
+        } else {
+          setTimeout(pollStatus, 10000);
+        }
+      })
+      .catch(() => setTimeout(pollStatus, 10000));
+  }
+  pollStatus();
+
+  // Copy Confirm Script
   document.querySelectorAll("button[title='Copy']").forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener("click", () => {
+      const original = btn.innerHTML;
       btn.querySelector('svg').style.display = 'none';
       btn.innerHTML = '<span class="text-green-400 text-xs">Copied</span>';
-      setTimeout(() => {
-        btn.innerHTML = `
-        <svg xmlns=\"http://www.w3.org/2000/svg\" class=\"w-5 h-5 text-gray-300 hover:text-white\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\">` +
-        `<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M8 16h8m-8-4h8m-6-4h6m2 10a2 2 0 01-2 2H8a2 2 0 01-2-2V6a2 2 0 012-2h6l4 4v10z\"/></svg>`;
-      }, 1500);
+      setTimeout(() => btn.innerHTML = original, 1500);
     });
   });
-  // Stop timer and disable submit button on form submission
-  document.getElementById("confirmationForm").addEventListener("submit", function () {
-  clearInterval(timer);  // Stop countdown
-  submitBtn.disabled = true;
-  submitBtn.classList.remove("bg-green-600", "hover:bg-green-700");
-  submitBtn.classList.add("bg-yellow-500", "cursor-wait");
-
-  // Change content to show spinner and text
-  submitBtn.innerHTML = `
-    <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
-      viewBox="0 0 24 24">
-      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-        stroke-width="4"></circle>
-      <path class="opacity-75" fill="currentColor"
-        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-    </svg>
-    <span>Submitting...</span>
-  `;
-});
-
-
 </script>
+
 {% endblock %}
-
-
-
-

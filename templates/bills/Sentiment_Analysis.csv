@@ -1,0 +1,4 @@
+review_id,review_text,sentiment
+1,"The product exceeded my expectations!",positive
+2,"Disappointed with the quality.",negative
+3,"It's okay, nothing special.",neutral

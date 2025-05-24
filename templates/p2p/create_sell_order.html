@@ -1,6 +1,5 @@
-{# templates/p2p/create_sell_order.html #}
 {% extends "base.html" %}
-
+{% load humanize %}
 {% block content %}
 <div class="container mx-auto p-6 max-w-lg">
   <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-t-lg shadow-lg">
@@ -15,13 +14,13 @@
       </div>
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-400">Available to Sell</label>
-        <p class="text-lg text-blue-300">₦{{ offer.amount_available }}</p>
+        <p class="text-lg text-blue-300">₦{{ offer.amount_available|intcomma }}</p>
       </div>
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-400">Quantity to Sell</label>
         <input type="number" name="amount_requested" min="{{ offer.min_amount }}" max="{{ offer.max_amount }}" required
                class="w-full mt-1 p-2 bg-gray-700 text-gray-200 rounded border border-gray-600 focus:outline-none focus:border-blue-500">
-        <p class="text-xs text-gray-400">Min: ₦{{ offer.min_amount }} | Max: ₦{{ offer.max_amount }}</p>
+        <p class="text-xs text-gray-400">Min: ₦{{ offer.min_amount|intcomma }} | Max: ₦{{ offer.max_amount|intcomma }}</p>
       </div>
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-400">Total You Will Receive</label>

@@ -46,13 +46,17 @@ def get_receiving_details(source: str, asset: str) -> dict:
     if source == 'binance':
         # return details from settings or DB
         return settings.BINANCE_RECEIVE_DETAILS  # e.g. {'uid':'...', 'email':'...'}
-    # elif source == 'bybit':
-    #     return settings.BYBIT_RECEIVE_DETAILS
-    # ... others
+    elif source == 'bybit':
+        return settings.BYBIT_RECEIVE_DETAILS
+    elif source == 'bitget':
+        return settings.BITGET_RECEIVE_DETAILS
+    elif source == 'mexc':
+        return settings.MEXC_RECEIVE_DETAILS
+    elif source == 'gateio':
+        return settings.GATEIO_RECEIVE_DETAILS
     
-    # fallback: on-chain wallet address
-    # if source == 'wallet':
-    #     return {'address': settings.PLATFORM_WALLET_ADDRESS}
+    if source == 'wallet':
+        return {'address': settings.PLATFORM_WALLET_ADDRESS}
 
     raise ValueError(f"Unsupported source: {source}")
 

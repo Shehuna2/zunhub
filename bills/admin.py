@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AssetSellOrder, ExchangeInfo
+from .models import AssetSellOrder, ExchangeInfo, PaymentProof
 
 @admin.register(AssetSellOrder)
 class SellOrderAdmin(admin.ModelAdmin):
@@ -32,3 +32,9 @@ class SellOrderAdmin(admin.ModelAdmin):
 @admin.register(ExchangeInfo)
 class ExchangeInfoAdmin(admin.ModelAdmin):
     list_display = ('exchange',)
+
+
+@admin.register(PaymentProof)
+class PaymentProofAdmin(admin.ModelAdmin):
+    list_display = ("order", "uploaded_at")
+    readonly_fields = ("uploaded_at",)
