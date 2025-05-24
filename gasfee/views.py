@@ -3,33 +3,35 @@ import requests
 import logging
 import traceback
 import base58
+from web3 import Web3
 from decimal import Decimal
 from django.conf import settings
-
-
-
 from django.core.cache import cache
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse
 from django.db import transaction
 from django.utils import timezone
 from django.contrib import messages
-from web3 import Web3
 from dotenv import load_dotenv
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required, user_passes_test
 
 
 from .forms import CryptoForm
 from p2p.models import Wallet
 from .models import CryptoPurchase, Crypto
-from .utils import (
-    get_crypto_price, get_exchange_rate, send_bsc, check_solana_balance, 
-    send_evm, send_solana, validate_solana_address, send_ton, validate_ton_address
-)
-# from .near_utils import (
-#     validate_near_account_id, send_near
-# )
 
+from .utils import (
+    get_crypto_price, get_exchange_rate, send_bsc, send_evm
+)
+from .near_utils import (
+    validate_near_account_id, send_near
+)
+from .ton_utils import (
+    send_ton, validate_ton_address
+)
+from .sol_utils import (
+    send_solana, validate_solana_address, check_solana_balance, 
+)
 
 # Load environment variables
 load_dotenv()
@@ -49,77 +51,42 @@ def add_crypto_asset(request):
     return render(request, 'gasfee/create_crypto.html', {'form': form})
 
 
-
-
 def asset_list(request):
-    """Returns a list of available crypto assets with live prices and logos."""
+    """Renders the crypto dashboard with initial prices & logos."""
     cryptos = Crypto.objects.all()
-    crypto_list = []
-
-    # Collect all CoinGecko IDs for a single API call
-    coingecko_ids = [crypto.coingecko_id for crypto in cryptos]
-    network_map = {crypto.coingecko_id: getattr(crypto, 'network', 'Ethereum').lower() for crypto in cryptos}
-
-    # Fetch prices in batch
-    prices = {}
+    # Option A: Fetch initial batch prices (optional)
+    coingecko_ids = [c.coingecko_id for c in cryptos]
     cache_key = f"crypto_prices_{'_'.join(sorted(coingecko_ids))}"
-    cached_prices = cache.get(cache_key)
-
-    if cached_prices is None:
+    prices = cache.get(cache_key)
+    if prices is None:
         try:
-            # Batch request to CoinGecko
-            ids_param = ','.join(coingecko_ids)
-            response = requests.get(
-                f"https://api.coingecko.com/api/v3/simple/price?ids={ids_param}&vs_currencies=usd"
+            resp = requests.get(
+                "https://api.coingecko.com/api/v3/simple/price",
+                params={"ids": ",".join(coingecko_ids), "vs_currencies": "usd"},
+                timeout=5,
             )
-            response.raise_for_status()
-            prices = response.json()
-            cache.set(cache_key, prices, timeout=300)  # Cache for 5 minutes
-        except Exception as e:
-            logger.error(f"Failed to fetch batch prices: {e}")
+            resp.raise_for_status()
+            prices = resp.json()
+            cache.set(cache_key, prices, 300)
+        except Exception:
             prices = {}
-    else:
-        prices = cached_prices
 
-    for crypto in cryptos:
-        # Get price from batch response
-        price = prices.get(crypto.coingecko_id, {}).get('usd', 0)
-        if price == 0:
-            # Fallback to individual fetch if needed (with rate limit handling)
-            individual_cache_key = f"crypto_price_{crypto.coingecko_id}_{network_map[crypto.coingecko_id]}"
-            price = cache.get(individual_cache_key)
-            if price is None:
-                try:
-                    price = get_crypto_price(crypto.coingecko_id, network_map[crypto.coingecko_id])
-                    cache.set(individual_cache_key, price, timeout=300)
-                except Exception as e:
-                    logger.error(f"Failed to fetch price for {crypto.coingecko_id}: {e}")
-                    price = 0
-
-        # Use logo_url from model, fallback to placeholder
-        logo_url = getattr(crypto, 'logo_url', None)
-        if not logo_url:
-            logo_url = f"{settings.MEDIA_URL}images/default_crypto_logo.png"  # Ensure this file exists
-
+    crypto_list = []
+    for c in cryptos:
+        price = prices.get(c.coingecko_id, {}).get("usd", 0.0)
         crypto_list.append({
-            'id': crypto.id,
-            'name': crypto.name,
-            'symbol': crypto.symbol,
-            'coingecko_id': crypto.coingecko_id,
-            'price': price,
-            'logo_url': crypto.logo.url,
+            "id":        c.id,
+            "name":      c.name,
+            "symbol":    c.symbol,
+            "ws_symbol": f"{c.symbol.lower()}usdt",
+            "price":     float(price),
+            "logo_url":  c.logo.url,
         })
 
-    return render(request, "gasfee/crypto_list.html", {"cryptos": crypto_list})
+    return render(request, "gasfee/crypto_list.html", {
+        "cryptos": crypto_list,
+    })
 
-
-# def refund_user(request, order):
-#     with transaction.atomic():
-#         wallet = Wallet.objects.select_for_update().get(user=request.user)
-#         wallet.balance += order.total_price
-#         wallet.save(update_fields=["balance"])
-#         order.status = "refunded"
-#         order.save(update_fields=["status"])
 
 @login_required
 def buy_crypto(request, crypto_id):
@@ -213,11 +180,11 @@ def buy_crypto(request, crypto_id):
                     logger.warning(f"Invalid Solana address: {wallet_address}")
                     return JsonResponse({"success": False, "error": "Invalid Solana address format."})
                 logger.info(f"Valid Solana address: {wallet_address}")
-            # elif crypto.symbol.upper() == "NEAR":
-            #     if not validate_near_account_id(wallet_address):
-            #         logger.warning(f"Invalid NEAR address: {wallet_address}")
-            #         return JsonResponse({"success": False, "error": "Invalid NEAR address format."})
-            #     logger.info(f"Valid NEAR address: {wallet_address}")
+            elif crypto.symbol.upper() == "NEAR":
+                if not validate_near_account_id(wallet_address):
+                    logger.warning(f"Invalid NEAR address: {wallet_address}")
+                    return JsonResponse({"success": False, "error": "Invalid NEAR address format."})
+                logger.info(f"Valid NEAR address: {wallet_address}")
             elif crypto.symbol.upper() == "TON":
                 if not validate_ton_address(wallet_address):
                     logger.warning(f"Invalid TON address: {wallet_address}")

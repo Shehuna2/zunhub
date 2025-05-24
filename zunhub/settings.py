@@ -2,7 +2,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import json
 import os
-
+from django.core.serializers.json import DjangoJSONEncoder
 
 
 load_dotenv()  # Load environment variables from .env file
