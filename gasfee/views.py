@@ -88,185 +88,144 @@ def asset_list(request):
     })
 
 
+# Address validators per symbol (excluding EVM, handled inline)
+VALIDATORS = {
+    "SOL": validate_solana_address,
+    "TON": validate_ton_address,
+    "NEAR": validate_near_account_id,
+}
+
+# Sender functions per symbol
+SENDERS = {
+    "BNB": send_bsc,
+    "SOL": send_solana,
+    "TON": send_ton,
+    "NEAR": send_near,
+    "ETH": send_evm,
+    "BASE-ETH": send_evm,
+}
+
 @login_required
 def buy_crypto(request, crypto_id):
+    # Fetch crypto and exchange rate
     crypto = get_object_or_404(Crypto, id=crypto_id)
-    logger.info(f"Crypto Symbol: {crypto.symbol}, Upper: {crypto.symbol.upper()}")
-
-    # Fetch cached prices
-    network = crypto.network if hasattr(crypto, "network") else "Ethereum"
-    crypto_price = cache.get(f"crypto_price_{crypto.coingecko_id}_{network.lower()}")
     exchange_rate = cache.get("exchange_rate_usd_ngn")
-
-    if crypto_price is None:
-        crypto_price = get_crypto_price(crypto.coingecko_id, network)
-        cache.set(f"crypto_price_{crypto.coingecko_id}_{network.lower()}", crypto_price, timeout=300)
-
     if exchange_rate is None:
         exchange_rate = get_exchange_rate()
-        cache.set("exchange_rate_usd_ngn", exchange_rate, timeout=300)
+        cache.set("exchange_rate_usd_ngn", exchange_rate, 300)
+
+    # Fetch an initial crypto price (USD) for template
+    network = crypto.network.lower()
+    price_cache_key = f"crypto_price_{crypto.coingecko_id}_{network}"
+    crypto_price = cache.get(price_cache_key)
+    if crypto_price is None:
+        try:
+            crypto_price = get_crypto_price(crypto.coingecko_id, crypto.network)
+            cache.set(price_cache_key, crypto_price, 300)
+        except Exception as e:
+            logger.error(f"Failed to fetch initial price for {crypto.symbol}: {e}")
+            crypto_price = 0
 
     if request.method == "POST":
-        wallet_address = request.POST.get("wallet_address")
-
+        # Parse and validate input amount
         try:
             amount = Decimal(request.POST.get("amount", "0"))
             if amount <= 0:
-                raise ValueError("Invalid amount")
-
-            currency = request.POST.get("currency", "NGN").upper()
-
-            # Convert amount to crypto received
-            if currency == "NGN":
-                total_price_ngn = amount
-                crypto_received = (amount / exchange_rate) / crypto_price
-            elif currency == "USDT":
-                crypto_received = amount / crypto_price
-                total_price_ngn = amount * exchange_rate
-            elif currency == crypto.symbol.upper():
-                crypto_received = amount
-                total_price_ngn = (amount * crypto_price) * exchange_rate
-            else:
-                return JsonResponse({"success": False, "error": "Invalid currency selection."})
-            
-            logger.info(f"Processing purchase: {amount} {currency} for {crypto_received:.6f} {crypto.symbol} to {wallet_address}")
-
-            # Handle rent/deployment costs within atomic transaction
-            with transaction.atomic():
-                wallet = Wallet.objects.select_for_update().get(user=request.user)
-                total_ngn_deducted = total_price_ngn
-                
-                if crypto.symbol.upper() == "SOL":
-                    receiver_balance = check_solana_balance(wallet_address)
-                    rent_exemption = Decimal('0.00089')
-                    rent_sol = rent_exemption if receiver_balance == 0 else Decimal('0')
-                    rent_ngn = (rent_sol * crypto_price * exchange_rate).quantize(Decimal('0.01'))
-                    total_ngn_deducted += rent_ngn
-                elif crypto.symbol.upper() == "TON":
-                    deployment_ton = Decimal('0.05')
-                    deployment_ngn = (deployment_ton * crypto_price * exchange_rate).quantize(Decimal('0.01'))
-                    total_ngn_deducted += deployment_ngn
-                else:
-                    rent_sol = Decimal('0')
-                
-                if wallet.balance < total_ngn_deducted:
-                    return JsonResponse({
-                        "success": False,
-                        "error": f"Insufficient NGN balance. Required: {total_ngn_deducted}, Available: {wallet.balance}"
-                    })
-
-                wallet.balance -= total_ngn_deducted
-                wallet.save(update_fields=["balance"])
-
-                order = CryptoPurchase.objects.create(
-                    user=request.user,
-                    crypto=crypto,
-                    input_amount=amount,
-                    input_currency=currency,
-                    crypto_amount=crypto_received,
-                    total_price=total_ngn_deducted,
-                    wallet_address=wallet_address,
-                    status="pending"
-                )
-
-            # Validate wallet address
-            if crypto.symbol.upper() in ["BNB", "ETH", "BASE-ETH"]:
-                try:
-                    wallet_address = Web3.to_checksum_address(wallet_address)
-                except ValueError:
-                    return JsonResponse({"success": False, "error": "Invalid Ethereum address format."})
-            elif crypto.symbol.upper() == "SOL":
-                if not validate_solana_address(wallet_address):
-                    logger.warning(f"Invalid Solana address: {wallet_address}")
-                    return JsonResponse({"success": False, "error": "Invalid Solana address format."})
-                logger.info(f"Valid Solana address: {wallet_address}")
-            elif crypto.symbol.upper() == "NEAR":
-                if not validate_near_account_id(wallet_address):
-                    logger.warning(f"Invalid NEAR address: {wallet_address}")
-                    return JsonResponse({"success": False, "error": "Invalid NEAR address format."})
-                logger.info(f"Valid NEAR address: {wallet_address}")
-            elif crypto.symbol.upper() == "TON":
-                if not validate_ton_address(wallet_address):
-                    logger.warning(f"Invalid TON address: {wallet_address}")
-                    return JsonResponse({"success": False, "error": "Invalid TON address format."})
-                logger.info(f"Valid TON address: {wallet_address}")
-            else:
-                return JsonResponse({"success": False, "error": "Unsupported token."})
-
-            # Handle transaction
-            try:
-                logger.info(f"Attempting transfer for symbol: {crypto.symbol.upper()}")
-                if crypto.symbol.upper() == "BNB":
-                    tx_hash = send_bsc(wallet_address, crypto_received)
-                elif crypto.symbol.upper() == "SOL":
-                    tx_hash, actual_rent_sol = send_solana(wallet_address, float(crypto_received))
-                    if Decimal(str(actual_rent_sol)) != rent_sol:
-                        logger.warning(f"Rent mismatch: expected {rent_sol}, sent {actual_rent_sol}")
-                elif crypto.symbol.upper() == "TON":
-                    tx_hash, actual_deployment_ton = send_ton(wallet_address, float(crypto_received), order.id)
-                    logger.info(f"Transaction hash from send_ton: {tx_hash}")
-                    if actual_deployment_ton == 0:
-                        refund_amount = deployment_ngn
-                        wallet.balance += refund_amount
-                        wallet.save(update_fields=["balance"])
-                        total_ngn_deducted -= refund_amount
-                        order.total_price = total_ngn_deducted
-                        order.save(update_fields=["total_price"])
-                # elif crypto.symbol.upper() == "NEAR":
-                #     if not validate_near_account_id(wallet_address):
-                #         return JsonResponse({"success": False, "error": "Invalid NEAR account ID format."})
-                #     try:
-                #         tx_hash = send_near(wallet_address, crypto_received)
-                #         logger.info(f"NEAR transaction hash: {tx_hash}")
-                #     except ValueError as e:
-                #         return JsonResponse({"success": False, "error": str(e)})
-                elif crypto.symbol.upper() in ["ETH", "BASE-ETH"]:
-                    evm_network = crypto.symbol.split("-")[-1].lower()
-                    tx_hash = send_evm(evm_network, wallet_address, Web3.to_wei(crypto_received, "ether"))
-                else:
-                    return JsonResponse({"success": False, "error": "Unsupported token."})
-
-                order.tx_hash = tx_hash
-                order.status = "completed"
-                order.save(update_fields=["tx_hash", "status"])
-
-                message = f"Your {crypto_received:.6f} {crypto.symbol} has been sent!"
-                if crypto.symbol.upper() == "SOL" and rent_sol > 0:
-                    message += f" (includes {rent_sol:.6f} SOL rent for unfunded wallet)"
-                elif crypto.symbol.upper() == "TON" and actual_deployment_ton > 0:
-                    message += f" (includes {actual_deployment_ton:.6f} TON for wallet deployment)"
-
-                return JsonResponse({
-                    "success": True,
-                    "message": message,
-                    "tx_hash": tx_hash,
-                    "order_id": order.id,
-                    "logo_url": crypto.logo.url,
-                    "crypto_name": crypto.name,
-                    "crypto_symbol": crypto.symbol,
-                    "crypto_amount": str(crypto_received),
-                    "input_amount": str(amount),
-                    "input_currency": currency,
-                    "total_ngn_charged": str(total_ngn_deducted),
-                    "wallet_address": wallet_address,
-                    "created_at": order.created_at.strftime("%Y-%m-%d %H:%M:%S"),
-                    "username": request.user.username,
-                    "exchange_rate": str(exchange_rate),
-                    "crypto_price": str(crypto_price),
-                })
-            except Exception as tx_error:
-                logger.error(f"Crypto transfer failed: {tx_error}\n{traceback.format_exc()}")
-                refund_user(request, order)
-                return JsonResponse({"success": False, "error": "Transaction failed. Refund issued."})
-
+                raise ValueError
         except (ValueError, TypeError):
             return JsonResponse({"success": False, "error": "Invalid amount input."})
 
+        currency = request.POST.get("currency", "NGN").upper()
+        wallet_address = request.POST.get("wallet_address", "").strip()
+
+        # Wallet address validation and normalization for EVM chains
+        symbol = crypto.symbol.upper()
+        if symbol in ["BNB", "ETH", "BASE-ETH"]:
+            try:
+                wallet_address = Web3.to_checksum_address(wallet_address)
+            except Exception:
+                return JsonResponse({"success": False, "error": "Invalid Ethereum-compatible address."})
+        else:
+            validator = VALIDATORS.get(symbol)
+            if validator and not validator(wallet_address):
+                return JsonResponse({"success": False, "error": "Invalid wallet address format."})
+
+        # Convert to crypto quantity and NGN total
+        if currency == "NGN":
+            total_ngn = amount
+            crypto_received = Decimal(request.POST.get("crypto_received", "0"))
+        elif currency == "USDT":
+            total_ngn = amount * Decimal(exchange_rate)
+            crypto_received = Decimal(request.POST.get("crypto_received", "0"))
+        elif currency == symbol:
+            crypto_received = amount
+            total_ngn = amount * Decimal(exchange_rate)
+        else:
+            return JsonResponse({"success": False, "error": "Invalid currency selection."})
+
+        # Deduct balance and create purchase order
+        with transaction.atomic():
+            wallet = Wallet.objects.select_for_update().get(user=request.user)
+            if wallet.balance < total_ngn:
+                return JsonResponse({
+                    "success": False,
+                    "error": f"Insufficient balance. Required: {total_ngn}, Available: {wallet.balance}"
+                })
+            wallet.balance -= total_ngn
+            wallet.save(update_fields=["balance"])
+
+            order = CryptoPurchase.objects.create(
+                user=request.user,
+                crypto=crypto,
+                input_amount=amount,
+                input_currency=currency,
+                crypto_amount=crypto_received,
+                total_price=total_ngn,
+                wallet_address=wallet_address,
+                status="pending"
+            )
+
+        # Execute blockchain transfer
+        sender = SENDERS.get(symbol)
+        if not sender:
+            return JsonResponse({"success": False, "error": "Unsupported token."})
+
+        try:
+            # NEAR transfer only needs address and amount
+            if symbol == "NEAR":
+                result = sender(wallet_address, float(crypto_received))
+            else:
+                result = sender(wallet_address, float(crypto_received), order.id)
+            tx_hash = result if isinstance(result, str) else result[0]
+        except Exception as e:
+            logger.error(f"Transfer failed: {e}", exc_info=True)
+            refund_user(request, order)
+            return JsonResponse({"success": False, "error": "Transaction failed. Refund issued."})
+
+        # Finalize order
+        order.tx_hash = tx_hash
+        order.status = "completed"
+        order.save(update_fields=["tx_hash", "status"])
+
+        # Return JSON response
+        return JsonResponse({
+            "success": True,
+            "crypto_name": order.crypto.name,
+            "crypto_symbol": order.crypto.symbol,
+            "crypto_amount": str(order.crypto_amount),
+            "total_ngn_charged": str(order.total_price),
+            "wallet_address": order.wallet_address,
+            "tx_hash": order.tx_hash,
+            "created_at": order.created_at.isoformat(),
+        })
+
+    # GET: render template (price via WebSocket)
     return render(request, "gasfee/buy_crypto.html", {
         "crypto": crypto,
         "exchange_rate": exchange_rate,
         "crypto_price": crypto_price,
     })
+
     
 
 def refund_user(request, purchase):

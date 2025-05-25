@@ -1,11 +1,8 @@
 {% extends "base.html" %}
-{% load humanize_naira %}
 
 {% block content %}
-
-  <div class="container mx-auto p-6 mt-20">
-    <div class="max-w-md mx-auto bg-gray-800 p-6 rounded-lg shadow-md">
-      <!-- Container for form and receipt -->
+  <div class="container mx-auto p-6 mt-20" x-data="buyCrypto()" x-init="init()">
+    <div class="max-w-md mx-auto bg-gray-800 p-6 rounded-lg border border-gray-800 shadow-md">
       <div id="buyCryptoContainer">
         <!-- Form -->
         <div id="buyCryptoFormContainer">
@@ -19,306 +16,290 @@
             </div>
             <div>
               <p class="text-gray-300 text-sm">Live Price</p>
-              <p id="livePrice" class="text-sm text-green-400">${{ crypto_price|floatformat:2 }}</p>
+              <p x-text="formatPrice(price)" class="text-sm text-green-400"></p>
             </div>
           </div>
 
-          <form id="buyCryptoForm" method="post">
+          <form id="buyCryptoForm" method="post" @submit.prevent="submit()" class="space-y-4">
             {% csrf_token %}
-            <input type="hidden" id="csrfToken" value="{{ csrf_token }}">
-
-            <div class="mb-4">
+            <div>
               <label class="block text-gray-400 mb-2">Amount</label>
               <div class="relative flex">
-                <input type="number" name="amount" id="amountInput" step="0.0001" required
-                       class="w-full p-2 bg-gray-700 rounded-l border border-gray-600 focus:outline-none">
-                <select name="currency" id="currencySelect"
+                <input type="number" name="amount" x-model.number="amount" step="0.0001" required
+                      placeholder="Enter amount"
+                      class="w-full p-2 bg-gray-700 rounded-l border border-gray-600 focus:outline-none">
+                <select name="currency" id="currencySelect" x-model="currency"
                         class="bg-gray-700 text-white p-2 border-l border-gray-600 rounded-r">
-                  <option value="ngn">NGN</option>
-                  <option value="usdt">USDT</option>
-                  <option value="{{ crypto.symbol|lower }}">{{ crypto.symbol|upper }}</option>
+                  <option value="NGN">NGN</option>
+                  <option value="USDT">USDT</option>
+                  <option :value="symbol">{{ crypto.symbol|upper }}</option>
                 </select>
               </div>
             </div>
 
-            <div class="mb-4">
+            <div>
               <label for="walletAddress" class="block text-gray-400 mb-2">Your Crypto Wallet Address</label>
-              <input type="text" name="wallet_address" id="walletAddress" required
+              <input type="text" name="wallet_address" x-model="walletAddress" required
                      placeholder="Paste your {{ crypto.symbol }} wallet address here"
                      class="w-full p-2 bg-gray-700 rounded border border-gray-600 focus:outline-none">
-              <p id="walletError" class="text-red-500 text-sm mt-1 hidden">Invalid wallet address format.</p>
+              <p x-show="walletError" class="text-red-500 text-sm mt-1">{{ walletErrorMessage }}</p>
             </div>
 
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex justify-between items-center">
               <div>
-                <p class="text-gray-400">Total Cost (<span id="inputCurrency">NGN</span>):</p>
-                <p id="totalCost" class="text-2xl font-bold text-blue-400">₦0.00</p>
+                <p class="text-gray-400">Total Cost (<span x-text="currency"></span>):</p>
+                <p x-text="formatNgn(totalCost)" class="text-2xl font-bold text-blue-400"></p>
               </div>
               <div>
                 <p class="text-gray-400">Crypto Received:</p>
-                <p id="cryptoReceived" class="text-2xl font-bold text-green-400">0 {{ crypto.symbol }}</p>
+                <p x-text="formatCrypto(cryptoReceived)" class="text-2xl font-bold text-green-400"></p>
               </div>
             </div>
 
             <div class="relative">
-              <button type="submit" id="confirmPurchaseBtn"
+              <button type="submit" :disabled="loading"
                       class="w-full bg-gradient-to-br from-blue-900 to-purple-800 hover:bg-blue-700 text-white py-2 rounded-lg">
-                Confirm Purchase
+                <span x-show="!loading">Confirm Purchase</span>
+                <div x-show="loading"
+                     class="w-6 h-6 border-4 border-t-transparent border-blue-500 rounded-full animate-spin mx-auto">
+                </div>
               </button>
-              <div id="spinner" class="hidden absolute inset-0 flex items-center justify-center">
-                <div class="w-6 h-6 border-4 border-t-transparent border-blue-500 rounded-full animate-spin"></div>
-              </div>
             </div>
           </form>
-          <div id="result" class="mt-4 text-center" aria-live="polite"></div>
+
+          <div id="result" class="mt-4 text-center" aria-live="polite" x-html="resultMessage"></div>
         </div>
-        <!-- Receipt -->
-        <div id="receiptContainer" class="hidden">
-          <div class="bg-gray-700 p-6 rounded-lg shadow-lg border border-gray-600">
-            <div class="text-center">
-              <svg class="mx-auto h-12 w-12 text-green-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </div>
+    </div>
+
+<!-- Receipt Modal -->
+    <div x-show="showReceipt" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.outside="reset()">
+      <div class="bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full border border-gray-700" @click.stop>
+        <div class="text-center mb-4">
+          <div class="flex justify-center">
+            <div class="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center animate-pulse shadow-lg">
+              <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
               </svg>
-              <div class="flex justify-center items-center gap-2">
-                <h3 class="receipt-title text-2xl font-bold text-green-400">Crypto Receipt</h3>
-              </div>
             </div>
-            <div class="receipt-card p-4 rounded-lg">
-              <div class="grid grid-cols-2 gap-4 sm:grid-cols-2">
-                <!-- Row 1 -->
-                <div class="receipt-field">
-                  <div class="flex-1 items-center">
-                    <img src="{{ crypto.logo.url }}" alt="{{ crypto.name }} logo" class="receipt-logo w-8 h-8 rounded-full">
-                  </div>
-                </div>
-                <div class="receipt-field">
-                  <i class="fas fa-check-circle receipt-icon"></i>
-                  <div class="flex-1">
-                    <span class="text-gray-400 text-sm">Status</span>
-                    <p id="receiptStatus" class="text-sm text-green-400">Completed</p>
-                  </div>
-                </div>
-                <div class="receipt-field">
-                  <i class="fas fa-coins receipt-icon"></i>
-                  <div class="flex-1">
-                    <span class="text-gray-400 text-sm">Crypto</span>
-                    <p class="text-sm">
-                      <span id="receiptCrypto"></span> (<span id="receiptSymbol"></span>)
-                    </p>
-                  </div>
-                </div>
-                <!-- Row 2 -->
-                <div class="receipt-field">
-                  <i class="fas fa-wallet receipt-icon"></i>
-                  <div class="flex-1">
-                    <span class="text-gray-400 text-sm">Amount</span>
-                    <p class="text-sm font-mono">
-                      <span id="receiptCryptoAmount"></span> <span id="receiptSymbol2"></span>
-                    </p>
-                  </div>
-                </div>
-                <div class="receipt-field bg-gray-800 rounded-lg">
-                  <i class="fas fa-credit-card receipt-icon"></i>
-                  <div class="flex-1">
-                    <span class="text-gray-400 text-sm">Total Cost</span>
-                    <p class="text-base font-bold text-green-400">₦<span id="receiptTotalNgn"></span></p>
-                  </div>
-                </div>
-                <!-- Row 3 -->
-                <div class="receipt-field">
-                  <i class="fas fa-address-book receipt-icon"></i>
-                  <div class="flex-1">
-                    <span class="text-gray-400 text-sm">Address</span>
-                    <p id="receiptWalletAddress" class="text-sm font-mono expandable truncate"></p>
-                  </div>
-                </div>
-                <div class="receipt-field">
-                  <i class="fas fa-link receipt-icon"></i>
-                  <div class="flex-1">
-                    <span class="text-gray-400 text-sm">Tx Hash</span>
-                    <p id="receiptTxHash" class="text-sm font-mono expandable truncate"></p>
-                  </div>
-                </div>
-                <!-- Row 4 -->
-                <div class="receipt-field">
-                  <i class="fas fa-calendar receipt-icon"></i>
-                  <div class="flex-1">
-                    <span class="text-gray-400 text-sm">Date</span>
-                    <p id="receiptDate" class="text-sm"></p>
-                  </div>
-                </div>
+          </div>
+          <h3 class="text-2xl font-bold text-green-400 mt-2">Order Receipt</h3>
+        </div>
+        <!-- Nested Card for Order Details -->
+        <div class="bg-gray-800 p-4 rounded-2xl border border-green-700 shadow-md">
+          <div class="space-y-4">
+            <!-- Status -->
+            <div class="flex justify-between items-center">
+              <div class="flex items-center space-x-2">
+                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span class="text-gray-400">Status:</span>
               </div>
-              <div class="mt-4">
-                <button id="copyTxHash" class="copy-btn bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-2 rounded-lg flex items-center mx-auto">
-                  <i class="fas fa-copy copy-icon mr-2"></i>
-                  <i class="fas fa-check check-icon mr-2"></i>
-                  Copy Tx Hash
+              <span class="font-semibold text-green-400">Completed</span>
+            </div>
+            <!-- Crypto -->
+            <div class="flex justify-between items-center">
+              <div class="flex items-center space-x-2">
+                <img :src="cryptoLogoUrl || '{{ crypto.logo.url }}'" alt="Crypto Logo" class="w-6 h-6 rounded-full">
+                <span class="text-gray-400">Crypto:</span>
+              </div>
+              <span x-text="receipt.crypto + ' (' + receipt.symbol + ')'" class="font-semibold text-white"></span>
+            </div>
+            <!-- Amount -->
+            <div class="flex justify-between items-center">
+              <div class="flex items-center space-x-2">
+                <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c1.657 0 3-1.343 3-3S13.657 2 12 2 9 3.343 9 5s1.343 3 3 3zM12 14c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3z"/>
+                </svg>
+                <span class="text-gray-400">Amount:</span>
+              </div>
+              <span x-text="receipt.amount + ' ' + receipt.symbol" class="font-mono text-white"></span>
+            </div>
+            <!-- Total Cost -->
+            <div class="flex justify-between items-center">
+              <div class="flex items-center space-x-2">
+                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span class="text-gray-400">Total Cost:</span>
+              </div>
+              <span x-text="formatNgn(receipt.total)" class="font-bold text-green-400"></span>
+            </div>
+            <!-- Address -->
+            <div class="flex justify-between items-center">
+              <div class="flex items-center space-x-2">
+                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+                <span class="text-gray-400">Address:</span>
+              </div>
+              <span x-text="receipt.address" class="font-mono text-white truncate"></span>
+            </div>
+            <!-- Tx Hash with Copy Icon -->
+            <div class="flex justify-between items-center">
+              <div class="flex items-center space-x-2">
+                <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                <span class="text-gray-400">Tx Hash:</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span x-text="trimHash(receipt.txHash)" class="font-mono text-white"></span>
+                <button @click="copyTxHash()" class="text-gray-400 hover:text-white relative">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16h8m-8-4h8m-6-4h6m2 10a2 2 0 01-2 2H8a2 2 0 01-2-2V6a2 2 0 012-2h6l4 4v10z"/>
+                  </svg>
+                  <span x-show="txCopied" class="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gray-700 text-white text-xs px-2 py-1 rounded">Copied!</span>
                 </button>
               </div>
             </div>
+            <!-- Date -->
+            <div class="flex justify-between items-center">
+              <div class="flex items-center space-x-2">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span class="text-gray-400">Date:</span>
+              </div>
+              <span x-text="receipt.date" class="font-mono text-white"></span>
+            </div>
           </div>
-          <div class="mt-6 flex space-x-4">
-            <a href="{% url 'asset_list' %}" id="homeBtn" class="flex-1 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white py-2 rounded-lg text-center">Back to Home</a>
-            <button id="newPurchaseBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-2 rounded-lg">Buy Again</button>
-          </div>
+        </div>
+        <div class="mt-6 flex space-x-4">
+          <button @click="reset()"
+                  class="flex-1 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 to-gray-700 text-white py-2 rounded-lg transition duration-200">
+            Close
+          </button>
+          <button @click="reset()"
+                  class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 to-blue-700 text-white py-2 rounded-lg transition duration-200">
+            Buy Again
+          </button>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const amountInput = document.getElementById("amountInput");
-      const currencySelect = document.getElementById("currencySelect");
-      const totalCostDisplay = document.getElementById("totalCost");
-      const cryptoReceivedDisplay = document.getElementById("cryptoReceived");
-      const buyCryptoForm = document.getElementById("buyCryptoForm");
-      const walletAddressInput = document.getElementById("walletAddress");
-      const walletError = document.getElementById("walletError");
-      const confirmPurchaseBtn = document.getElementById("confirmPurchaseBtn");
-      const spinner = document.getElementById("spinner");
-      const resultDiv = document.getElementById("result");
-      const buyCryptoFormContainer = document.getElementById("buyCryptoFormContainer");
-      const receiptContainer = document.getElementById("receiptContainer");
-      const newPurchaseBtn = document.getElementById("newPurchaseBtn");
-      const copyTxHashBtn = document.getElementById("copyTxHash");
-      const walletAddressEl = document.getElementById("receiptWalletAddress");
-      const txHashEl = document.getElementById("receiptTxHash");
-      const csrfToken = document.getElementById("csrfToken").value;
+    function buyCrypto() {
+      return {
+        symbol: '{{ crypto.symbol|upper }}',
+        price: parseFloat('{{ crypto_price|floatformat:2 }}'),
+        exchangeRate: parseFloat('{{ exchange_rate|floatformat:2 }}'),
+        amount: 0,
+        currency: 'NGN',
+        walletAddress: '',
+        loading: false,
+        walletError: false,
+        walletErrorMessage: 'Invalid wallet address format.',
+        resultMessage: '',
+        showReceipt: false,
+        receipt: {},
+        txCopied: false,
 
-      let cryptoPrice = parseFloat("{{ crypto_price|floatformat:2 }}");
-      const exchangeRate = parseFloat("{{ exchange_rate|floatformat:2 }}");
+        trimHash(hash) {
+          if (!hash) return '';
+          const len = hash.length;
+          if (len <= 12) return hash; // Return full hash if short
+          return hash.slice(0, 6) + '...' + hash.slice(-6); // Trim to first 6 and last 6 characters
+        },
+        copyTxHash() {
+          navigator.clipboard.writeText(this.receipt.txHash).then(() => {
+            this.txCopied = true; // Show "Copied!" message
+            setTimeout(() => { this.txCopied = false; }, 2000); // Hide after 2 seconds
+          });
+        },
 
-      function validateWalletAddress(address, symbol) {
-        if (symbol === "TON") {
-          return address.length > 0 && (address.startsWith("EQ") || address.startsWith("UQ"));
-        } else if (symbol === "SOL") {
-          return address.length > 0 && /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
-        } else if (symbol === "NEAR") {
-          if (!address || address.length < 2 || address.length > 64) return false;
-          if (address.length === 64 && /^[0-9a-fA-F]{64}$/.test(address)) return true;
-          if (!/^[a-z0-9._-]+$/.test(address)) return false;
-          return address.endsWith(".near") || address.endsWith(".tg");
-        } else {
-          return Web3.utils.isAddress(address);
-        }
-      }
+        init() {
+          this.setupSocket();
+        },
+        setupSocket() {
+          const pair = this.symbol.toLowerCase() + 'usdt@ticker';
+          const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${pair}`);
+          ws.onmessage = ({ data }) => {
+            const msg = JSON.parse(data);
+            this.price = parseFloat(msg.c);
+          };
+          ws.onclose = () => setTimeout(() => this.setupSocket(), 5000);
+        },
 
-      function updateCostAndCrypto() {
-        const amount = parseFloat(amountInput.value) || 0;
-        const currency = currencySelect.value.toLowerCase();
+        formatPrice(p) { return p > 0 ? `$${p.toFixed(2)}` : 'N/A'; },
+        formatNgn(n)   { return `₦${parseFloat(n).toFixed(2)}`; },
+        formatCrypto(c){ return `${parseFloat(c).toFixed(6)} ${this.symbol}`; },
 
-        let totalCostNgn = 0;
-        let cryptoReceived = 0;
-
-        if (currency === "ngn") {
-          const amountInUsd = amount / exchangeRate;
-          cryptoReceived = amountInUsd / cryptoPrice;
-          totalCostNgn = amount;
-        } else if (currency === "usdt") {
-          cryptoReceived = amount / cryptoPrice;
-          totalCostNgn = amount * exchangeRate;
-        } else if (currency === "{{ crypto.symbol|lower }}") {
-          cryptoReceived = amount;
-          totalCostNgn = (amount * cryptoPrice) * exchangeRate;
-        }
-
-        totalCostDisplay.innerText = `₦${totalCostNgn.toFixed(2)}`;
-        cryptoReceivedDisplay.innerText = `${cryptoReceived.toFixed(6)} {{ crypto.symbol }}`;
-        document.getElementById("inputCurrency").innerText = currency.toUpperCase();
-      }
-
-      buyCryptoForm.addEventListener("submit", function (event) {
-        event.preventDefault();
-        const walletAddress = walletAddressInput.value.trim();
-        const symbol = "{{ crypto.symbol|upper }}";
-
-        if (!validateWalletAddress(walletAddress, symbol)) {
-          walletError.classList.remove("hidden");
-          walletError.innerText = "Invalid wallet address format.";
-          return;
-        }
-        walletError.classList.add("hidden");
-
-        confirmPurchaseBtn.disabled = true;
-        spinner.classList.remove("hidden");
-        resultDiv.innerHTML = "";
-
-        const formData = new FormData(buyCryptoForm);
-        fetch("{% url 'buy_crypto' crypto.id %}", {
-          method: "POST",
-          body: formData,
-          headers: {
-            "X-CSRFToken": csrfToken,
-            "X-Requested-With": "XMLHttpRequest"
+        get totalCost() {
+          if (this.currency === 'NGN') {
+            return this.amount;
           }
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`Server error: ${response.status}`);
+          if (this.currency === 'USDT') {
+            return this.amount * this.exchangeRate;
           }
-          return response.json();
-        })
-        .then(data => {
-          console.log("Server response:", data);
-          confirmPurchaseBtn.disabled = false;
-          spinner.classList.add("hidden");
-          if (data.success) {
-            buyCryptoFormContainer.classList.add("hidden");
-            receiptContainer.classList.remove("hidden");
-            document.getElementById("receiptStatus").textContent = "Completed";
-            document.getElementById("receiptCrypto").textContent = data.crypto_name;
-            document.getElementById("receiptSymbol").textContent = data.crypto_symbol;
-            document.getElementById("receiptCryptoAmount").textContent = parseFloat(data.crypto_amount).toFixed(6);
-            document.getElementById("receiptSymbol2").textContent = data.crypto_symbol;
-            document.getElementById("receiptTotalNgn").textContent = parseFloat(data.total_ngn_charged).toFixed(2);
-            document.getElementById("receiptWalletAddress").textContent = data.wallet_address;
-            document.getElementById("receiptTxHash").textContent = data.tx_hash;
-            document.getElementById("receiptDate").textContent = new Date(data.created_at || Date.now()).toLocaleString('en-GB', {
-              dateStyle: 'medium',
-              timeStyle: 'short'
+          if (this.currency === this.symbol) {
+            return this.amount * this.price * this.exchangeRate;
+          }
+          return 0;
+        },
+        get cryptoReceived() {
+          if (this.price <= 0) return 0;
+          if (this.currency === 'NGN') {
+            return (this.amount / this.exchangeRate) / this.price;
+          }
+          if (this.currency === 'USDT') {
+            return this.amount / this.price;
+          }
+          if (this.currency === this.symbol) {
+            return this.amount;
+          }
+          return 0;
+        },
+        async submit() {
+          this.loading = true;
+          this.resultMessage = '';
+          this.walletError = false;
+
+          const formData = new FormData(document.getElementById('buyCryptoForm'));
+          formData.append('crypto_received', this.cryptoReceived);
+
+          try {
+            const res = await fetch("{% url 'buy_crypto' crypto.id %}", {
+              method: 'POST',
+              body: formData,
+              headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
-          } else {
-            resultDiv.innerHTML = `<p class="text-red-400">${data.error || "Transaction failed."}</p>`;
+            const data = await res.json();
+            if (data.success) {
+              this.receipt = {
+                crypto: data.crypto_name,
+                symbol: data.crypto_symbol,
+                amount: parseFloat(data.crypto_amount).toFixed(6),
+                total: data.total_ngn_charged,
+                address: data.wallet_address,
+                txHash: data.tx_hash,
+                date: new Date(data.created_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }),
+              };
+              this.showReceipt = true;
+            } else {
+              this.resultMessage = `<p class="text-red-400">${data.error}</p>`;
+            }
+          } catch (e) {
+            this.resultMessage = `<p class="text-red-400">Error: ${e.message}</p>`;
+          } finally {
+            this.loading = false;
           }
-        })
-        .catch(error => {
-          console.error("Fetch error:", error);
-          confirmPurchaseBtn.disabled = false;
-          spinner.classList.add("hidden");
-          resultDiv.innerHTML = `<p class="text-red-400">Error: ${error.message}</p>`;
-        });
-      });
+        },
 
-      newPurchaseBtn.addEventListener("click", function () {
-        buyCryptoForm.reset();
-        buyCryptoFormContainer.classList.remove("hidden");
-        receiptContainer.classList.add("hidden");
-        resultDiv.innerHTML = "";
-        updateCostAndCrypto();
-      });
-
-      copyTxHashBtn.addEventListener("click", function () {
-        navigator.clipboard.writeText(txHashEl.textContent).then(() => {
-          copyTxHashBtn.classList.add("copied");
-          copyTxHashBtn.innerHTML = '<i class="fas fa-check check-icon mr-2"></i>Copied!';
-          setTimeout(() => {
-            copyTxHashBtn.classList.remove("copied");
-            copyTxHashBtn.innerHTML = '<i class="fas fa-copy copy-icon mr-2"></i>Copy Tx Hash';
-          }, 2000);
-        });
-      });
-
-      [walletAddressEl, txHashEl].forEach(el => {
-        el.addEventListener("click", function () {
-          this.classList.toggle("expanded");
-          this.classList.toggle("truncate");
-        });
-      });
-
-      amountInput.addEventListener("input", updateCostAndCrypto);
-      currencySelect.addEventListener("change", updateCostAndCrypto);
-      updateCostAndCrypto();
-    });
+        copyTxHash() {
+          navigator.clipboard.writeText(this.receipt.txHash).then(() => this.txCopied = true);
+        },
+        reset() {
+          this.showReceipt = false;
+          this.amount = 0;
+          this.currency = 'NGN';
+          this.walletAddress = '';
+          this.resultMessage = '';
+          this.txCopied = false;
+        }
+      }
+    }
   </script>
 {% endblock %}
