@@ -215,14 +215,15 @@ def dashboard(request):
 
 @login_required
 def marketplace(request):
-    """Display all active sell offers from merchants with total completed orders."""
-    offers = SellOffer.objects.filter(is_available=True).select_related('merchant').annotate(
+    """Display all active sell/buy offers from merchants with total completed orders."""
+    withdraw = BuyOffer.objects.filter(is_active=True).select_related('merchant').order_by('-created_at')
+    deposit = SellOffer.objects.filter(is_available=True).select_related('merchant').annotate(
         merchant_total_orders=Count(
             'order',  # Related name for orders linked to SellOffer
             filter=Q(order__status='completed')  # Only count completed orders
         )
     ).order_by('-created_at')
-    return render(request, "p2p/marketplace.html", {"offers": offers})
+    return render(request, "p2p/marketplace.html", {"deposit": deposit, 'withdraw': withdraw})
 
 
 @login_required
