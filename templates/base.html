@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
+    {% load static %}
     {% load humanize %}
-{% include "p2p/head.html" %}
+    {% include "p2p/head.html" %}
 <body class="bg-gradient-to-br from-gray-900 to-gray-800 text-white min-h-screen font-sans">
     <!-- Header -->
     {% include 'p2p/header.html' %}
@@ -11,37 +12,38 @@
     <div class="flex pt-16">
         <!-- Sidebar -->
         {% include "p2p/navbar.html" %}
-        
+
         <!-- Main Content -->
         <main class="flex-1 p-4 md:p-6 md:ml-20 lg:ml-64 pb-16 md:pb-0">
-            {% block content %}
-            {% endblock content %}
+            {% block content %}{% endblock content %}
         </main>
     </div>
 
-    <!-- Scripts -->
+    <!-- Alpine.js -->
     <script src="//unpkg.com/alpinejs" defer></script>
 
+    <!-- Shared App JS -->
+    <script src="{% static 'js/order-actions.js' %}?v=1.0.1"></script>
+
+    <!-- Per-page extra scripts -->
+    {% block extra_scripts %}{% endblock %}
+
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             console.log("DOM loaded");
             var toggleButton = document.getElementById("sidebar-toggle");
             var sidebar = document.getElementById("sidebar");
             if (toggleButton && sidebar) {
                 console.log("Sidebar toggle button and sidebar found");
-                toggleButton.addEventListener("click", function() {
-                    console.log("Sidebar toggle clicked");
+                toggleButton.addEventListener("click", function () {
                     sidebar.classList.toggle("hidden");
-                    console.log("Sidebar classes after toggle:", sidebar.classList.toString());
+                    console.log("Sidebar toggled");
                 });
-            } else {
-                console.log("Sidebar toggle button or sidebar not found");
             }
 
-            // Balance Toggle
             var toggleBalance = document.getElementById("toggle-balance");
             if (toggleBalance) {
-                toggleBalance.addEventListener("click", function() {
+                toggleBalance.addEventListener("click", function () {
                     let balance = document.getElementById("wallet-balance");
                     let eyeIcon = document.getElementById("eye-icon");
                     if (balance && eyeIcon) {
@@ -58,33 +60,32 @@
                 });
             }
 
-            // Profile Dropdown
             var profileBtn = document.getElementById("profile-btn");
             var profileMenu = document.getElementById("profile-menu");
             if (profileBtn && profileMenu) {
-                profileBtn.addEventListener("click", function(e) {
+                profileBtn.addEventListener("click", function (e) {
                     e.stopPropagation();
                     profileMenu.classList.toggle("hidden");
                 });
-                document.addEventListener("click", function(event) {
+                document.addEventListener("click", function (event) {
                     if (!profileBtn.contains(event.target)) {
                         profileMenu.classList.add("hidden");
                     }
                 });
             }
 
-            // Search Toggle for Mobile
             var searchToggle = document.getElementById("search-toggle");
             var searchInput = document.getElementById("search-input");
             if (searchToggle && searchInput) {
-                searchToggle.addEventListener("click", function() {
+                searchToggle.addEventListener("click", function () {
                     searchInput.classList.toggle("hidden");
                 });
             }
         });
     </script>
+
     <footer class="bg-gray-900 text-white p-4 mt-6">
-      <p class="text-center">©Zunhub 2025. All rights reserved.</p>
+        <p class="text-center">©Zunhub 2025. All rights reserved.</p>
     </footer>
 </body>
 </html>

@@ -10,7 +10,12 @@ urlpatterns = [
     path('', include('bills.urls')),
     path('', include('accounts.urls')),
     path('', include('payments.urls')),
-    
 ]
+
+# ✅ Serve user-uploaded files (media)
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# ✅ Serve static files for JS/CSS during development with Daphne
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

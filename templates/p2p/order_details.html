@@ -1,142 +1,90 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
 <div class="container mx-auto p-6 max-w-3xl">
-    <!-- Header -->
-    <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-t-lg shadow-lg">
-        <h2 class="text-4xl font-bold text-center">Order Details</h2>
+
+  <!-- 1) HEADER: Must be closed before anything else appears -->
+  <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-t-lg shadow-lg">
+    <h2 class="text-4xl font-bold text-center">Order Details</h2>
+  </div>  <!-- ← Closed here -->
+
+  <!-- 2) CARD DETAILS -->
+  <div class="bg-gray-800 p-6 rounded-b-lg shadow-lg space-y-4">
+    <div class="grid grid-cols-2 gap-4">
+      <div><strong>Agent:</strong> {{ order.sell_offer.merchant.username }}</div>
+      <div><strong>Buyer:</strong> {{ order.buyer.username }}</div>
+      <div><strong>Order ID:</strong> {{ order.id }}</div>
+      <div><strong>Rate:</strong>
+        <span class="text-green-400">₦{{ order.sell_offer.price_per_unit }}</span>
+      </div>
+      <div><strong>Amount:</strong> ₦{{ order.amount_requested }}</div>
+      <div><strong>Total Price:</strong> ₦{{ order.total_price }}</div>
+      <div><strong>Created At:</strong> {{ order.created_at }}</div>
+      <div id="statusBlock">
+        {% include "partials/_status_block.html" %}
+      </div>
     </div>
 
-    <!-- Card Details -->
-    <div class="bg-gray-800 p-6 rounded-b-lg shadow-lg space-y-4">
-        <div class="grid grid-cols-2 gap-4">
-            <div><strong>Agent:</strong> {{ order.sell_offer.merchant.username }}</div>
-            <div><strong>Buyer:</strong> {{ order.buyer.username }}</div>
-            <div><strong>Order ID:</strong> {{ order.id }}</div>
-            <div><strong>Rate:</strong> <span class="text-green-400">₦{{ order.sell_offer.price_per_unit }}</span></div>
-            <div><strong>Amount:</strong> ₦{{ order.amount_requested }}</div>
-            <div><strong>Total Price:</strong> ₦{{ order.total_price }}</div>
-            <div><strong>Created At:</strong> {{ order.created_at }}</div>
-            <div><strong>Status:</strong> <span id="order-status">{{ order.get_status_display }}</span></div>
-        </div>
-
-        {% if request.user == order.buyer %}
-        <!-- Payment Instructions -->
-        <div class="mt-6 bg-gray-700 p-4 rounded-lg">
-            <h3 class="text-lg font-semibold text-white mb-2">Payment Instructions</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="bg-gray-800 p-3 rounded">
-                    <span class="text-gray-300">Full Name:</span>
-                    <span class="text-white font-medium">{{ order.sell_offer.merchant.profile.full_name }}</span>
-                </div>
-                <div class="bg-gray-800 p-3 rounded">
-                    <span class="text-gray-300">Bank Name:</span>
-                    <span class="text-white font-medium">{{ order.sell_offer.merchant.profile.bank_name }}</span>
-                </div>
-                <div class="bg-gray-800 p-3 rounded">
-                    <span class="text-gray-300">Account No:</span>
-                    <span class="text-white font-medium">{{ order.sell_offer.merchant.profile.account_no }}</span>
-                </div>
-            </div>
-
-            {% if order.status == 'pending' %}
-            <button id="markAsPaidBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg mt-4">
-                Mark as Paid
-            </button>
-
-            <!-- Modal for Mark as Paid -->
-            <div id="markAsPaidModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition duration-300 ease-in-out">
-                <div class="bg-white rounded-lg p-6 w-full max-w-md scale-95 opacity-0 transform transition duration-300 ease-in-out" id="markAsPaidModalContent">
-                    <h2 class="text-xl font-bold mb-4 text-gray-800">Confirm Mark as Paid</h2>
-                    <p class="mb-6 text-gray-700">Are you sure you have made the payment for this order?</p>
-                    <div class="flex justify-end gap-4">
-                        <button id="cancelMarkAsPaidModal" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
-                        <button id="confirmMarkAsPaid" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Yes, Confirm</button>
-                    </div>
-                </div>
-            </div>
-            {% elif order.status == 'paid' %}
-            <div class="mt-4 flex flex-wrap gap-3">
-                {% if order.dispute %}
-                <p class="text-red-500 font-semibold w-full">A dispute has been raised for this order.</p>
-                <form action="{% url 'cancel_dispute' order.dispute.id %}" method="POST">
-                    {% csrf_token %}
-                    <button type="submit" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
-                        Cancel Dispute
-                    </button>
-                </form>
-                <a href="{% url 'track_dispute' order.dispute.id %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-                    Track Dispute
-                </a>
-                {% else %}
-                <a href="{% url 'create_dispute' order.id %}" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
-                    Raise Dispute
-                </a>
-                {% endif %}
-            </div>
-            {% endif %}
-        </div>
-        {% endif %}
-
-        {% if request.user == order.sell_offer.merchant and order.status == 'paid' %}
-        <button id="releaseFundsBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg mt-4">
-            Release Funds
-        </button>
-
-        <!-- Modal for Release Funds -->
-        <div id="releaseFundsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition duration-300 ease-in-out">
-            <div class="bg-white rounded-lg p-6 w-full max-w-md scale-95 opacity-0 transform transition duration-300 ease-in-out" id="releaseFundsModalContent">
-                <h2 class="text-xl font-bold mb-4 text-gray-800">Confirm Release Funds</h2>
-                <p class="mb-6 text-gray-700">Are you sure you want to release funds for this order?</p>
-                <div class="flex justify-end gap-4">
-                    <button id="cancelReleaseFundsModal" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
-                    <button id="confirmReleaseFunds" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Yes, Release</button>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        {% if request.user == order.sell_offer.merchant %}
-        <a href="{% url 'merchant_orders' %}" class="block text-center mt-6 text-blue-400 hover:underline">
-            Back to My Orders
-        </a>
-        {% else %}
-        <a href="{% url 'buyer_orders' %}" class="block text-center mt-6 text-blue-400 hover:underline">
-            Back to My Orders
-        </a>
-        {% endif %}
+    <!-- BUTTON BLOCK: either buyer’s “Mark as Paid” OR merchant’s “Release Funds” -->
+    <div id="buttonBlock">
+      {% if request.user == order.buyer %}
+        {% include "partials/_button_block.html" %}
+      {% elif request.user == order.sell_offer.merchant and order.status == 'paid' %}
+        {% include "partials/_button_block.html" %}
+      {% endif %}
     </div>
-</div>
 
-<!-- Spinner Overlay -->
+    <!-- Back link -->
+    {% if request.user == order.sell_offer.merchant %}
+      <a href="{% url 'merchant_orders' %}" class="block text-center mt-6 text-blue-400 hover:underline">
+        Back to My Orders
+      </a>
+    {% else %}
+      <a href="{% url 'buyer_orders' %}" class="block text-center mt-6 text-blue-400 hover:underline">
+        Back to My Orders
+      </a>
+    {% endif %}
+  </div>  <!-- End card details -->
+
+</div>  <!-- End container -->
+
+<!-- Spinner Overlay (unchanged) -->
 <div id="spinnerOverlay" class="hidden fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
-    <div class="loader ease-linear rounded-full border-4 border-t-4 border-white h-12 w-12"></div>
+  <div class="loader ease-linear rounded-full border-4 border-t-4 border-white h-12 w-12"></div>
 </div>
-
 <style>
-    .loader {
-        border-color: #f3f3f3;
-        border-top-color: #3498db;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
+  .loader {
+    border-color: #f3f3f3;
+    border-top-color: #3498db;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
 </style>
+{% endblock content %}
 
-<!-- Toastify -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+{% block extra_scripts %}
+  <!-- 1) Toastify -->
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
-<script src="/static/js/order-actions.js" defer></script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const csrfToken = '{{ csrf_token }}';
+  <!-- 2) Your click/ modal helper -->
+  <script src="{% static 'js/order-actions.js' %}?v=1.0.1 defer"></script>
 
+  <!-- 3) Your WebSocket helper -->
+  <script src="{% static 'js/order-socket.js' %}"></script>
+
+  <!-- 4) Inline binding code: -->
+  <script>
+    console.log("DOM loaded");
+    console.log("Looking for markAsPaidBtn:", !!document.getElementById('markAsPaidBtn'));
+    console.log("handleOrderAction is", typeof window.handleOrderAction);
+
+    // Bind the buyer’s “Mark as Paid”
     window.handleOrderAction({
-      csrfToken,
+      csrfToken: '{{ csrf_token }}',
       triggerBtnId: 'markAsPaidBtn',
       modalId: 'markAsPaidModal',
       contentId: 'markAsPaidModalContent',
@@ -150,21 +98,30 @@
       audit: 'mark_as_paid'
     });
 
-    window.handleOrderAction({
-      csrfToken,
-      triggerBtnId: 'releaseFundsBtn',
-      modalId: 'releaseFundsModal',
-      contentId: 'releaseFundsModalContent',
-      cancelBtnId: 'cancelReleaseFundsModal',
-      confirmBtnId: 'confirmReleaseFunds',
-      endpoint: "{% url 'release_fund' order.id %}",
-      successMessage: 'Funds released successfully.',
-      statusText: 'Completed',
-      statusColor: 'text-green-400',
-      btnSuccessText: 'Funds Released',
-      audit: 'release_fund'
-    });
-  });
-</script>
 
-{% endblock content %}
+    // Bind the merchant’s “Release Funds”
+    if (document.getElementById('releaseFundsBtn')) {
+        window.handleOrderAction({
+          csrfToken: '{{ csrf_token }}',
+          triggerBtnId: 'releaseFundsBtn',
+          modalId: 'releaseFundsModal',
+          contentId: 'releaseFundsModalContent',
+          cancelBtnId: 'cancelReleaseFundsModal',
+          confirmBtnId: 'confirmReleaseFunds',
+          endpoint: "{% url 'release_fund' order.id %}",
+          successMessage: 'Funds released successfully.',
+          statusText: 'Completed',
+          statusColor: 'text-green-400',
+          btnSuccessText: 'Funds Released',
+          audit: 'release_fund'
+        });
+    }
+    // WebSocket updates
+    setupOrderWebSocket("{{ order.id }}", function(event, data) {
+      console.log('Received event:', event, data);
+      if (['paid','completed','dispute'].includes(event)) {
+        fetchAndReplaceOrderBlocks();
+      }
+    });
+  </script>
+{% endblock %}

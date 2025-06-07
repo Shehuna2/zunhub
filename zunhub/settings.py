@@ -99,14 +99,21 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
         },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': 'debug.log',
+        },
     },
     'loggers': {
         '': {
-            'handlers': ['console'],
+            'handlers': ['console', 'file'],
             'level': 'INFO',
         },
     },
 }
+
+
+
 
 
 # Application definition
@@ -120,11 +127,23 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'widget_tweaks',
+    'channels',
     'p2p',
     'bills',
     'gasfee',
     'payments',
 ]
+
+# Tell Django to use ASGI instead of WSGI.
+ASGI_APPLICATION = "zunhub.asgi.application"
+
+# Configure channel layers (Redis backend):
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -155,6 +174,8 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'zunhub.wsgi.application'
+
+
 
 
 # Database
@@ -202,14 +223,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / "static"]  # Where your static files live
+STATIC_ROOT = BASE_DIR / "staticfiles"    # Where static files are collected
 
-MEDIA_ROOT = BASE_DIR / 'media'
+# Media (optional)
 MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 
 
 # Default primary key field type

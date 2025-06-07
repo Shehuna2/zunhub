@@ -9,7 +9,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 
 from django.db import transaction
 from decimal import Decimal
-from p2p.models import Wallet, Order, Dispute
+from p2p.models import Wallet, Dispute
 from .utils import purchase_airtime, purchase_data, get_data_plans
 import logging
 from django.utils import timezone
@@ -145,7 +145,7 @@ def admin_dashboard_refresh(request):
         'to_credit_orders': AssetSellOrder.objects.filter(status='awaiting_confirmation').order_by('-created_at')[:5],
         'recent_disputes': Dispute.objects.all().order_by('-created_at')[:10],
         'total_orders': AssetSellOrder.objects.count(),
-        'pending_orders': Order.objects.filter(status='pending').count(),
+        'pending_orders': AssetSellOrder.objects.filter(status='pending').count(),
         'completed_orders': AssetSellOrder.objects.filter(status='completed').count(),
         'pending_disputes': Dispute.objects.exclude(status='resolved').count(),
         'awaiting_confirmation': AssetSellOrder.objects.filter(status='awaiting_confirmation').count(),

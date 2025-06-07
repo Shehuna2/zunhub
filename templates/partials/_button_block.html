@@ -1,0 +1,129 @@
+{# NOTE: No outer wrapper with id="buttonBlock" here. #}
+<p>{{ order.status }}"</p>
+
+{% if request.user == order.buyer %}
+  <div class="mt-6 bg-gray-700 p-4 rounded-lg">
+    <h3 class="text-lg font-semibold text-white mb-2">Payment Instructions</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="bg-gray-800 p-3 rounded">
+        <span class="text-gray-300">Full Name:</span>
+        <span class="text-white font-medium">{{ order.sell_offer.merchant.profile.full_name }}</span>
+      </div>
+      <div class="bg-gray-800 p-3 rounded">
+        <span class="text-gray-300">Bank Name:</span>
+        <span class="text-white font-medium">{{ order.sell_offer.merchant.profile.bank_name }}</span>
+      </div>
+      <div class="bg-gray-800 p-3 rounded">
+        <span class="text-gray-300">Account No:</span>
+        <span class="text-white font-medium">{{ order.sell_offer.merchant.profile.account_no }}</span>
+      </div>
+    </div>
+
+    {% if order.status == 'pending' %}
+      <button
+        id="markAsPaidBtn"
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg mt-4"
+      >
+        Mark as Paid
+      </button>
+
+      <!-- Modal for Mark as Paid -->
+      <div
+        id="markAsPaidModal"
+        class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition duration-300 ease-in-out"
+      >
+        <div
+          id="markAsPaidModalContent"
+          class="bg-white rounded-lg p-6 w-full max-w-md scale-95 opacity-0 transform transition duration-300 ease-in-out"
+        >
+          <h2 class="text-xl font-bold mb-4 text-gray-800">Confirm Mark as Paid</h2>
+          <p class="mb-6 text-gray-700">
+            Are you sure you have made the payment for this order?
+          </p>
+          <div class="flex justify-end gap-4">
+            <button
+              id="cancelMarkAsPaidModal"
+              class="px-4 py-2 bg-gray-300 rounded"
+            >
+              Cancel
+            </button>
+            <button
+              id="confirmMarkAsPaid"
+              class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Yes, Confirm
+            </button>
+          </div>
+        </div>
+      </div>
+    {% elif order.status == 'paid' %}
+      <div class="mt-4 flex flex-wrap gap-3">
+        {% if order.dispute %}
+          <p class="text-red-500 font-semibold w-full">
+            A dispute has been raised for this order.
+          </p>
+          <form action="{% url 'cancel_dispute' order.dispute.id %}" method="POST">
+            {% csrf_token %}
+            <button
+              type="submit"
+              class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition"
+            >
+              Cancel Dispute
+            </button>
+          </form>
+          <a
+            href="{% url 'track_dispute' order.dispute.id %}"
+            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+          >
+            Track Dispute
+          </a>
+        {% else %}
+          <a
+            href="{% url 'create_dispute' order.id %}"
+            class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
+          >
+            Raise Dispute
+          </a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+{% elif request.user == order.sell_offer.merchant and order.status == 'paid' %}
+  <button
+    id="releaseFundsBtn"
+    class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg mt-4"
+  >
+    Release Funds
+  </button>
+
+  <!-- Modal for Release Funds -->
+  <div
+    id="releaseFundsModal"
+    class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition duration-300 ease-in-out"
+  >
+    <div
+      id="releaseFundsModalContent"
+      class="bg-white rounded-lg p-6 w-full max-w-md scale-95 opacity-0 transform transition duration-300 ease-in-out"
+    >
+      <h2 class="text-xl font-bold mb-4 text-gray-800">Confirm Release Funds</h2>
+      <p class="mb-6 text-gray-700">
+        Are you sure you want to release funds for this order?
+      </p>
+      <div class="flex justify-end gap-4">
+        <button
+          id="cancelReleaseFundsModal"
+          class="px-4 py-2 bg-gray-300 rounded"
+        >
+          Cancel
+        </button>
+        <button
+          id="confirmReleaseFunds"
+          class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+        >
+          Yes, Release
+        </button>
+      </div>
+    </div>
+  </div>
+{% endif %}

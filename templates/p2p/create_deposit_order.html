@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load humanize %}
 {% block content %}
     <div class="container mx-auto p-6">
         <!-- Header -->
@@ -26,8 +26,8 @@
 
                 <!-- Available Units -->
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-400">Merchant balance</label>
-                    <p class="text-lg font-semibold text-blue-400">₦{{ sell_offer.merchant.wallet.balance }}</p>
+                    <label class="block text-sm font-medium text-gray-400">Available Units</label>
+                    <p class="text-lg font-semibold text-blue-400">₦{{ sell_offer.amount_available|intcomma }}</p>
                 </div>
 
                 <!-- Input: Quantity -->
@@ -35,7 +35,14 @@
                     <label class="block text-sm font-medium text-gray-400">Enter Quantity</label>
                     <input type="number" name="amount_requested" min="{{ sell_offer.min_amount }}" max="{{ sell_offer.max_amount }}" value="{{ form.amount_requested.value|default_if_none:'' }}" required
                         class="w-full mt-1 p-2 bg-gray-700 text-gray-200 rounded border border-gray-600 focus:outline-none focus:border-blue-500">
-                    <p class="text-xs text-gray-400">Min: ₦{{ sell_offer.min_amount }} | Max: ₦{{ sell_offer.max_amount }}</p>
+                        {% if form.amount_requested.errors %}
+                            <ul class="errorlist text-red-500 text-sm mt-1">
+                                {% for error in form.amount_requested.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    <p class="text-xs text-gray-400">Min: ₦{{ sell_offer.min_amount|intcomma }} | Max: ₦{{ sell_offer.max_amount|intcomma }}</p>
                 </div>
 
                 <!-- Total Price -->

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Wallet, SellOffer, Order, Dispute, BuyOffer, SellOrder
+from .models import Wallet, Withdraw_P2P_Offer, DepositOrder, Dispute, Deposit_P2P_Offer, WithdrawOrder
 from .views import admin_dashboard
 from .utils import notify_users
 
@@ -69,18 +69,18 @@ class DisputeAdmin(admin.ModelAdmin):
     reject_dispute.short_description = "Reject Dispute (Keep funds in escrow)"
 
 
-@admin.register(BuyOffer)
+@admin.register(Deposit_P2P_Offer)
 class BuyOfferAdmin(admin.ModelAdmin):
     list_display = ("amount_available", "price_per_unit", "min_amount", "max_amount", "created_at")
     list_filter = ("merchant", "price_per_unit")
     search_fields = ("merchant__username", "price_per_unit")
 
-@admin.register(SellOrder)
+@admin.register(WithdrawOrder)
 class SellOrderAdmin(admin.ModelAdmin):
     list_display = ("buyer_offer", "seller", "amount_requested", "total_price", "status", "created_at")
     list_filter = ("status",)
     search_fields = ("buyer_offer__merchant__username", "seller__username")
 
 
-admin.site.register(SellOffer)
-admin.site.register(Order)
+admin.site.register(Withdraw_P2P_Offer)
+admin.site.register(DepositOrder)

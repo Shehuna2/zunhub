@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{%  load humanize %}
+{% block content %}
+    <div class="container mx-auto p-6">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-t-lg shadow-lg">
+            <h2 class="text-4xl font-bold text-center">Create Withdrawal Order</h2>
+        </div>
+
+        <div class="mx-auto bg-gray-800 p-6 rounded-lg shadow-md border border-gray-700">
+            <form method="POST">
+                {% csrf_token %}
+
+                <!-- Merchant Info -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-400">Merchant Username</label>
+                    <p class="text-lg font-semibold text-gray-300">{{ offer.merchant.username }}</p>
+                </div>
+
+                <!-- Price -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-400">Price per Unit</label>
+                    <p class="text-lg font-semibold text-green-400">₦{{ offer.price_per_unit|floatformat:2 }}</p>
+                </div>
+
+                <!-- Available Units -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-400">Available Units</label>
+                    <p class="text-lg font-semibold text-blue-400">₦{{ offer.amount_available|floatformat:2 }}</p>
+                </div>
+
+                <!-- Input: Quantity -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-400" for="{{ form.amount_requested.id_for_label }}">Enter Quantity to Sell</label>
+                    <input type="number" name="amount_requested" id="{{ form.amount_requested.id_for_label }}"
+                           min="{{ offer.min_amount }}" max="{{ offer.max_amount }}" step="0.01"
+                           value="{{ form.amount_requested.value|default_if_none:'' }}"
+                           required class="w-full mt-4 p-3 bg-white text-gray-900 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
+                    {% if form.amount_requested.errors %}
+                        <ul class="errorlist text-red-500 text-sm mt-2">
+                            {% for error in form.amount_requested.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                        <p class="mt-2 text-sm text-gray-500">Min: ₦{{ offer.min_amount|floatformat:2 }} | Max: ₦{{ offer.max_amount|floatformat:2}} </p>
+                </div>
+
+                <!-- Total Fiat -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-400">Total Fiat to Receive</label>
+                    <p class="text-lg font-semibold text-blue-500" id="totalPrice">₦0.00</p>
+                </div>
+
+                <!-- Messages -->
+                {% if messages %}
+                    <div class="mb-4">
+                        {% for message in messages %}
+                            <p class="text-sm {% if message.tags == 'error' %}text-red-500{% elif message.tags == 'success' %}text-green-500{% endif %}">
+                                {{ message }}
+                            </p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <!-- Submit Button -->
+                <div class="mt-4">
+                    <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold">
+                        Confirm Order
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Back to Marketplace -->
+        <div class="text-center mt-6">
+            <p class="text-blue-400 hover:underline">Back to <a href="{% url 'marketplace' %}">Marketplace</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Auto-calculate total fiat based on input quantity
+        document.querySelector('input[name="amount_requested"]').addEventListener('input', function() {
+            const pricePerUnit = parseFloat("{{ offer.price_per_unit|safe }}");
+            const amount = parseFloat(this.value) || 0;
+            const totalPrice = (amount * pricePerUnit).toFixed(2);
+            document.getElementById("totalPrice").innerText = `₦${totalPrice}`;
+        });
+    </script>
+{% endblock content %}
