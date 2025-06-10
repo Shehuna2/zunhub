@@ -67,42 +67,37 @@
 {% endblock content %}
 
 {% block extra_scripts %}
-  <!-- 1) Toastify -->
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-
-  <!-- 2) Your click/ modal helper -->
-  <script src="{% static 'js/order-actions.js' %}?v=1.0.1 defer"></script>
-
-  <!-- 3) Your WebSocket helper -->
+  <script src="{% static 'js/order-actions.js' %}?v=1.0.1" defer></script>
   <script src="{% static 'js/order-socket.js' %}"></script>
 
-  <!-- 4) Inline binding code: -->
   <script>
-    console.log("DOM loaded");
-    console.log("Looking for markAsPaidBtn:", !!document.getElementById('markAsPaidBtn'));
-    console.log("handleOrderAction is", typeof window.handleOrderAction);
+    const csrfToken = '{{ csrf_token }}';
 
-    // Bind the buyer’s “Mark as Paid”
-    window.handleOrderAction({
-      csrfToken: '{{ csrf_token }}',
-      triggerBtnId: 'markAsPaidBtn',
-      modalId: 'markAsPaidModal',
-      contentId: 'markAsPaidModalContent',
-      cancelBtnId: 'cancelMarkAsPaidModal',
-      confirmBtnId: 'confirmMarkAsPaid',
-      endpoint: "{% url 'mark_as_paid' order.id %}",
-      successMessage: 'Marked as Paid',
-      statusText: 'Paid',
-      statusColor: 'text-yellow-400',
-      btnSuccessText: 'Marked as Paid',
-      audit: 'mark_as_paid'
-    });
-
-
-    // Bind the merchant’s “Release Funds”
-    if (document.getElementById('releaseFundsBtn')) {
+    // 1. bindModals: attach modals to any buttons present
+    function bindModals() {
+      // Buyer
+      if (document.getElementById('markAsPaidBtn')) {
+        console.log("🔁 Binding buyer modal");
         window.handleOrderAction({
-          csrfToken: '{{ csrf_token }}',
+          csrfToken,
+          triggerBtnId: 'markAsPaidBtn',
+          modalId: 'markAsPaidModal',
+          contentId: 'markAsPaidModalContent',
+          cancelBtnId: 'cancelMarkAsPaidModal',
+          confirmBtnId: 'confirmMarkAsPaid',
+          endpoint: "{% url 'mark_as_paid' order.id %}",
+          successMessage: 'Marked as Paid',
+          btnSuccessText: 'Marked as Paid',
+          audit: 'mark_as_paid'
+        });
+      }
+
+      // Merchant
+      if (document.getElementById('releaseFundsBtn')) {
+        console.log("🔁 Binding merchant modal");
+        window.handleOrderAction({
+          csrfToken,
           triggerBtnId: 'releaseFundsBtn',
           modalId: 'releaseFundsModal',
           contentId: 'releaseFundsModalContent',
@@ -110,18 +105,42 @@
           confirmBtnId: 'confirmReleaseFunds',
           endpoint: "{% url 'release_fund' order.id %}",
           successMessage: 'Funds released successfully.',
-          statusText: 'Completed',
-          statusColor: 'text-green-400',
           btnSuccessText: 'Funds Released',
           audit: 'release_fund'
         });
-    }
-    // WebSocket updates
-    setupOrderWebSocket("{{ order.id }}", function(event, data) {
-      console.log('Received event:', event, data);
-      if (['paid','completed','dispute'].includes(event)) {
-        fetchAndReplaceOrderBlocks();
       }
+    }
+
+    // 2. fetchAndReplaceOrderBlocks: swap in fresh HTML, then re-bind
+    async function fetchAndReplaceOrderBlocks() {
+      try {
+        const res = await fetch("{% url 'order_details_partial' order.id %}", {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+
+        document.getElementById('statusBlock').innerHTML = data.status_html;
+        document.getElementById('buttonBlock').innerHTML = data.buttons_html;
+
+        // ⚡️ Now re-bind the newly injected buttons
+        bindModals();
+      } catch (err) {
+        console.warn('Failed to refresh order blocks', err);
+      }
+    }
+
+    // 3. On page load, bind once and start WS listener
+    document.addEventListener('DOMContentLoaded', () => {
+      bindModals();
+
+      setupOrderWebSocket("{{ order.id }}", (event, data) => {
+        console.log('WS event:', event, data);
+        if (['paid','completed','dispute'].includes(event)) {
+          fetchAndReplaceOrderBlocks();
+        }
+      });
     });
   </script>
 {% endblock %}
+

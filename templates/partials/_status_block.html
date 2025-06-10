@@ -2,13 +2,11 @@
   <strong>Status:</strong>
   <span id="order-status" class="font-semibold">
     {% if order.status == 'pending' %}
-      <span class="text-yellow-300">Pending</span>
+      <span class="text-yellow-300">{{ order.get_status_display }}</span>
     {% elif order.status == 'paid' %}
-      <span class="text-blue-400">Paid</span>
+      <span class="text-blue-400">{{ order.get_status_display }}</span>
     {% elif order.status == 'completed' %}
-      <span class="text-green-400">Completed</span>
-    {% else %}
-      <span class="text-gray-300">{{ order.get_status_display }}</span>
+      <span class="text-green-400">{{ order.get_status_display }}</span>
     {% endif %}
   </span>
 </div>

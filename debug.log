@@ -4968,3 +4968,159 @@ Listening on TCP address 127.0.0.1:8000
 TON Sender Address: EQDEIv5bpS6Z2yz7mAoQXsI9q0KZe8l48B-AXHDh9kP1IaeH
 Not Found: /.well-known/appspecific/com.chrome.devtools.json
 Killed 1 pending application instances
+Starting server at tcp:port=8000:interface=127.0.0.1
+HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+Configuring endpoint tcp:port=8000:interface=127.0.0.1
+Listening on TCP address 127.0.0.1:8000
+TON Sender Address: EQDEIv5bpS6Z2yz7mAoQXsI9q0KZe8l48B-AXHDh9kP1IaeH
+Not Found: /api/log/
+Not Found: /api/log/
+Not Found: /api/log/
+Not Found: /favicon.ico
+Not Found: /api/log/
+Not Found: /api/log/
+Not Found: /api/log/
+Attempting to lock 100 for user merchant-2, balance=97700.00, locked=1900.00
+Locked 100 for user merchant-2, new balance=97600.00, new locked=2000.00
+Not Found: /api/log/
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Not Found: /api/log/
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Attempting to lock 100 for user merchant-2, balance=97600.00, locked=1900.00
+Locked 100 for user merchant-2, new balance=97500.00, new locked=2000.00
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Not Found: /api/log/
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Not Found: /api/log/
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Attempting to lock 100 for user merchant-2, balance=97500.00, locked=1900.00
+Locked 100 for user merchant-2, new balance=97400.00, new locked=2000.00
+Not Found: /api/log/
+Not Found: /api/log/
+Attempting to lock 100 for user merchant-2, balance=97400.00, locked=1900.00
+Locked 100 for user merchant-2, new balance=97300.00, new locked=2000.00
+Not Found: /api/log/
+Killed 2 pending application instances
+Starting server at tcp:port=8000:interface=127.0.0.1
+HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+Configuring endpoint tcp:port=8000:interface=127.0.0.1
+Listening on TCP address 127.0.0.1:8000
+TON Sender Address: EQDEIv5bpS6Z2yz7mAoQXsI9q0KZe8l48B-AXHDh9kP1IaeH
+Killed 2 pending application instances
+Starting server at tcp:port=8000:interface=127.0.0.1
+HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+Configuring endpoint tcp:port=8000:interface=127.0.0.1
+Listening on TCP address 127.0.0.1:8000
+TON Sender Address: EQDEIv5bpS6Z2yz7mAoQXsI9q0KZe8l48B-AXHDh9kP1IaeH
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Attempting to lock 100 for user merchant-2, balance=97300.00, locked=2000.00
+Locked 100 for user merchant-2, new balance=97200.00, new locked=2100.00
+Killed 2 pending application instances
+Starting server at tcp:port=8000:interface=127.0.0.1
+HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+Configuring endpoint tcp:port=8000:interface=127.0.0.1
+Listening on TCP address 127.0.0.1:8000
+TON Sender Address: EQDEIv5bpS6Z2yz7mAoQXsI9q0KZe8l48B-AXHDh9kP1IaeH
+Killed 1 pending application instances
+Starting server at tcp:port=8000:interface=127.0.0.1
+HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+Configuring endpoint tcp:port=8000:interface=127.0.0.1
+Listening on TCP address 127.0.0.1:8000
+TON Sender Address: EQDEIv5bpS6Z2yz7mAoQXsI9q0KZe8l48B-AXHDh9kP1IaeH
+Killed 1 pending application instances
+Starting server at tcp:port=8000:interface=127.0.0.1
+HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+Configuring endpoint tcp:port=8000:interface=127.0.0.1
+Listening on TCP address 127.0.0.1:8000
+TON Sender Address: EQDEIv5bpS6Z2yz7mAoQXsI9q0KZe8l48B-AXHDh9kP1IaeH
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Killed 2 pending application instances
+Starting server at tcp:port=8000:interface=127.0.0.1
+HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+Configuring endpoint tcp:port=8000:interface=127.0.0.1
+Listening on TCP address 127.0.0.1:8000
+TON Sender Address: EQDEIv5bpS6Z2yz7mAoQXsI9q0KZe8l48B-AXHDh9kP1IaeH
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Killed 2 pending application instances
+Starting server at tcp:port=8000:interface=127.0.0.1
+HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+Configuring endpoint tcp:port=8000:interface=127.0.0.1
+Listening on TCP address 127.0.0.1:8000
+TON Sender Address: EQDEIv5bpS6Z2yz7mAoQXsI9q0KZe8l48B-AXHDh9kP1IaeH
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Killed 0 pending application instances
+Starting server at tcp:port=8000:interface=127.0.0.1
+HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+Configuring endpoint tcp:port=8000:interface=127.0.0.1
+Listening on TCP address 127.0.0.1:8000
+Killed 0 pending application instances
+Starting server at tcp:port=8000:interface=127.0.0.1
+HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+Configuring endpoint tcp:port=8000:interface=127.0.0.1
+Listening on TCP address 127.0.0.1:8000
+TON Sender Address: EQDEIv5bpS6Z2yz7mAoQXsI9q0KZe8l48B-AXHDh9kP1IaeH
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Killed 1 pending application instances
+Starting server at tcp:port=8000:interface=127.0.0.1
+HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+Configuring endpoint tcp:port=8000:interface=127.0.0.1
+Listening on TCP address 127.0.0.1:8000
+TON Sender Address: EQDEIv5bpS6Z2yz7mAoQXsI9q0KZe8l48B-AXHDh9kP1IaeH
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Killed 1 pending application instances
+Starting server at tcp:port=8000:interface=127.0.0.1
+HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+Configuring endpoint tcp:port=8000:interface=127.0.0.1
+Listening on TCP address 127.0.0.1:8000
+TON Sender Address: EQDEIv5bpS6Z2yz7mAoQXsI9q0KZe8l48B-AXHDh9kP1IaeH
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+Watching for file changes with StatReloader
+TON Sender Address: EQDEIv5bpS6Z2yz7mAoQXsI9q0KZe8l48B-AXHDh9kP1IaeH
+Not Found: /favicon.ico
+Watching for file changes with StatReloader
+TON Sender Address: EQDEIv5bpS6Z2yz7mAoQXsI9q0KZe8l48B-AXHDh9kP1IaeH
+Not Found: /ws/order/47/
+Not Found: /ws/order/47/
+Not Found: /ws/order/47/
+Not Found: /ws/order/47/
+Not Found: /api/log/
+Not Found: /ws/order/47/
+Not Found: /ws/order/47/
+Not Found: /favicon.ico
+Attempting to lock 50 for user merchant-3, balance=4000.00, locked=800.00
+Locked 50 for user merchant-3, new balance=3950.00, new locked=850.00
+Not Found: /ws/order/48/
+Not Found: /ws/order/48/
+Not Found: /api/log/
+Not Found: /api/log/
+Not Found: /ws/order/48/
+Not Found: /api/log/
+Not Found: /ws/order/48/
+Attempting to lock 50 for user merchant-3, balance=3950.00, locked=800.00
+Locked 50 for user merchant-3, new balance=3900.00, new locked=850.00
+Not Found: /ws/order/49/
+Not Found: /api/log/
+Not Found: /ws/order/49/
+Not Found: /api/log/
+Not Found: /ws/order/49/
+Starting server at tcp:port=8000:interface=127.0.0.1
+HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+Configuring endpoint tcp:port=8000:interface=127.0.0.1
+Listening on TCP address 127.0.0.1:8000
+TON Sender Address: EQDEIv5bpS6Z2yz7mAoQXsI9q0KZe8l48B-AXHDh9kP1IaeH
+Attempting to lock 50 for user merchant-3, balance=3900.00, locked=800.00
+Locked 50 for user merchant-3, new balance=3850.00, new locked=850.00
+Not Found: /api/log/
+Not Found: /api/log/
+Killed 2 pending application instances

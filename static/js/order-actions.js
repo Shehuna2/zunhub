@@ -40,8 +40,6 @@ window.handleOrderAction = function ({
   confirmBtnId,
   endpoint,
   successMessage,
-  statusText,
-  statusColor,
   btnSuccessText,
   audit
 }) {
@@ -80,23 +78,19 @@ window.handleOrderAction = function ({
 
         if (res.ok) {
           const data = await res.json();
-          toast(data.message || successMessage, 'linear-gradient(to right, #00b09b, #96c93d)');
 
+          // 1) Let the server‐rendered partials update status & buttons
           if (typeof fetchAndReplaceOrderBlocks === 'function') {
             await fetchAndReplaceOrderBlocks();
           }
 
+          // 2) Then show the toast
+          toast(data.message || successMessage, 'linear-gradient(to right, #00b09b, #96c93d)');
+
+          // 3) Finally, cosmetically disable this button
           triggerBtn.textContent = btnSuccessText;
           triggerBtn.disabled    = true;
-          triggerBtn.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-blue-600', 'hover:bg-blue-700');
           triggerBtn.classList.add('bg-gray-500');
-
-          const statusEl = document.getElementById('order-status');
-          if (statusEl) {
-            statusEl.innerHTML = statusText;
-            statusEl.classList.add('animate-pulse', statusColor);
-            setTimeout(() => statusEl.classList.remove('animate-pulse'), 2000);
-          }
 
           if (audit) {
             navigator.sendBeacon('/api/log/', JSON.stringify({
