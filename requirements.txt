@@ -67,6 +67,7 @@ python-dateutil==2.9.0.post0
 python-dotenv==1.1.0
 pyunormalize==16.0.0
 PyYAML==6.0.2
+pipreqs==0.4.13
 redis==5.2.1
 referencing==0.36.2
 regex==2024.11.6
